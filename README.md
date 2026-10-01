@@ -2,8 +2,6 @@
 
 **Every song I've ever played on Spotify, as a star.**
 
-**[See my galaxy →](https://suhxnitiwari.github.io/listening-galaxy/)**
-
 4,646 songs from four years of listening (May 2022 to September 2026). Each star is a song: bigger means more plays, and the color is the year I found it. Songs gather into constellations by artist; Ariana Grande is the pink nebula at the center.
 
 - **The big bang:** it opens by replaying four years in 14 seconds, every star lighting up on the day I first heard that song.
