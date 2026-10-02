@@ -48,7 +48,7 @@ window.buildTour = (D, songs, artists) => {
           verdict: 'When everyone else is asleep, she goes home.', focus: { artists: F.night.map(n => n[0]) }, play: F.closers[1][0] },
 
         { name: 'goodnight n go?', date: AN.latest.date, q: 'When does she actually sleep?', title: `${AN.count} all-nighters`, night: true, counter: AN.count,
-          text: `Most nights the music stops between ${hour(sleep[0])} and ${hour(sleep.at(-1))}. Except ${AN.count} times, when it played every single hour from midnight to 6 AM. The first: ${date(AN.first.date)}, ${title(AN.first.song)} by ${by(AN.first.song)} ${AN.first.times} times. ${AN.by_era.high_school} in high school, ${(AN.by_era.austin || 0) + (AN.by_era.y2026 || 0)} since Austin, a record ${AN.top_month[1]} in ${month(AN.top_month[0])}, and the latest on ${date(AN.latest.date)} (${title(AN.latest.song)} on repeat). Most end on a ${AN.top_weekday[0]} morning, and the song most often playing at 5 AM is ${title(F.night_song.five_am)}: ${F.night_song.five_am_times} times.`,
+          text: `Most nights the music stops between ${hour(sleep[0])} and ${hour(sleep.at(-1))}. Except ${AN.count} times, when it played every single hour from midnight to 6 AM. The first: ${date(AN.first.date)}, ${title(AN.first.song)} by ${by(AN.first.song)} ${AN.first.times} times. ${AN.by_era.high_school} in high school, ${(AN.by_era.austin || 0) + (AN.by_era.y2026 || 0)} since Austin, a record ${AN.top_month[1]} in ${month(AN.top_month[0])}, and the latest on ${date(AN.latest.date)} (${title(AN.latest.song)} on repeat). Most end on a ${AN.top_weekday[0]} morning, and the song most often playing at 5 AM is ${title(F.night_song.five_am)}: ${F.night_song.five_am_times} times. Her study partner through all of them: ${title(F.night_artist.song)} by ${A(F.night[0][0]).name}, ${F.night_artist.song_times} plays.`,
           verdict: `${title(F.night_song.five_am)}… asleep, honestly. Why ${AN.top_weekday[0]}s? Monday night is when the week's work peaks, with exams on Wednesdays and Thursdays.`, focus: { songs: AN.latest.songs }, play: F.night_song.five_am },
 
         { name: 'dear reader', date: F.longest_session.start, q: `What happened on ${date(F.longest_session.start)}?`, title: `${F.longest_session.hours} hours`,
@@ -100,6 +100,17 @@ window.buildTour = (D, songs, artists) => {
             `${fmt(Q.one_listen_artists)} artists got exactly one listen and never another.`,
           ].filter(Boolean).join(' '),
           verdict: "She doesn't know why either. She's just weird like that.", focus: { songs: [F.off_season ? F.off_season.song : F.day.song, Q.halloween.song, Q.valentines.song, Q.one_hour.song, Q.never_finished.song] }, play: F.off_season ? F.off_season.song : Q.one_hour.song, long: true },
+
+        { name: "the hunger games: valentine's day", date: '2024-02-14', q: 'What does Suhani play on Valentine\'s Day?', title: "Can't Catch Me Now", long: true,
+          text: (() => { const V = Q.valentines_by_year, v = y => V.find(x => x.year === y) || { times: 0, of: 0, songs: [] };
+            // the anti-love songs she actually played on February 14, picked by title from that day's plays
+            const pick = (y, names) => names.filter(n => v(y).songs.some(i => title(i).toLowerCase().startsWith(n.toLowerCase())));
+            const y24 = pick(2024, ['Beautiful Liar', 'Mean', 'Heart Attack', "Baby, I'm Jealous", "Can't Remember to Forget You"]), next24 = pick(2024, ['thank u, next']).length;
+            const y26 = pick(2026, ['ANYTHING BUT LOVE', 'TIT FOR TAT', 'I Knew You Were Trouble', "This Is Why We Can't Have Nice Things", 'Disturbia']), where26 = pick(2026, ['Where Have You Been']).length;
+            const y23 = pick(2023, ['Apocalypse', 'Psycho Saiyaan', 'Illegal Weapon 2.0', 'Bandook Meri Laila']);
+            return `Suhani is a hopeless romantic who has been single every Valentine's Day in this dataset, which makes February 14 extra salty: all that love in the air, and still not her turn. Her playlist has opinions. February 14, 2024: her #1 song, ${v(2024).times} times, was "Can't Catch Me Now," from The Hunger Games. Not Lover. Not Into You. Can't. Catch. Me. Now. Two years later she went further: ${y26.join('. ')}.${where26 ? ' And, straight to Cupid: Where Have You Been.' : ''}`; })(),
+          verdict: `May the odds of finding a boyfriend eventually be ever in her favor. She survived another one. But beneath all the jokes was the same little question every year: when will it be my turn? Has Cupid ever even tried firing?`,
+          focus: { songs: [...new Set(Q.valentines_by_year.flatMap(x => x.songs))] }, play: (Q.valentines_by_year.find(x => x.year === 2024) || {}).song },
 
         { name: '(instrumental)', date: '2025-04-15', q: `Why are ${F.instrumentals.count} of her plays instrumentals?`, title: 'Study mode', counter: F.instrumentals.count,
           text: `In 2025, ${F.instrumentals.count} plays of ${top.name} instrumentals, every one played start to finish. That's what it sounds like when she puts her phone away to study.`,
