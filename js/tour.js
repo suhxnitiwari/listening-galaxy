@@ -19,6 +19,8 @@ window.buildTour = (D, songs, artists) => {
     const cluster = [wolves, ...wolves.links.slice(0, 3).map(m => m.s)], pair = [wolves.i, cluster[1].i, wolves.links[0].c];
     const M = F.moods, [march, december] = F.trips, inOrder = F.in_order.slice(0, 3);
     const busiest = F.hours.indexOf(Math.max(...F.hours));
+    const taylor2023 = F.album_days.filter(d => d.artist === F.rival.artist && d.date.startsWith('2023'));
+    const releaseNight = F.album_days.find(d => d.artist === F.top.artist && d.first_at < '02:00');
 
     return [
         { date: top.first, q: 'Who runs this galaxy?', title: top.name,
@@ -26,7 +28,7 @@ window.buildTour = (D, songs, artists) => {
           verdict: 'Not a fan. A citizen.', focus: { artist: F.top.artist }, play: top.songs[0].i },
 
         { date: F.rival.first + '-01', q: 'Has anyone ever taken the throne?', title: `${month(F.rival.first)}: the coup`,
-          text: `After ${F.rival.reign_before} straight months of ${top.name}, ${rival.name} walked in and took the crown: ${F.rival.months.filter(m => m < '2024').map(m => month(m).split(' ')[0]).join(', ')} 2023. Suhani was writing her college essays, a new era that needed new music to be creative. By the new year she was back with ${top.name}. (${rival.name} snuck one more month in ${month(F.rival.months.at(-1))}.)`,
+          text: `After ${F.rival.reign_before} straight months of ${top.name}, ${rival.name} walked in and took the crown: ${F.rival.months.filter(m => m < '2024').map(m => month(m).split(' ')[0]).join(', ')} 2023. Suhani was writing her college essays, a new era that needed new music to be creative, so she went through Taylor's catalog album by album: ${taylor2023.map(d => `${d.album} (${month(d.date.slice(0, 7)).split(' ')[0]}${d.date === '2023-03-17' ? ', the night the Eras Tour opened' : d.date === '2023-10-27' ? ', release day' : ''})`).join(', ')}. By the new year she was back with ${top.name}. (${rival.name} snuck one more month in ${month(F.rival.months.at(-1))}.)`,
           verdict: `Everyone else got a month or two: ${F.rival.others.map(([a, c, ms]) => `${A(a).name} (${ms.map(m => month(m).replace(' 20', " '")).join(', ')}${NOTES[A(a).name] ? ', ' + NOTES[A(a).name] : ''})`).join('; ')}. Only ${rival.name} ever made ${top.name} nervous.`,
           focus: { artists: [F.top.artist, F.rival.artist] }, play: F.rival.song },
 
@@ -36,10 +38,10 @@ window.buildTour = (D, songs, artists) => {
 
         { date: M.in_love[0][0] + '-15', q: 'Is she in love every January?', title: 'Manifesting season',
           text: `${month(M.in_love[0][0])} was ${M.in_love[0][1]}% love songs, the most of any month, and the 119 Until I Found Yous were a January too. Not love: the start of a new year, and a girl manifesting it.`,
-          verdict: 'New year, new manifestation.', mood: true, focus: { mood: 'love' } },
+          verdict: "She's still manifesting it.", mood: true, focus: { mood: 'love' } },
 
-        { date: '2023-03-01', q: 'When is she most likely to be listening?', title: `${hour(busiest)}`,
-          text: `Her listening peaks at ${hour(busiest)}, and the hours from 3 to 7 PM are her busiest. Before 9 AM? Just ${F.before_9}% of everything. And the little she plays in the morning is her saddest: ${F.morning_heartbreak.morning}% heartbreak songs, against ${F.morning_heartbreak.rest}% the rest of the day.`,
+        { date: '2023-03-01', q: 'When is she most likely to be listening?', title: `${hour(busiest)}: homework hour`,
+          text: `Her listening peaks at ${hour(busiest)}. On high-school weekdays the music came on after school and stayed on: ${F.weekday_peak.high_school.three_to_eight}% of it between 3 and 8 PM, homework hours (in college, ${F.weekday_peak.austin.three_to_eight}%). Before 9 AM? Just ${F.before_9}% of everything. And the little she plays in the morning is her saddest: ${F.morning_heartbreak.morning}% heartbreak songs, against ${F.morning_heartbreak.rest}% the rest of the day.`,
           verdict: 'Suhani is not a morning person.', focus: { all: true } },
 
         { date: AN.first.date, q: 'Who is 2 AM Suhani?', title: 'A different person', night: true,
@@ -117,6 +119,10 @@ window.buildTour = (D, songs, artists) => {
         { date: '2025-03-15', q: 'Which songs travel together?', title: 'The middle-school playlist',
           text: `${wolves.title} (${wolves.A.name}) and ${cluster[1].title} (${cluster[1].A.name}): back-to-back ${pair[2]} times. Add ${cluster.slice(2).map(s => `${s.title} (${s.A.name})`).join(' and ')}, and it's a set of songs that all came out in 2017 and 2018, when she was in middle school. She plays them together more now, in college, than she ever did then.`,
           verdict: 'A middle-school playlist that never ended.', focus: { songs: cluster.map(s => s.i) }, pair: [pair[0], pair[1]], play: pair[0] },
+
+        ...(releaseNight ? [{ date: releaseNight.date, q: `Was she up when ${releaseNight.album} came out?`, title: `${clock(releaseNight.first_at)}, ${date(releaseNight.date)}`, night: true, counter: releaseNight.new_songs,
+          text: `Of course she was. ${releaseNight.album} by ${top.name}: ${releaseNight.new_songs} brand-new songs heard for the first time that night, the first at ${clock(releaseNight.first_at)}.`,
+          verdict: 'Day one. Minute one.', focus: { songs: songs.filter(s => s.A === top && s.first === releaseNight.date).map(s => s.i) }, play: releaseNight.song }] : []),
 
         { date: M.happiest[0][0] + '-15', q: 'Her happiest month?', title: `${month(M.happiest[0][0])}: right now`, mood: true,
           text: `Her most party-and-confident month ever is ${month(M.happiest[0][0])} (${M.happiest[0][1]}%). The next three: ${M.happiest.slice(1).map(([m]) => month(m)).join(', ')}. All four of her happiest months are from the last year.`,
