@@ -6,11 +6,38 @@
 
 91,160 listens · 4,647 songs · 1,230 artists · 4,395 hours · 5,053 sessions
 
+## The skills it shows
+
+The whole path from a raw export to something people can use. The warehouse and ETL live in [listening-history](https://github.com/suhxnitiwari/listening-history); this repo is the data product and the front end.
+
+**Data engineering**
+- **ETL on a messy export:** 182,293 raw records cleaned to 91,160 real listens (songs only, no private sessions, IP/country/device stripped, Austin time, de-duplicated, overnight loops removed).
+- **Dimensional modeling:** a PostgreSQL star schema, `fact_play` with track, artist, album, date and session dimensions.
+- **Entity resolution:** the single, album and deluxe IDs of one song merged on a normalized title and artist.
+- **Sessionization:** a new session after 30 quiet minutes, 5,053 in all.
+- **A privacy-first data product:** `galaxy.json` (680 KB) ships per-song and per-artist summaries, never the time of a single play; the raw zip never leaves my laptop.
+
+**Analytics and data science**
+- **Similarity scoring:** back-to-back plays scored by cosine similarity, `together / √(listens A × listens B)`, top 3 per song, 1,887 links.
+- **Semi-supervised labeling:** 389 hand-tagged moods spread to 617 more songs by label propagation, with a 60% agreement threshold instead of guesses.
+- **Behavioral metrics:** skip rates, streaks, all-nighters, mood share by month, life eras, trips home read from the share of Hindi music.
+- **Insight to narrative:** the album and a line for each of the 53 months are findings computed by the warehouse, written as a story and checked against what I remember.
+
+**Data visualization**
+- **Visual encoding:** area tracks listens (radius by square root), color is year found or emotion, brightness is recency, distance from the center is when an artist entered my life.
+- **Graph algorithms:** constellations are minimum spanning trees (Prim's algorithm); comparing two songs finds the shortest chain of back-to-back plays between them.
+- **Time as state:** one `now` drives the timeline, the replay and the tour; every star works out its own state from it.
+- **Performance:** thousands of stars in 3D at 60 fps on one canvas, with cached glow sprites, shared hit-testing and no framework.
+
+**Communicating with data**
+- **Data storytelling:** the replay, the album, the monthly lines.
+- **A downloadable report** generated from the same data, and a **reproducible pipeline**: one command rebuilds everything from a Spotify export.
+
 ## What you can do
 
 - **Fly out from Dallas.** It opens over Dallas at night on May 21, 2022, the day my history starts, pulls back to Earth, out to the Milky Way, past it, and dives into a new galaxy: Heavy Rotation.
-- **Watch it grow.** Four years replay in 30 seconds from the center outward, with nothing else on screen, every star igniting on the day I first heard it, with a ticker of who owned each month. Drag the timeline to any month; the bars under it are listens per month, pink when my #1 artist owned it.
-- **Play the album.** *in my head(phones)*, a tour of me in 15 tracks and 5 from the vault: who runs the galaxy, the cruel summer Taylor won, the day I played one song 119 times, my all-nighters (and why they land on Tuesdays), my college-essay marathon, the morning I left home, how college changed me, and how 2026 is changing me again. Every number in it is computed by the export; only the words are mine.
+- **Watch it grow.** Four years replay in 30 seconds from the center outward, with nothing else on screen, every star igniting on the day I first heard it, and every month gets its own line about what was happening. Drag the timeline to any month; the bars under it are listens per month, mauve when my #1 artist owned it.
+- **Play the album.** *in my head(phones)*, a tour of me in two sides, 7 tracks in Dallas and 7 in Austin, and 5 from the vault, laid out as a tracklist (lift the needle to turn the record over between sides): who runs the galaxy, the cruel summer Taylor won, the day I played one song 119 times, my all-nighters (and why they land on Tuesdays), my college-essay marathon, the morning I left home, how college changed me, and how 2026 is changing me again. Every number in it is computed by the export; only the words are mine.
 - **Touch the sky.** It's a 3D disk: drag to spin it, shift-drag to move, scroll to zoom. Stars lean toward your cursor, constellations draw themselves (with the artist's photo) as you come close, and clicking empty space sends a ripple through the galaxy.
 - **Open any star.** Its card shows first listen, peak month, last listen, lifespan, usual hour, skip rate, biggest day, my mood tag, and the songs I play back-to-back with it, plus a 30-second preview.
 - **Color by emotion.** Switch from year found to mood: rose love, yellow party, orange confident, lavender bittersweet, blue heartbreak, violet dark.
