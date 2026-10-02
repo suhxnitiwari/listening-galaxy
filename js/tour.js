@@ -112,7 +112,7 @@ window.buildTour = (D, songs, artists) => {
           verdict: `May the odds of finding a boyfriend eventually be ever in her favor. She survived another one. But beneath all the jokes was the same little question every year: when will it be my turn? Has Cupid ever even tried firing?`,
           focus: { songs: [...new Set(Q.valentines_by_year.flatMap(x => x.songs))] }, play: (Q.valentines_by_year.find(x => x.year === 2024) || {}).song },
 
-        { name: 'hot n cold', date: '2024-04-23', q: 'How fast do her moods change?', title: `${F.mood_swings.per_day} mood swings a day`, long: true,
+        { name: 'positions', date: '2024-04-23', q: 'How fast do her moods change?', title: `${F.mood_swings.per_day} mood swings a day`, long: true,
           text: (() => { const MS = F.mood_swings, find = (list, a, b) => list.find(([x, y]) => title(x).toLowerCase().startsWith(a.toLowerCase()) && title(y).toLowerCase().startsWith(b.toLowerCase()));
             const lines = [[MS.up, 'Leave Me Lonely', 'Dangerous Woman', 'Sad girl to main character.'], [MS.up, "Now That We Don't Talk", 'imgonnagetyouback', 'Heartbreak, then immediately plotting revenge.'],
               [MS.down, 'yes, and?', "we can't be friends", 'Healed for exactly one song.'], [MS.down, 'We Are Never Ever Getting Back Together', 'All Too Well', 'Never ever. For about three minutes.']]
@@ -133,7 +133,7 @@ window.buildTour = (D, songs, artists) => {
           text: `${wolves.title} (${wolves.A.name}) and ${cluster[1].title} (${cluster[1].A.name}), back-to-back ${wolves.links[0].c} times, always in that order. Add ${cluster.slice(2).map(s => `${s.title} (${s.A.name})`).join(' and ')}: songs that all came out in 2017 and 2018, when she was in middle school, on a playlist she still plays the way she built it.`,
           verdict: 'A middle-school playlist that never ended.', focus: { songs: cluster.map(s => s.i) }, pair: [wolves.i, cluster[1].i], play: wolves.i },
 
-        ...(releaseNight ? [{ name: 'positions: first in line', date: releaseNight.date, q: `Was she up when ${releaseNight.album} came out?`, title: `${clock(releaseNight.first_at)}, ${date(releaseNight.date)}`, night: true, counter: releaseNight.new_songs,
+        ...(releaseNight ? [{ name: 'first in line', date: releaseNight.date, q: `Was she up when ${releaseNight.album} came out?`, title: `${clock(releaseNight.first_at)}, ${date(releaseNight.date)}`, night: true, counter: releaseNight.new_songs,
           text: `Of course she was. ${releaseNight.album} by ${top.name}: ${releaseNight.new_songs} brand-new songs heard for the first time that night, the first at ${clock(releaseNight.first_at)}.`,
           verdict: 'Day one. Minute one.', focus: { songs: songs.filter(s => s.A === top && s.first === releaseNight.date).map(s => s.i) }, play: releaseNight.song }] : []),
 
