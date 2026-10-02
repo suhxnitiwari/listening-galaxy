@@ -112,6 +112,15 @@ window.buildTour = (D, songs, artists) => {
           verdict: `May the odds of finding a boyfriend eventually be ever in her favor. She survived another one. But beneath all the jokes was the same little question every year: when will it be my turn? Has Cupid ever even tried firing?`,
           focus: { songs: [...new Set(Q.valentines_by_year.flatMap(x => x.songs))] }, play: (Q.valentines_by_year.find(x => x.year === 2024) || {}).song },
 
+        { name: 'hot n cold', date: '2024-04-23', q: 'How fast do her moods change?', title: `${F.mood_swings.per_day} mood swings a day`, long: true,
+          text: (() => { const MS = F.mood_swings, find = (list, a, b) => list.find(([x, y]) => title(x).toLowerCase().startsWith(a.toLowerCase()) && title(y).toLowerCase().startsWith(b.toLowerCase()));
+            const lines = [[MS.up, 'Leave Me Lonely', 'Dangerous Woman', 'Sad girl to main character.'], [MS.up, "Now That We Don't Talk", 'imgonnagetyouback', 'Heartbreak, then immediately plotting revenge.'],
+              [MS.down, 'yes, and?', "we can't be friends", 'Healed for exactly one song.'], [MS.down, 'We Are Never Ever Getting Back Together', 'All Too Well', 'Never ever. For about three minutes.']]
+              .map(([list, a, b, joke]) => { const r = find(list, a, b); return r ? `${title(r[0]).split(' (')[0]} → ${title(r[1]).replace(" (Taylor's Version)", '').replace(' (From The Vault)', '')}, ${r[2]} times. ${joke}` : null; }).filter(Boolean);
+            return `${fmt(MS.total)} times she went straight from a heartbreak song into a party song, or the other way around. ${lines.join(' ')}`; })(),
+          verdict: 'Heartbroken, healed, petty, heartbroken again, all before the song ends.', focus: { mood: 'heartbreak' }, mood: true,
+          play: (songs.find(x => x.title === 'Dangerous Woman' && x.A === top) || top.songs[0]).i },
+
         { name: '(instrumental)', date: '2025-04-15', q: `Why are ${F.instrumentals.count} of her plays instrumentals?`, title: 'Study mode', counter: F.instrumentals.count,
           text: `In 2025, ${F.instrumentals.count} plays of ${top.name} instrumentals, every one played start to finish. That's what it sounds like when she puts her phone away to study.`,
           verdict: 'The lyrics would have been a distraction.', focus: { songs: F.instrumentals.songs }, play: F.instrumentals.songs[0] },
