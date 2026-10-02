@@ -1,4 +1,4 @@
-// The tour is an album, "in my head(phones)": 15 tracks and 4 from the vault, each one a finding about me.
+// The tour is an album, "in my head(phones)": 15 tracks and 5 from the vault, each one a finding about me.
 // Every number comes from data/galaxy.json ("facts"), which etl/galaxy_export.py computes from the warehouse;
 // only the words are written by hand. A track can move time, focus the sky on an artist, a song or a set of songs,
 // play a song, turn the sky to night or to emotion colors, count up a number, or fly the viewer home.
@@ -22,8 +22,12 @@ window.buildTour = (D, songs, artists) => {
 
     const album = [
         { name: 'side to side', date: top.first, q: 'Who runs this galaxy?', title: top.name,
-          text: `${F.top.share}% of everything Suhani has ever played is ${top.name}. She was Suhani's #1 artist in ${F.top.owned} of ${F.top.months} months and held the top spot through every version of her life in the dataset: high school, the summer before college, the move to Austin, and 2026. Nicki Minaj said it best on Side to Side, and in Suhani's listening galaxy, it's true: Ariana runs pop. And Suhani is very loyal: ${F.loyal.count} songs survived every single year.`,
+          text: `${F.top.share}% of everything Suhani has ever played is ${top.name}. She was Suhani's #1 artist in ${F.top.owned} of ${F.top.months} months and held the top spot through every version of her life in the dataset: high school, the summer before college, the move to Austin, and 2026. Nicki Minaj said it best on Side to Side, and in Suhani's listening galaxy, it's true: Ariana runs pop.`,
           verdict: "Ariana isn't Suhani's favorite artist. She's the gravitational center.", focus: { artist: F.top.artist }, play: top.songs[0].i },
+
+        { name: 'one last time. again.', date: F.loyal.peak + '-15', q: "What's her defining trait?", title: 'Loyalty', counter: S(F.loyal.song).n,
+          text: `Suhani's defining behavioral trait is loyalty. ${F.loyal.count} songs survived every single year of the data. She found ${fmt(F.discovery[2023].new_artists)} new artists in 2023 and just ${fmt(F.discovery[2024].new_artists)} in 2024, when ${F.discovery[2024].comfort}% of her listening was songs she already knew. And the song she's never once gone a year without? ${title(F.loyal.song)}: ${fmt(S(F.loyal.song).n)} plays, her most-played of the ${F.loyal.count}.`,
+          verdict: 'Apparently, she did not mean the title literally.', focus: { songs: F.loyal.songs }, play: F.loyal.song },
 
         { name: 'cruel summer', date: F.rival.first + '-01', q: 'Who was trouble?', title: 'I Knew You Were Trouble',
           text: `After ${F.rival.reign_before} straight months of ${top.name}, Summer 2023 was a Cruel Summer: cruel to Ari, and cruel to Suhani, who spent it writing college essays. ...Ready For It? ${rival.name} was. Suhani went through her whole catalog, album by album (${taylor2023.map(d => `${d.album}${d.date === '2023-03-17' ? ' the night the Eras Tour opened' : d.date === '2023-10-27' ? ' on release day' : ''}`).join(', ')}), but two albums carried the essays: ${F.taylor_favs.map(([a, n]) => `${a} (${fmt(n)} plays)`).join(' and ')}. Lover for the heart, reputation for the nerve. ${rival.name} won ${F.rival.months.filter(m => m < '2024').map(m => month(m).split(' ')[0]).join(', ')} 2023.`,
@@ -54,9 +58,9 @@ window.buildTour = (D, songs, artists) => {
           text: `Twice the data goes quiet for hours at a time: flights. March 2024, ${march.flight_hours[1]} offline hours on the way back, with ${top.name}'s eternal sunshine dropping mid-trip. And December 2024, in the year she'd nearly forgotten her roots: ${december.desi}% of what she played in India was South Asian, against ${F.desi_overall}% normally.`,
           verdict: 'Two weeks home and it all came back.', focus: { songs: december.all }, play: december.songs[0] },
 
-        { name: 'one last time', date: F.eras.austin_first.at, q: 'How do you say goodbye to home?', title: 'One last time',
+        { name: 'suburban legends', date: F.eras.austin_first.at, q: 'How do you say goodbye to home?', title: 'Suburban Legends',
           text: `April 2024, her last spring in her parents' house in Dallas: ${title(F.loyal.song)} had its biggest month ever, ${F.loyal.peak_times} plays. Four months later, at ${clock(F.eras.austin_first.at)} on ${date(F.eras.austin_first.at)}, her first morning in Austin, she pressed play on ${title(F.eras.austin_first.song)}, a song about the suburbs you grow up in and the people you leave there.`,
-          verdict: 'One last time, then goodbye, suburbs.', focus: { songs: [F.eras.austin_first.song, F.loyal.song] }, pair: [F.loyal.song, F.eras.austin_first.song], play: F.loyal.song },
+          verdict: 'One last time (again), then goodbye, suburbs.', focus: { songs: [F.eras.austin_first.song, F.loyal.song] }, pair: [F.loyal.song, F.eras.austin_first.song], play: F.loyal.song },
 
         { name: 'taste', date: '2024-10-01', q: 'How did college change her?', title: 'Trying to fit in',
           text: `Away from Mom and Dad, trying to be a blank canvas without knowing who she was yet. Late-night listening jumped from ${E.high_school.late}% to ${E.austin.late}%, and party and confident songs from ${E.high_school.upbeat}% to ${E.austin.upbeat}%: ${F.fall2024.party.slice(0, 3).map(i => title(i)).join(', ')}, the songs everyone was playing, while ${F.eras.austin_new.map(([a]) => A(a).name).join(', ')} moved in. She was trying hard to fit in. South Asian music fell to ${F.desi_by_year[2024]}%, and she skipped more than ever (${E.austin.skip}%). But her #1 new song that semester? ${title(F.fall2024.top_new)}, in Hindi.`,
@@ -65,10 +69,6 @@ window.buildTour = (D, songs, artists) => {
         { name: 'october', date: F.heartbreak.month + '-15', q: 'Her loneliest, saddest month?', title: month(F.heartbreak.month), mood: true,
           text: `Across the past four years, October is her saddest month: ${M.sad_calendar[1]}% sad songs on average, against a typical ${M.typical_sad}%. The days go from bright to dark and short, and something about it gets her. ${month(F.heartbreak.month)} was the worst: 1 in 4 songs a heartbreak song. ACL, Texas–OU in Dallas, Halloweekend: everyone seemed to have plans. She didn't.`,
           verdict: 'College was lonely. Being away from home was lonely.', focus: { mood: 'heartbreak' } },
-
-        { name: 'phone down', date: '2025-04-15', q: `Why are ${F.instrumentals.count} of her plays instrumentals?`, title: 'Study mode', counter: F.instrumentals.count,
-          text: `In 2025, ${F.instrumentals.count} plays of ${top.name} instrumentals, every one played start to finish. That's what it sounds like when she puts her phone away to study.`,
-          verdict: 'The lyrics would have been a distraction.', focus: { songs: F.instrumentals.songs }, play: F.instrumentals.songs[0] },
 
         { name: 'who i am', date: '2026-06-15', q: 'And 2026?', title: 'Remembering who she is', mood: true,
           text: `South Asian music is back to ${F.desi_by_year[2026]}%, its highest since high school, and ${A(F.eras.new_2026[0][0]).name}, new this year, already has ${fmt(F.eras.new_2026[0][1])} listens. She's skipping less (${E.y2026.skip}%). A Sephora ad brought back ${title(F.comeback.song)} after ${fmt(F.comeback.gap_days)} days of silence. And all four of her happiest months ever are from the last year, the best one ${month(M.happiest[0][0])}.`,
@@ -83,6 +83,10 @@ window.buildTour = (D, songs, artists) => {
           verdict: 'Still pressing play.', outro: true },
     ];
     const vault = [
+        { name: 'phone down', date: '2025-04-15', q: `Why are ${F.instrumentals.count} of her plays instrumentals?`, title: 'Study mode', counter: F.instrumentals.count,
+          text: `In 2025, ${F.instrumentals.count} plays of ${top.name} instrumentals, every one played start to finish. That's what it sounds like when she puts her phone away to study.`,
+          verdict: 'The lyrics would have been a distraction.', focus: { songs: F.instrumentals.songs }, play: F.instrumentals.songs[0] },
+
         ...(F.off_season ? [{ name: 'christmas in may', date: F.off_season.month + '-15', q: `Why ${title(F.off_season.song)} in ${month(F.off_season.month).split(' ')[0]}?`, title: 'Christmas in May',
           text: `${F.off_season.times} plays of ${title(F.off_season.song)} by ${by(F.off_season.song)}, in ${month(F.off_season.month)}.`,
           verdict: "She doesn't know either. She's just weird like that.", focus: { song: F.off_season.song }, play: F.off_season.song }] : []),
