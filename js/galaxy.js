@@ -26,7 +26,7 @@
     document.querySelectorAll('[data-total]').forEach(el => { el.textContent = fmt(D.totals[el.dataset.total]); });
     $('#kb').textContent = fmt((bytes || JSON.stringify(D).length) / 1024);
 
-    const yearColor = { 2022: [126, 178, 255], 2023: [170, 140, 255], 2024: [255, 160, 220], 2025: [255, 190, 150], 2026: [255, 236, 170] };
+    const yearColor = { 2022: [150, 176, 246], 2023: [186, 160, 246], 2024: [238, 168, 214], 2025: [248, 188, 176], 2026: [246, 226, 186] };   // lavender haze: periwinkle, lilac, mauve, dusty rose, champagne
     // emotion colors: warm for happy, blue for sad, violet for gloomy
     const moods = [['love', [255, 105, 150]], ['party', [255, 226, 80]], ['confident', [255, 150, 60]], ['bittersweet', [185, 150, 255]], ['heartbreak', [80, 140, 255]], ['dark', [140, 70, 200]]];
     const moodColor = Object.fromEntries(moods), noMood = [105, 100, 125];
@@ -64,6 +64,7 @@
     }
     for (const A of artists) A.edges = tree(A.songs);
     const TOUR = window.buildTour(D, songs, artists);   // the case file, from js/tour.js
+    const LINES = window.buildMonths(D, songs, artists);   // a line for every month, from js/months.js
 
     // ---------- color: by the year I found a song, or by how it feels ----------
     let colorMode = 'year';
@@ -150,24 +151,31 @@
     const dust = [0.15, 0.35, 0.7].flatMap(depth => [...Array(220)].map(() => [rnd(), rnd(), rnd() * 1.3, depth]));
     const rings = [260, 620, 1050, 1550, 2150];
     // primordial gas: two spiral arms of faint matter that burst out in the opening and stay on as galactic dust
-    const gasColors = [[247, 168, 196], [170, 140, 255], [126, 178, 255], [255, 214, 150], [255, 140, 190]];
+    const gasColors = [[232, 186, 214], [186, 160, 246], [150, 176, 246], [246, 214, 186], [238, 160, 200]];
     const gas = [...Array(2400)].map((_, i) => {
         const t = Math.pow(rnd(), 0.6), r = 50 + t * 2300, th = (i % 2) * Math.PI + Math.log(r / 50) * 1.9 + (rnd() - 0.5) * 0.9;
         return [Math.cos(th) * r, Math.sin(th) * r, (rnd() - 0.5) * (30 + r * 0.12), gasColors[Math.floor(rnd() * gasColors.length)], 0.8 + rnd() * 2.2, 0.4 + rnd() * 0.6, r];
     });
     const clouds = [...Array(14)].map((_, i) => { const r = 250 + rnd() * 1700, th = (i % 2) * Math.PI + Math.log(r / 50) * 1.9 + (rnd() - 0.5) * 0.5;
         return { x: Math.cos(th) * r, y: Math.sin(th) * r, r: 220 + rnd() * 380, c: gasColors[i % gasColors.length] }; });
+    // the sky's background: deep plum, warming to a dusty mauve haze in the middle (cached until the window changes size)
+    let hazeFor = '', hazeGrad = null;
+    function hazeBg() {
+        if (hazeFor !== W + 'x' + H) { hazeFor = W + 'x' + H; hazeGrad = g.createRadialGradient(W * 0.5, H * 0.45, 0, W * 0.5, H * 0.45, Math.max(W, H) * 0.75);
+            hazeGrad.addColorStop(0, '#2A1E36'); hazeGrad.addColorStop(0.55, '#1B1425'); hazeGrad.addColorStop(1, '#100B16'); }
+        return hazeGrad;
+    }
     // ---------- the prelude: Dallas at night, out to Earth, out to the Milky Way, past it, and into a new galaxy ----------
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const PRE_MS = 6000;
-    // real seconds -> scene seconds: Dallas flies by, Earth is a glimpse, the Milky Way a beat, then straight to the new galaxy
-    const KEYS = [[0, 0.6], [1, 2.9], [2, 4.7], [3.4, 7.2], [6, 12]];
+    const PRE_MS = 4800;
+    // real seconds -> scene seconds: Dallas flies by, Earth is a glimpse, the Milky Way a beat, then a jump to lightspeed and a big bang
+    const KEYS = [[0, 0.6], [1, 2.9], [2, 4.7], [3.2, 7.0], [4.0, 10.2], [4.8, 12]];
     const scene = r => { for (let i = 1; i < KEYS.length; i++) if (r <= KEYS[i][0]) { const [a0, b0] = KEYS[i - 1], [a1, b1] = KEYS[i]; return b0 + (b1 - b0) * (r - a0) / (a1 - a0); } return 12; };
     const pre = { start: performance.now(), end: performance.now() + (reduced ? 0 : PRE_MS), done: false, timers: [] };
     // ?frame=2.5 freezes the opening at 2.5 seconds, for reviewing it frame by frame
     const freeze = new URLSearchParams(location.search).has('frame') ? parseFloat(new URLSearchParams(location.search).get('frame')) : null;
     if (freeze != null) pre.end = Infinity;
-    const intro = { start: pre.end, ms: 5600, touched: false };
+    const intro = { start: pre.end, ms: 3800, touched: false };
     const R1 = Math.random, gs = () => R1() + R1() + R1() - 1.5, smooth = k => { k = clamp(k, 0, 1); return k * k * (3 - 2 * k); };
     const preStars = [...Array(1200)].map(() => [(R1() - 0.5) * 6, (R1() - 0.5) * 6, 0.3 + R1() * 6, R1()]);
     // Earth at night: real continents (Natural Earth), the Texas border, and real cities at their real coordinates (lat, lon, size)
@@ -230,13 +238,15 @@
         g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
 
         // stars: they stream inward while we pull away from Earth, then outward as we fly toward the new galaxy
-        const away = t < 2.6 ? 0 : Math.exp(Math.min(t, 6.5) * 0.6 - 1.56) - 1, toward = t < 8 ? 0 : (t - 8) * 1.4 + Math.pow(Math.max(0, t - 10), 2) * 2;
-        const starA = smooth((t - 2.4) / 1.2) * (1 - smooth((t - 8.2) / 1.4));   // after the Milky Way, the stars go out: pitch black
+        const warp = clamp((t - 7.4) / 2.4, 0, 1);   // 0 drifting, 1 full lightspeed
+        const away = t < 2.6 ? 0 : Math.exp(Math.min(t, 6.5) * 0.6 - 1.56) - 1, toward = t < 7.4 ? 0 : (t - 7.4) * 1.2 + Math.pow(t - 7.4, 2.4) * 1.6;
+        const starA = smooth((t - 2.4) / 1.2) * (1 - smooth((t - 10.3) / 0.6));   // the streaks burn out as the spark appears
         for (const [x, y, z, b] of preStars) {
-            let z1 = z + away - toward, z0 = z + (t < 6.5 ? Math.exp(Math.min(t - 0.05, 6.5) * 0.6 - 1.56) - 1 : away) - (t < 8 ? 0 : toward - 0.08);
+            let z1 = z + away - toward, z0 = z + (t < 6.5 ? Math.exp(Math.min(t - 0.05, 6.5) * 0.6 - 1.56) - 1 : away);
             z1 = ((z1 - 0.15) % 6 + 6) % 6 + 0.15; z0 = ((z0 - 0.15) % 6 + 6) % 6 + 0.15; if (Math.abs(z1 - z0) > 2) z0 = z1;
-            const a = (0.2 + 0.6 * b) * starA * clamp(1.6 / z1 + 0.1, 0, 1); if (a < 0.02) continue;
-            g.strokeStyle = `rgba(${b > 0.75 ? '255,214,235' : b > 0.45 ? '200,210,255' : '255,255,255'},${a})`; g.lineWidth = clamp(1.4 / z1, 0.5, 2.2);
+            if (warp > 0) z0 = z1 + 0.05 + warp * 2.4;   // at lightspeed every star is a streak from the vanishing point
+            const a = (0.2 + 0.6 * b) * starA * clamp(1.6 / z1 + 0.1 + warp * 0.3, 0, 1); if (a < 0.02) continue;
+            g.strokeStyle = `rgba(${b > 0.75 || warp > 0.6 && b > 0.4 ? '255,214,235' : b > 0.45 ? '200,210,255' : '255,255,255'},${a})`; g.lineWidth = clamp(1.4 / z1, 0.5, 2.2) * (1 + warp);
             g.beginPath(); g.moveTo(cx + x * M * 0.5 / z0, cy + y * M * 0.5 / z0); g.lineTo(cx + x * M * 0.5 / z1 + 0.01, cy + y * M * 0.5 / z1); g.stroke();
         }
 
@@ -256,7 +266,7 @@
             sh.addColorStop(0, 'rgba(255,240,220,.10)'); sh.addColorStop(0.45, 'rgba(3,6,18,.15)'); sh.addColorStop(0.8, 'rgba(3,6,18,.7)'); sh.addColorStop(1, 'rgba(3,6,18,.9)');
             g.fillStyle = sh; g.fillRect(cx - R, cy - R, R * 2, R * 2);
             // Texas, outlined, so the starting point is unmistakable
-            if (texas && R > M * 0.6) { g.strokeStyle = `rgba(247,168,196,${0.85 * clamp((R / M - 0.6) / 1.2, 0, 1)})`; g.lineWidth = 1.4; if (ringPath(texas, cx, cy, R, spin, false)) { g.closePath(); g.stroke(); } }
+            if (texas && R > M * 0.6) { g.strokeStyle = `rgba(232,186,214,${0.85 * clamp((R / M - 0.6) / 1.2, 0, 1)})`; g.lineWidth = 1.4; if (ringPath(texas, cx, cy, R, spin, false)) { g.closePath(); g.stroke(); } }
             g.restore(); g.globalAlpha = 1; g.globalCompositeOperation = 'lighter';
             // city lights
             const ds = clamp(R * 0.0014, 0.7, 2.4);
@@ -267,33 +277,35 @@
             // labels while we're close enough to read them
             const la = clamp((R / M - 1.2) / 1.5, 0, 1) * fadeE;
             if (la > 0) { g.globalCompositeOperation = 'source-over'; g.textAlign = 'left';
-                const [tx, ty, tz] = onGlobe(31.0, -100.0, spin); if (tz > 0) { g.font = '600 13px "JetBrains Mono", monospace'; g.fillStyle = `rgba(247,168,196,${0.75 * la})`; g.fillText('T E X A S', cx + tx * R - 40, cy - ty * R); }
+                const [tx, ty, tz] = onGlobe(31.0, -100.0, spin); if (tz > 0) { g.font = '600 13px "JetBrains Mono", monospace'; g.fillStyle = `rgba(232,186,214,${0.75 * la})`; g.fillText('T E X A S', cx + tx * R - 40, cy - ty * R); }
                 g.font = '12px "JetBrains Mono", monospace'; g.fillStyle = `rgba(255,236,245,${la})`; if (dz > 0) g.fillText(homeLabel, px + 12, py - 8);
                 g.globalCompositeOperation = 'lighter'; }
         }
         // me, pressing play: a pink pulse on Dallas that stays the brightest point all the way out
         if (t < 8.4 && dz > 0) { const pr = clamp(R / M * 0.5, 1.8, 5), pa = clamp((8.4 - t) / 0.8, 0, 1), ph = (t * 0.8) % 1, qx = R > 2 ? px : cx, qy = R > 2 ? py : cy;
-            g.globalAlpha = pa; g.drawImage(sprite([247, 168, 196]), qx - pr * 7, qy - pr * 7, pr * 14, pr * 14); g.globalAlpha = 1;
+            g.globalAlpha = pa; g.drawImage(sprite([232, 186, 214]), qx - pr * 7, qy - pr * 7, pr * 14, pr * 14); g.globalAlpha = 1;
             g.fillStyle = `rgba(255,235,245,${pa})`; g.beginPath(); g.arc(qx, qy, pr, 0, 7); g.fill();
-            if (t < 4) { g.strokeStyle = `rgba(247,168,196,${0.6 * (1 - ph) * pa})`; g.lineWidth = 1.2; g.beginPath(); g.arc(qx, qy, pr + ph * 60, 0, 7); g.stroke(); } }
+            if (t < 4) { g.strokeStyle = `rgba(232,186,214,${0.6 * (1 - ph) * pa})`; g.lineWidth = 1.2; g.beginPath(); g.arc(qx, qy, pr + ph * 60, 0, 7); g.stroke(); } }
 
         // the Milky Way grows around that point (we live out on an arm), then we leave it behind
         if (t > 4.4 && t < 9.4) {
-            const grow = Math.exp(-(6.6 - Math.min(t, 6.6)) * 2.6), Rg = M * 0.5 * grow * (t > 6.6 ? Math.exp(-(t - 6.6) * 0.9) : 1), rot = 0.6 + t * 0.04, tilt = 0.5;
+            const grow = Math.exp(-(6.6 - Math.min(t, 6.6)) * 2.6), Rg = M * 0.5 * grow * (t > 6.6 ? Math.exp(-(t - 6.6) * 2.6) : 1), rot = 0.6 + t * 0.04 + Math.pow(Math.max(0, t - 6.6), 2) * 0.5, tilt = 0.5;
             const ex = (EARTH_IN_MW[0] * Math.cos(rot) - EARTH_IN_MW[1] * Math.sin(rot)) * Rg, ey = (EARTH_IN_MW[0] * Math.sin(rot) + EARTH_IN_MW[1] * Math.cos(rot)) * Rg * tilt;
-            const drift = smooth((t - 6.6) / 2.4), gx = cx - ex * (1 - drift) - drift * W * 0.42, gy = cy - ey * (1 - drift) + drift * H * 0.18;
-            drawSpiral(milky, gx, gy, Rg, rot, tilt, clamp((t - 4.4) / 0.6, 0, 1) * clamp((9.4 - t) / 1, 0, 1));
+            const drift = smooth((t - 6.6) / 1.2), gx = cx - ex * (1 - drift) - drift * W * 0.42, gy = cy - ey * (1 - drift) + drift * H * 0.18;
+            drawSpiral(milky, gx, gy, Rg, rot, tilt, clamp((t - 4.4) / 0.6, 0, 1) * clamp((8.8 - t) / 0.6, 0, 1));
             if (t > 5.4 && t < 7.4) { g.globalCompositeOperation = 'source-over'; g.font = '11px "JetBrains Mono", monospace'; g.textAlign = 'left'; g.fillStyle = `rgba(207,198,218,${clamp((t - 5.4) / 0.4, 0, 1) * clamp((7.4 - t) / 0.4, 0, 1)})`;
                 g.fillText('← YOU ARE HERE · ORION ARM', gx + ex + 10, gy + ey + 4); g.globalCompositeOperation = 'lighter'; }
         }
-        // in the pitch black, one pink spark: it beats twice like a heart, then blooms into the big bang
-        if (t > 9.8) {
-            const k2 = clamp((t - 9.8) / 2.2, 0, 1), beat = Math.max(0, Math.sin(Math.min(k2, 0.72) / 0.72 * Math.PI * 2 - Math.PI / 2)) ** 6;
-            const bloom = smooth((k2 - 0.72) / 0.28), r = 1.5 + 4 * smooth(k2 / 0.3) + 6 * beat + bloom * Math.max(W, H);
+        // where the streaks converge, one pink spark: it beats once like a heart, then blows out into the big bang
+        if (t > 10) {
+            const k2 = clamp((t - 10) / 2, 0, 1), beat = k2 < 0.5 ? Math.sin(k2 / 0.5 * Math.PI) ** 4 : 0;
+            const bloom = smooth((k2 - 0.5) / 0.5), r = 2 + 5 * smooth(k2 / 0.2) + 10 * beat + bloom * Math.max(W, H) * 0.6;
             const sg = g.createRadialGradient(cx, cy, 0, cx, cy, r * 6);
-            sg.addColorStop(0, `rgba(255,255,255,${0.9 + 0.1 * beat})`); sg.addColorStop(0.08, `rgba(255,200,230,${0.7 * (0.5 + beat) + bloom * 0.3})`); sg.addColorStop(1, 'rgba(170,140,255,0)');
+            sg.addColorStop(0, 'rgba(255,255,255,1)'); sg.addColorStop(0.08, `rgba(255,200,230,${0.6 + 0.4 * beat + bloom * 0.4})`); sg.addColorStop(1, 'rgba(170,140,255,0)');
             g.fillStyle = sg; g.fillRect(cx - r * 6, cy - r * 6, r * 12, r * 12);
-            if (beat > 0.05) { g.strokeStyle = `rgba(247,168,196,${0.5 * beat})`; g.lineWidth = 1.5; g.beginPath(); g.arc(cx, cy, r * 3 + (1 - beat) * 40, 0, 7); g.stroke(); }
+            if (beat > 0.05) { g.strokeStyle = `rgba(232,186,214,${0.7 * beat})`; g.lineWidth = 2; g.beginPath(); g.arc(cx, cy, r * 3 + (1 - beat) * 60, 0, 7); g.stroke(); }
+            if (bloom > 0) { g.strokeStyle = `rgba(255,225,240,${0.8 * (1 - bloom)})`; g.lineWidth = 2 + 10 * (1 - bloom); g.beginPath(); g.arc(cx, cy, bloom * Math.max(W, H) * 0.75, 0, 7); g.stroke();
+                g.fillStyle = `rgba(255,240,248,${0.85 * smooth((bloom - 0.55) / 0.45)})`; g.fillRect(0, 0, W, H); }   // whiteout, and the new galaxy is born out of it
         }
         g.globalCompositeOperation = 'source-over';
     }
@@ -319,7 +331,7 @@
         frontier += (grown() - frontier) * 0.08;
         const ik = clamp((time - intro.start) / intro.ms, 0, 1), ie = 1 - (1 - ik) ** 3, sw = (1 - ie) * 2.6;
         bangE = 0.015 + 0.985 * ie; bC = Math.cos(sw); bS = Math.sin(sw);
-        if (ik < 1 && !intro.touched) { cam.pitch = 0.1 + 0.85 * ie; view.z = fitZ * (1.8 - 0.8 * ie); }
+        if (ik < 1 && !intro.touched) { cam.pitch = 0.1 + 0.85 * ie; view.z = fitZ * (2.6 - 1.6 * ie); }
         if (fly) { const k = Math.min(1, (time - fly.start) / fly.ms), e = k < .5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2, lz = Math.log(fly.from.z) + (Math.log(fly.to.z) - Math.log(fly.from.z)) * e;
             view.z = Math.exp(lz); view.x = fly.from.x + (fly.to.x - fly.from.x) * e; view.y = fly.from.y + (fly.to.y - fly.from.y) * e; if (k >= 1) fly = null; }
         // the galaxy turns slowly on its own while nobody is touching it
@@ -328,7 +340,7 @@
         const yaw = cam.yaw + cam.ty, pitch = clamp(cam.pitch + cam.tp, 0, 1.45);
         cY = Math.cos(yaw); sY = Math.sin(yaw); cP = Math.cos(pitch); sP = Math.sin(pitch);
 
-        g.setTransform(dpr, 0, 0, dpr, 0, 0); g.globalCompositeOperation = 'source-over'; g.fillStyle = '#07060E'; g.fillRect(0, 0, W, H);
+        g.setTransform(dpr, 0, 0, dpr, 0, 0); g.globalCompositeOperation = 'source-over'; g.fillStyle = hazeBg(); g.fillRect(0, 0, W, H);
         // dust in three depths drifts as the galaxy turns, so the sky has parallax
         for (const [x, y, r, d] of dust) {
             const X = ((x * W - yaw * W * 0.3 * d - view.x * view.z * d * 0.1) % W + W) % W, Y = ((y * H - pitch * H * 0.25 * d - view.y * view.z * d * 0.1) % H + H) % H;
@@ -350,20 +362,21 @@
         for (const p of gas) { const rg = reach(p[6]); if (!rg) continue; const [x, y, f] = project(p[0], p[1], p[2]); if (x < 0 || y < 0 || x > W || y > H) continue;
             const r = Math.max(0.6, p[4] * view.z * f * 0.6); g.fillStyle = `rgba(${p[3]},${gasA * p[5] * rg * clamp(0.3 + 0.55 * f, 0.3, 1)})`; g.fillRect(x - r / 2, y - r / 2, r, r); }
         // the growing edge: a faint luminous rim where new artists are arriving
-        if (frontier < 2500 && pre.done) { g.strokeStyle = 'rgba(247,168,196,.07)'; g.lineWidth = 2; g.beginPath(); for (let k = 0; k <= 96; k++) { const a = k / 96 * 6.2832, [x, y] = project(Math.cos(a) * frontier, Math.sin(a) * frontier, 0); k ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
+        if (frontier < 2500 && pre.done) { g.strokeStyle = 'rgba(232,186,214,.07)'; g.lineWidth = 2; g.beginPath(); for (let k = 0; k <= 96; k++) { const a = k / 96 * 6.2832, [x, y] = project(Math.cos(a) * frontier, Math.sin(a) * frontier, 0); k ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
         // the first light: a white-hot flash and a shockwave
-        const kf = clamp((time - intro.start) / 2600, 0, 1);
+        const kf = clamp((time - intro.start) / 2000, 0, 1);
         if (kf < 1) { const [cx, cy] = project(0, 0, 0), e = 1 - (1 - kf) ** 2, R = 30 + Math.max(W, H) * 0.45 * e, fl = g.createRadialGradient(cx, cy, 0, cx, cy, R);
-            fl.addColorStop(0, `rgba(255,255,255,${1 - kf})`); fl.addColorStop(0.15, `rgba(255,214,235,${0.8 * (1 - kf)})`); fl.addColorStop(0.5, `rgba(170,140,255,${0.3 * (1 - kf)})`); fl.addColorStop(1, 'rgba(126,178,255,0)');
+            fl.addColorStop(0, `rgba(255,255,255,${1 - kf})`); fl.addColorStop(0.15, `rgba(255,214,235,${0.8 * (1 - kf)})`); fl.addColorStop(0.5, `rgba(170,140,255,${0.3 * (1 - kf)})`); fl.addColorStop(1, 'rgba(150,176,246,0)');
             g.fillStyle = fl; g.fillRect(cx - R, cy - R, R * 2, R * 2);
+            if (pre.done && !reduced) { g.fillStyle = `rgba(255,240,248,${0.85 * (1 - kf) ** 3})`; g.fillRect(0, 0, W, H); }   // the prelude's whiteout clears off the new galaxy
             for (const [lag, a] of [[0, 0.6], [0.18, 0.3]]) { const kk = clamp(kf - lag, 0, 1); if (!kk) continue; g.strokeStyle = `rgba(255,220,240,${a * (1 - kk)})`; g.lineWidth = 1 + 5 * (1 - kk);
                 g.beginPath(); g.ellipse(cx, cy, kk * Math.max(W, H), kk * Math.max(W, H) * Math.max(0.3, cP), 0, 0, 7); g.stroke(); } }
         // my #1 artist glows like a nebula, flattened onto the disk
         const A0 = artists[0], [nx, ny, nf] = project(A0.x, A0.y, A0.z), NR = 260 * view.z * nf, k0 = Math.min(1, (now - t0) / ((t1 - t0) * 0.4));
         g.save(); g.translate(nx, ny); g.scale(1, Math.max(0.3, cP)); const neb = g.createRadialGradient(0, 0, 0, 0, 0, NR);
-        neb.addColorStop(0, `rgba(247,168,196,${0.14 * k0})`); neb.addColorStop(1, 'rgba(247,168,196,0)'); g.fillStyle = neb; g.fillRect(-NR, -NR, NR * 2, NR * 2); g.restore();
+        neb.addColorStop(0, `rgba(232,186,214,${0.14 * k0})`); neb.addColorStop(1, 'rgba(232,186,214,0)'); g.fillStyle = neb; g.fillRect(-NR, -NR, NR * 2, NR * 2); g.restore();
         // the cursor is a soft light
-        if (mouse.on) { const cg = g.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 170); cg.addColorStop(0, 'rgba(247,168,196,.07)'); cg.addColorStop(1, 'rgba(247,168,196,0)'); g.fillStyle = cg; g.fillRect(mouse.x - 170, mouse.y - 170, 340, 340); }
+        if (mouse.on) { const cg = g.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 170); cg.addColorStop(0, 'rgba(232,186,214,.07)'); cg.addColorStop(1, 'rgba(232,186,214,0)'); g.fillStyle = cg; g.fillRect(mouse.x - 170, mouse.y - 170, 340, 340); }
 
         // births: every song that appeared since the last frame ignites; the biggest ones go supernova
         if (now > prevNow && now - prevNow < 120 * DAY) {
@@ -396,7 +409,7 @@
         g.lineWidth = 0.6; g.strokeStyle = `rgba(200,190,255,${dimOthers ? 0.025 : 0.06})`; g.beginPath();
         for (const A of artists) { if (A.songs.length < 3 || A === nearArtist || A === focusArtist) continue; for (const [a, b] of A.edges) if (lit(a) && lit(b)) { g.moveTo(a.sx, a.sy); g.lineTo(b.sx, b.sy); } }
         g.stroke();
-        if (monthOwner && bang && monthOwner.edges.length) { g.lineWidth = 1; g.strokeStyle = 'rgba(247,168,196,.32)'; g.beginPath();
+        if (monthOwner && bang && monthOwner.edges.length) { g.lineWidth = 1; g.strokeStyle = 'rgba(232,186,214,.32)'; g.beginPath();
             for (const [a, b] of monthOwner.edges) if (lit(a) && lit(b)) { g.moveTo(a.sx, a.sy); g.lineTo(b.sx, b.sy); } g.stroke(); }
         for (const A of new Set([nearArtist, focusArtist])) { if (!A) continue; g.lineWidth = 0.9; g.strokeStyle = 'rgba(220,210,255,.42)'; g.beginPath();
             for (const [a, b] of A.edges) if (lit(a) && lit(b)) { g.moveTo(a.sx, a.sy); g.lineTo(b.sx, b.sy); } g.stroke(); }
@@ -447,9 +460,9 @@
             if (B.sparks) { g.fillStyle = `rgba(255,245,250,${1 - k})`; for (const [a, v] of B.sparks) { const d = e * 70 * v; g.fillRect(s.sx + Math.cos(a) * d - 1, s.sy + Math.sin(a) * d * Math.max(0.4, cP) - 1, 2, 2); } }
         }
         // a playing song sends out rings
-        if (playing && lit(playing)) for (let k = 0; k < 3; k++) { const ph = ((time / 1800) + k / 3) % 1; g.strokeStyle = `rgba(247,168,196,${0.5 * (1 - ph)})`; g.lineWidth = 1; g.beginPath(); g.arc(playing.sx, playing.sy, 6 + ph * 40, 0, 7); g.stroke(); }
+        if (playing && lit(playing)) for (let k = 0; k < 3; k++) { const ph = ((time / 1800) + k / 3) % 1; g.strokeStyle = `rgba(232,186,214,${0.5 * (1 - ph)})`; g.lineWidth = 1; g.beginPath(); g.arc(playing.sx, playing.sy, 6 + ph * 40, 0, 7); g.stroke(); }
         if (selected && lit(selected)) { g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 1; g.beginPath(); g.arc(selected.sx, selected.sy, selected.r * view.z * selected.f * 2.2 + 7, 0, 7); g.stroke(); }
-        for (const R of ripples) { const age = (time - R.t) / 1600; g.strokeStyle = `rgba(247,168,196,${0.25 * (1 - age)})`; g.lineWidth = 1.5; g.beginPath(); g.arc(R.x, R.y, age * 900, 0, 7); g.stroke(); }
+        for (const R of ripples) { const age = (time - R.t) / 1600; g.strokeStyle = `rgba(232,186,214,${0.25 * (1 - age)})`; g.lineWidth = 1.5; g.beginPath(); g.arc(R.x, R.y, age * 900, 0, 7); g.stroke(); }
         // the cursor's comet trail
         for (let i = trail.length - 1; i >= 0; i--) { const p = trail[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.022; if (p.life <= 0) { trail.splice(i, 1); continue; }
             g.fillStyle = `rgba(${p.c},${p.life * 0.8})`; g.beginPath(); g.arc(p.x, p.y, p.life * 2.2, 0, 7); g.fill(); }
@@ -471,7 +484,7 @@
         }
 
         $('#lit').textContent = fmt(count);
-        $('#date').textContent = new Date(now).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        $('#date').textContent = new Date(now).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
         frames++; if (time - fpsAt > 1000) { $('#fps').textContent = Math.round(frames * 1000 / (time - fpsAt)); frames = 0; fpsAt = time; }
         requestAnimationFrame(frame);
     }
@@ -489,7 +502,7 @@
         for (const m of D.months) {
             const a = kOf(day(m.month + '-01')), b = kOf(day(m.month + '-01') + 30 * DAY), x = Math.max(0, a) * w, bw = Math.max(1, (Math.min(1, b) - Math.max(0, a)) * w - 2), bh = Math.max(1.5, m.listens / max * h);
             const past = day(m.month + '-01') <= now;
-            mg.fillStyle = m.owner === 0 ? `rgba(247,168,196,${past ? 0.85 : 0.25})` : `rgba(150,70,110,${past ? 0.95 : 0.35})`; mg.fillRect(x, h - bh, bw, bh);
+            mg.fillStyle = m.owner === 0 ? `rgba(232,186,214,${past ? 0.85 : 0.25})` : `rgba(150,118,184,${past ? 0.95 : 0.35})`; mg.fillRect(x, h - bh, bw, bh);
         }
     }
     const ticks = $('#ticks');
@@ -511,7 +524,7 @@
         if (m !== lastMonthDrawn) {
             lastMonthDrawn = m; drawMonths();
             const M = monthBy.get(m); monthOwner = M ? artists[M.owner] : null;
-            ticker.innerHTML = M ? `<b>${esc(artists[M.owner].name)}</b> owned it · ${fmt(M.listens)} listens · ${fmt(M.new_songs)} new stars` : '';
+            ticker.innerHTML = M ? `${LINES[m] ? `<span class="line">${esc(LINES[m])}</span>` : ''}<span class="nums"><b>${esc(artists[M.owner].name)}</b> #1 · ${fmt(M.listens)} listens · ${fmt(M.new_songs)} new stars</span>` : '';
         }
     }
     let bang = null;
@@ -579,7 +592,7 @@
     function lifeline(s) {   // a sparkline of this song's life inside the four years: first listen, peak month, last listen
         const x = t => (kOf(t) * 100).toFixed(2), p = day(s.peak + '-15');
         return `<svg viewBox="0 0 100 26" preserveAspectRatio="none"><line x1="0" x2="100" y1="18" y2="18" stroke="#ffffff22"/><line x1="${x(s.born)}" x2="${x(s.gone)}" y1="18" y2="18" stroke="rgb(${s.c})" stroke-width="2.5"/>
-            <circle cx="${x(p)}" cy="18" r="3.2" fill="#F7A8C4"/><text x="${x(p)}" y="9" fill="#CFC6DA" font-size="6.5" text-anchor="middle" font-family="JetBrains Mono">peak</text></svg>`;
+            <circle cx="${x(p)}" cy="18" r="3.2" fill="#E8BAD6"/><text x="${x(p)}" y="9" fill="#CFC6DA" font-size="6.5" text-anchor="middle" font-family="JetBrains Mono">peak</text></svg>`;
     }
     function openSong(s, { fly = true, listen = false, push } = {}) {
         if (connectFrom && connectFrom !== s) { const a = connectFrom; connectFrom = null; hint(''); return openPair(a, s, { push }); }
@@ -722,7 +735,7 @@
         hover = drag && drag.moved > 5 ? null : pick(e.clientX, e.clientY);
         nearArtist = hover ? hover.A : nearestArtist(e.clientX, e.clientY);
         cv.classList.toggle('on-star', !!hover); showTip(hover, e.clientX, e.clientY);
-        const c = hover ? hover.c : [247, 168, 196];
+        const c = hover ? hover.c : [232, 186, 214];
         for (let k = 0; k < 2; k++) trail.push({ x: e.clientX, y: e.clientY, vx: (Math.random() - .5) * .6, vy: (Math.random() - .5) * .6 + .15, life: 0.6 + Math.random() * 0.4, c });
         if (trail.length > 160) trail.splice(0, trail.length - 160);
     });
@@ -800,7 +813,7 @@
         tour.classList.add('on'); $('#hero').classList.add('quiet');
         const ms = trackMs(c); markTrack(i);
         const bar = $('#tourBar'); bar.style.transition = 'none'; bar.style.width = '0'; requestAnimationFrame(() => { bar.style.transition = `width ${ms}ms linear`; bar.style.width = '100%'; });
-        tourTimer = setTimeout(() => step >= 0 && (step < TOUR.length - 1 ? startTour(step + 1) : endTour()), ms);
+        tourTimer = setTimeout(() => step >= 0 && (step < TOUR.length - 1 ? nextTrack(step + 1) : endTour()), ms);
     }
     // pausing holds the track where it is, so you can wander the sky; play picks the track back up from its start
     function pauseTour() {
@@ -810,7 +823,7 @@
     }
     function pauseOrEnd() { if (step >= 0) pauseTour(); else endTour(); }
     function endTour() {
-        closeAlbum(); if (step < 0) return; step = -1; paused = false; clearTimeout(tourTimer); tour.classList.remove('on'); ticks.querySelectorAll('button').forEach(b => b.classList.remove('on')); audio.pause();
+        closeFlip(); closeAlbum(); if (step < 0) return; step = -1; paused = false; clearTimeout(tourTimer); tour.classList.remove('on'); ticks.querySelectorAll('button').forEach(b => b.classList.remove('on')); audio.pause();
         tourSet = null; nightTarget = 0; pair = null; selected = null; focusArtist = null; if (moodBefore) { setColor(moodBefore); moodBefore = null; }
         $('#tourVideo').innerHTML = ''; $('#tourVideo').hidden = true;
         if (outro) { outro = null; setHome(DALLAS, 'DALLAS'); document.body.classList.remove('outro'); }
@@ -866,7 +879,36 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
         $('#albumPlay').textContent = i >= 0 ? '❚❚' : '▶';
     }
     $('#tourBtn').onclick = openAlbum;
-    $('#tourNext').onclick = () => step < TOUR.length - 1 ? startTour(step + 1) : endTour();
+    $('#tourNext').onclick = () => step < TOUR.length - 1 ? nextTrack(step + 1) : endTour();
+    // ---------- the flip: Side A ends, and you lift the needle, turn the record over and drop it on Side B ----------
+    const flip = $('#flip'), arm = $('#flipArm'), disc = $('#flipDisc'), flipLabel = $('#flipLabel'), flipSay = $('#flipSay');
+    const ON = 0, OFF = -30;   // the arm's angle on the record, and lifted clear of it
+    let flipTo = null, armAt = ON, flipped = false, armDrag = null;
+    function nextTrack(i) { if (TOUR[i - 1] && TOUR[i - 1].side === 'Side A' && TOUR[i].side === 'Side B') openFlip(i); else startTour(i); }
+    function setArm(a, ease) { armAt = clamp(a, OFF - 6, ON); arm.style.transition = ease ? 'transform .6s cubic-bezier(.3,.7,.2,1)' : 'none'; arm.style.transform = `rotate(${armAt}deg)`; }
+    function openFlip(i) {
+        pauseTour(); flipTo = i; flipped = false; flipLabel.textContent = 'A'; disc.classList.remove('turn', 'spin'); disc.classList.add('spin');
+        setArm(ON); flipSay.textContent = 'Side A is over. Lift the needle.'; flip.classList.add('on');
+    }
+    function closeFlip() { flip.classList.remove('on'); flipTo = null; }
+    function lifted() {
+        if (flipped) return; flipped = true; disc.classList.remove('spin'); flipSay.textContent = 'Turning it over…';
+        disc.classList.add('turn'); setTimeout(() => { flipLabel.textContent = 'B'; }, 450);
+        setTimeout(() => { flipSay.textContent = 'Now drop the needle on Side B.'; }, 950);
+    }
+    function dropped() { const i = flipTo; disc.classList.add('spin'); flipSay.textContent = 'Side B.'; setTimeout(() => { closeFlip(); startTour(i); }, 700); }
+    const armAngle = e => { const b = flip.querySelector('svg').getBoundingClientRect(), k = b.width / 260, px = b.left + 232 * k, py = b.top + 28 * k;
+        return Math.atan2(e.clientY - py, e.clientX - px) * 180 / Math.PI; };
+    arm.addEventListener('pointerdown', e => { e.preventDefault(); arm.setPointerCapture(e.pointerId); armDrag = { from: armAngle(e), at: armAt, moved: 0 }; });
+    arm.addEventListener('pointermove', e => { if (!armDrag) return; const d = armAngle(e) - armDrag.from; armDrag.moved = Math.max(armDrag.moved, Math.abs(d));
+        setArm(armDrag.at + d); if (armAt < OFF + 6) lifted(); });
+    arm.addEventListener('pointerup', () => {
+        if (!armDrag) return; const tap = armDrag.moved < 3; armDrag = null;
+        if (tap) { if (!flipped) { setArm(OFF, true); lifted(); } else if (flipLabel.textContent === 'B') { setArm(ON, true); dropped(); } return; }
+        if (!flipped) setArm(armAt < OFF + 6 ? OFF : ON, true);
+        else if (flipLabel.textContent === 'B' && armAt > ON - 8) { setArm(ON, true); dropped(); } else setArm(OFF, true);
+    });
+    $('#flipSkip').onclick = () => { const i = flipTo; closeFlip(); startTour(i); };
     $('#tourPrev').onclick = () => startTour(Math.max(0, step - 1));
     $('#tourEnd').onclick = endTour;
     $('#tourPlay').onclick = () => paused ? startTour(step) : pauseTour();
@@ -945,8 +987,8 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
     const prelude = $('#prelude');
     const NAME = 'Heavy Rotation';
     const lines = [[100, 1900, 'Dallas · May 21, 2022', 'I press play.'],
-        [2100, 3400, `${fmt(D.totals.listens)} listens later…`],
-        [3600, 6000, NAME, 'my listening galaxy']];
+        [2100, 3200, `${fmt(D.totals.listens)} listens later…`],
+        [3400, 5800, NAME, 'my listening galaxy']];
     function say(big, small) { prelude.innerHTML = `<div class="line"><b>${esc(big)}</b>${small ? `<span>${esc(small)}</span>` : ''}</div>`; const ln = prelude.querySelector('.line'); if (freeze != null) ln.classList.add('on'); else requestAnimationFrame(() => requestAnimationFrame(() => ln.isConnected && !ln.dataset.gone && ln.classList.add('on'))); }
     function hush() { const l = prelude.querySelector('.line'); if (l) { l.classList.remove('on'); l.dataset.gone = 1; } }   // gone: a fade-in still waiting on a frame mustn't bring it back
     if (!reduced) {
@@ -963,7 +1005,7 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
     function beginGalaxy(time) {
         pre.done = true; intro.start = time;
         document.body.classList.add('replay'); document.body.classList.remove('intro');
-        setTimeout(() => { if (!bang && step < 0) replay(); }, reduced ? 0 : 1200);
+        setTimeout(() => { if (!bang && step < 0) replay(); }, reduced ? 0 : 500);
     }
     addEventListener('keydown', e => { if (!pre.done && (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); skipIntro(); } });
     cv.addEventListener('click', () => { if (!pre.done) skipIntro(); });
