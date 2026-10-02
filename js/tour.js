@@ -21,29 +21,29 @@ window.buildTour = (D, songs, artists) => {
     const cluster = [wolves, ...wolves.links.slice(0, 3).map(m => m.s)];
 
     const album = [
-        { name: 'the citizen', date: top.first, q: 'Who runs this galaxy?', title: top.name,
-          text: `${F.top.share}% of everything Suhani has ever played is ${top.name}. She owned ${F.top.owned} of ${F.top.months} months, and she was #1 in every era: high school, the summer before college, Austin, and 2026.`,
-          verdict: 'Not a fan. A citizen.', focus: { artist: F.top.artist }, play: top.songs[0].i },
+        { name: 'positions', date: top.first, q: 'Who runs this galaxy?', title: top.name,
+          text: `${F.top.share}% of everything Suhani has ever played is ${top.name}. She owned ${F.top.owned} of ${F.top.months} months and was #1 in every era: high school, the summer before college, Austin, and 2026. ${F.loyal.count} songs survived every single year, led by ${title(F.loyal.song)} (${fmt(S(F.loyal.song).n)} plays). In 2024, the year everything changed, ${F.discovery[2024].comfort}% of her listening was songs she already knew.`,
+          verdict: 'Not a fan. A citizen. Suhani is very loyal.', focus: { artist: F.top.artist }, play: top.songs[0].i },
 
-        { name: "the coup (Taylor's Version)", date: F.rival.first + '-01', q: 'Has anyone ever taken the throne?', title: `${month(F.rival.first)}: the coup`,
-          text: `After ${F.rival.reign_before} straight months of ${top.name}, ${rival.name} took the crown: ${F.rival.months.filter(m => m < '2024').map(m => month(m).split(' ')[0]).join(', ')} 2023. Suhani was writing her college essays, a new era that needed new music to be creative, so she went through Taylor's catalog album by album: ${taylor2023.map(d => `${d.album} (${month(d.date).split(' ')[0]}${d.date === '2023-03-17' ? ', the night the Eras Tour opened' : d.date === '2023-10-27' ? ', release day' : ''})`).join(', ')}. By the new year she was back with ${top.name}.`,
+        { name: "the coup (Taylor's Version)", date: F.rival.first + '-01', q: 'Has anyone ever taken the throne?', title: 'A Cruel Summer',
+          text: `After ${F.rival.reign_before} straight months of ${top.name}, Summer 2023 was a Cruel Summer: college essays. ...Ready For It? ${rival.name} was. Suhani branched out to her whole catalog, album by album (${taylor2023.map(d => `${d.album}${d.date === '2023-03-17' ? ' the night the Eras Tour opened' : d.date === '2023-10-27' ? ' on release day' : ''}`).join(', ')}), but two albums carried the essays: ${F.taylor_favs.map(([a, n]) => `${a} (${fmt(n)} plays)`).join(' and ')}. Lover for the heart, reputation for the nerve. ${rival.name} took ${F.rival.months.filter(m => m < '2024').map(m => month(m).split(' ')[0]).join(', ')} 2023, and by the new year it was Look What You Made Me Do, Ariana: she was back.`,
           verdict: `Everyone else got a month or two: ${F.rival.others.map(([a, c, ms]) => `${A(a).name} (${ms.map(m => month(m).replace(' 20', " '")).join(', ')}${NOTES[A(a).name] ? ', ' + NOTES[A(a).name] : ''})`).join('; ')}. Only ${rival.name} ever made ${top.name} nervous.`,
-          focus: { artists: [F.top.artist, F.rival.artist] }, play: F.rival.song },
+          focus: { artists: [F.top.artist, F.rival.artist] }, play: F.taylor_song },
 
         { name: '119', date: F.day.date, q: `What happened on ${date(F.day.date)}?`, title: title(F.day.song), counter: F.day.count,
           text: `${F.day.count} times, from ${clock(F.day.from)} to ${clock(F.day.to)}. ${F.day.hours} hours. ${F.day.else ? '' : 'Nothing else played all day. '}${F.day.autoplayed} of those plays started because the one before it ended: she didn't even reach for the replay button, she just let it loop. Januarys are like that for her: ${month(M.in_love[0][0])} was ${M.in_love[0][1]}% love songs, the most of any month. Not love. A new year, and a girl manifesting it.`,
           verdict: "Someone was trying to manifest love into her 2023. (P.S. Try harder next time. It did not work.) She's still manifesting it.", focus: { song: F.day.song }, play: F.day.song },
 
-        { name: 'homework hour', date: '2023-03-01', q: 'When is she most likely to be listening?', title: `${hour(busiest)}`,
-          text: `Her listening peaks at ${hour(busiest)}. On high-school weekdays the music came on after school and stayed on: ${F.weekday_peak.high_school.three_to_eight}% of it between 3 and 8 PM, homework hours (${F.weekday_peak.austin.three_to_eight}% in college). Before 9 AM? Just ${F.before_9}% of everything, and those mornings are her saddest: ${F.morning_heartbreak.morning}% heartbreak songs, against ${F.morning_heartbreak.rest}% the rest of the day.`,
-          verdict: 'Suhani is not a morning person.', focus: { all: true } },
+        { name: 'problem (set)', date: '2023-03-01', q: 'When is she most likely to be listening?', title: `${hour(busiest)} on a school night`,
+          text: `Her listening peaks at ${hour(busiest)}. On high-school weekdays the music came on after school and stayed on through homework: ${F.weekday_peak.high_school.three_to_eight}% of it between 3 and 8 PM (${F.weekday_peak.austin.three_to_eight}% in college). The homework soundtrack: ${F.homework.map(i => title(i)).join(', ')}. Before 9 AM? Just ${F.before_9}% of everything, and those mornings are her saddest: ${F.morning_heartbreak.morning}% heartbreak songs, against ${F.morning_heartbreak.rest}% the rest of the day.`,
+          verdict: 'Suhani is not a morning person.', focus: { songs: F.homework }, play: F.homework.find(i => title(i) === 'Problem') ?? F.homework[0] },
 
-        { name: '2 am', date: AN.first.date, q: 'Who is 2 AM Suhani?', title: 'A different person', night: true,
+        { name: 'with you', date: AN.first.date, q: 'Who is 2 AM Suhani?', title: 'A different person', night: true,
           text: `After midnight she's ${F.night[0][1]}× likelier to be playing ${A(F.night[0][0]).name}, ${F.night[1][1]}× ${A(F.night[1][0]).name} and ${F.night[2][1]}× ${A(F.night[2][0]).name}: upbeat songs by hardworking, self-made men that keep her awake. ${F.desi_by_hour.night}% of what she plays after midnight is South Asian, against ${F.desi_by_hour.day}% by day. Her late nights end on ${title(F.closers[0][0])} and ${title(F.closers[1][0])}: "Boy, bye. I'm going to build a better future without you, with someone who'll love me like AP Dhillon in the ${title(F.closers[1][0])} video."`,
           verdict: 'When everyone else is asleep, she goes home.', focus: { artists: F.night.map(n => n[0]) }, play: F.closers[1][0] },
 
-        { name: 'tuesdays', date: AN.latest.date, q: 'When does she actually sleep?', title: `${AN.count} all-nighters`, night: true, counter: AN.count,
-          text: `Most nights the music stops between ${hour(sleep[0])} and ${hour(sleep.at(-1))}. Except ${AN.count} times, when it played every hour from midnight to 6 AM. The first: ${date(AN.first.date)}, ${title(AN.first.song)} ${AN.first.times} times. ${AN.by_era.high_school} in high school, ${(AN.by_era.austin || 0) + (AN.by_era.y2026 || 0)} since Austin, the latest on ${date(AN.latest.date)} (${title(AN.latest.song)} on repeat, ${title(AN.latest.five_am)} at 5 AM). Her record: ${AN.top_month[1]} in ${month(AN.top_month[0])}. Most end on a ${AN.top_weekday[0]} morning.`,
+        { name: 'better off', date: AN.latest.date, q: 'When does she actually sleep?', title: `${AN.count} all-nighters`, night: true, counter: AN.count,
+          text: `Most nights the music stops between ${hour(sleep[0])} and ${hour(sleep.at(-1))}. Except ${AN.count} times, when it played every hour from midnight to 6 AM. The first: ${date(AN.first.date)}, ${title(AN.first.song)} ${AN.first.times} times. ${AN.by_era.high_school} in high school, ${(AN.by_era.austin || 0) + (AN.by_era.y2026 || 0)} since Austin, the latest on ${date(AN.latest.date)} (${title(AN.latest.song)} on repeat, ${title(AN.latest.five_am)} at 5 AM). Her record: ${AN.top_month[1]} in ${month(AN.top_month[0])}. Most end on a ${AN.top_weekday[0]} morning, and the song most often playing at 5 AM is ${title(F.night_song.five_am)} (${F.night_song.five_am_times} times).`,
           verdict: `Why ${AN.top_weekday[0]}s? Monday night is when the week's work peaks, with exams on Wednesdays and Thursdays.`, focus: { songs: AN.latest.songs }, play: AN.latest.song },
 
         { name: 'the essay marathon', date: F.longest_session.start, q: `What happened on ${date(F.longest_session.start)}?`, title: `${F.longest_session.hours} hours`,
@@ -54,16 +54,16 @@ window.buildTour = (D, songs, artists) => {
           text: `Twice the data goes quiet for hours at a time: flights. March 2024, ${march.flight_hours[1]} offline hours on the way back, with ${top.name}'s eternal sunshine dropping mid-trip. And December 2024, in the year she'd nearly forgotten her roots: ${december.desi}% of what she played in India was South Asian, against ${F.desi_overall}% normally.`,
           verdict: 'Two weeks home and it all came back.', focus: { songs: december.all }, play: december.songs[0] },
 
-        { name: 'suburban legends', date: F.eras.austin_first.at, q: 'What did she play the morning she left home?', title: title(F.eras.austin_first.song),
-          text: `${clock(F.eras.austin_first.at)}, ${date(F.eras.austin_first.at)}: her first song after moving out of her parents' house in Dallas and into Austin, a song about the suburbs she grew up in. The spring before, ${title(F.loyal.song)} had its biggest month ever: ${F.loyal.peak_times} plays in ${month(F.loyal.peak)}.`,
-          verdict: 'One last time, then goodbye, suburbs.', focus: { songs: [F.eras.austin_first.song, F.loyal.song] }, play: F.eras.austin_first.song },
+        { name: 'one last time', date: F.eras.austin_first.at, q: 'How do you say goodbye to home?', title: 'One last time',
+          text: `April 2024, her last spring in her parents' house in Dallas: ${title(F.loyal.song)} had its biggest month ever, ${F.loyal.peak_times} plays. Four months later, at ${clock(F.eras.austin_first.at)} on ${date(F.eras.austin_first.at)}, her first morning in Austin, she pressed play on ${title(F.eras.austin_first.song)}, a song about the suburbs you grow up in and the people you leave there.`,
+          verdict: 'One last time, then goodbye, suburbs.', focus: { songs: [F.eras.austin_first.song, F.loyal.song] }, pair: [F.loyal.song, F.eras.austin_first.song], play: F.loyal.song },
 
-        { name: 'blank canvas', date: '2024-10-01', q: 'How did college change her?', title: 'Later nights, louder songs',
-          text: `Away from Mom and Dad, trying to be a blank canvas without knowing who she was yet. Late-night listening jumped from ${E.high_school.late}% to ${E.austin.late}%, party and confident songs from ${E.high_school.upbeat}% to ${E.austin.upbeat}%, and ${F.eras.austin_new.map(([a]) => A(a).name).join(', ')} moved in. South Asian music fell to ${F.desi_by_year[2024]}% (${E.summer.desi}% the summer before she left), and she skipped more than ever: ${E.austin.skip}%.`,
-          verdict: 'New city, new sound, and for a while, a little less of herself.', focus: { songs: austinSongs }, play: A(F.eras.austin_new[0][0]).songs[0].i },
+        { name: 'taste', date: '2024-10-01', q: 'How did college change her?', title: 'Trying to fit in',
+          text: `Away from Mom and Dad, trying to be a blank canvas without knowing who she was yet. Late-night listening jumped from ${E.high_school.late}% to ${E.austin.late}%, and party and confident songs from ${E.high_school.upbeat}% to ${E.austin.upbeat}%: ${F.fall2024.party.slice(0, 3).map(i => title(i)).join(', ')}, the songs everyone was playing, while ${F.eras.austin_new.map(([a]) => A(a).name).join(', ')} moved in. She was trying hard to fit in. South Asian music fell to ${F.desi_by_year[2024]}%, and she skipped more than ever (${E.austin.skip}%). But her #1 new song that semester? ${title(F.fall2024.top_new)}, in Hindi.`,
+          verdict: 'New city, new sound, and for a while, a little less of herself. Not all of her, though.', focus: { songs: [...F.fall2024.party, F.fall2024.top_new] }, play: F.fall2024.party[0] },
 
         { name: 'october', date: F.heartbreak.month + '-15', q: 'Her loneliest, saddest month?', title: month(F.heartbreak.month), mood: true,
-          text: `October is her saddest month of the year: ${M.sad_calendar[1]}% sad songs on average, against a typical ${M.typical_sad}%. The days go from bright to dark and short, and something about it gets her. ${month(F.heartbreak.month)} was the worst: 1 in 4 songs a heartbreak song. ACL, Texas–OU in Dallas, Halloweekend: everyone seemed to have plans. She didn't.`,
+          text: `Across the past four years, October is her saddest month: ${M.sad_calendar[1]}% sad songs on average, against a typical ${M.typical_sad}%. The days go from bright to dark and short, and something about it gets her. ${month(F.heartbreak.month)} was the worst: 1 in 4 songs a heartbreak song. ACL, Texas–OU in Dallas, Halloweekend: everyone seemed to have plans. She didn't.`,
           verdict: 'College was lonely. Being away from home was lonely.', focus: { mood: 'heartbreak' } },
 
         { name: 'phone down', date: '2025-04-15', q: `Why are ${F.instrumentals.count} of her plays instrumentals?`, title: 'Study mode', counter: F.instrumentals.count,
@@ -99,9 +99,6 @@ window.buildTour = (D, songs, artists) => {
           text: `Of course she was. ${releaseNight.album} by ${top.name}: ${releaseNight.new_songs} brand-new songs heard for the first time that night, the first at ${clock(releaseNight.first_at)}.`,
           verdict: 'Day one. Minute one.', focus: { songs: songs.filter(s => s.A === top && s.first === releaseNight.date).map(s => s.i) }, play: releaseNight.song }] : []),
 
-        { name: 'ride or die', date: F.loyal.peak + '-15', q: 'What survived everything?', title: `${F.loyal.count} songs`, counter: F.loyal.count,
-          text: `${F.loyal.count} songs she played in every single year, led by ${title(F.loyal.song)} (${fmt(S(F.loyal.song).n)} times). ${fmt(F.discovery[2023].new_artists)} new artists in 2023, just ${fmt(F.discovery[2024].new_artists)} in 2024, when ${F.discovery[2024].comfort}% of her listening was songs she already knew.`,
-          verdict: 'Suhani is very loyal.', focus: { songs: F.loyal.songs }, play: F.loyal.song },
     ];
     return [...album.map((t, i) => ({ ...t, label: `Track ${i + 1}` })), ...vault.map((t, i) => ({ ...t, label: `Track ${album.length + i + 1} (From The Vault)` }))];
 };
