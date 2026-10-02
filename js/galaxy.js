@@ -492,7 +492,16 @@
         }
     }
     const ticks = $('#ticks');
-    TOUR.forEach((c, i) => { const b = document.createElement('button'); b.style.left = (Math.min(1, Math.max(0, kOf(day(c.date)))) * 100) + '%'; b.title = c.title; b.setAttribute('aria-label', `${c.title}, ${longDate(day(c.date))}`); b.onclick = () => startTour(i); ticks.appendChild(b); });
+    // the timeline's dots are the four-year story's moments (from the export), separate from the album tour
+    const storyLine = c => (c.song != null ? `${songs[c.song].title}, ${songs[c.song].A.name}. ` : '') + c.text;
+    function showMoment(c) {
+        toast.innerHTML = `<span class="label">${longDate(day(c.date))}</span><b>${esc(c.title)}</b>${esc(storyLine(c))}`;
+        toast.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('on'), 3200);
+    }
+    D.story.forEach((c, i) => { const b = document.createElement('button'); b.style.left = (Math.min(1, Math.max(0, kOf(day(c.date)))) * 100) + '%'; b.title = c.title; b.setAttribute('aria-label', `${c.title}, ${longDate(day(c.date))}`);
+        b.onclick = () => { endTour(); cancelAnimationFrame(bang); bang = null; setNow(day(c.date)); ticks.querySelectorAll('button').forEach((x, k) => x.classList.toggle('on', k === i));
+            if (c.song != null) flyToSong(songs[c.song]); else if (c.artist != null) flyToArtist(artists[c.artist]); showMoment(c); };
+        ticks.appendChild(b); });
     let lastMonthDrawn = '';
     const monthBy = new Map(D.months.map(m => [m.month, m])), ticker = $('#ticker'), toast = $('#toast'); let toastTimer = null, toldUpTo = -1;
     function setNow(t) {
@@ -504,9 +513,7 @@
             ticker.innerHTML = M ? `<b>${esc(artists[M.owner].name)}</b> owned it · ${fmt(M.listens)} listens · ${fmt(M.new_songs)} new stars` : '';
         }
         // during the replay, the story's moments surface as the sky reaches them
-        if (bang && step < 0 && now > was) TOUR.forEach((c, i) => { const d = day(c.date.slice(0, 10)); if (i > toldUpTo && d > was && d <= now) { toldUpTo = i;
-            toast.innerHTML = `<span class="label">${longDate(d)} · ${esc(c.q)}</span><b>${esc(c.title)}</b>${esc(c.verdict)}`;
-            toast.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('on'), 2600); } });
+        if (bang && step < 0 && now > was) D.story.forEach((c, i) => { const d = day(c.date); if (i > toldUpTo && d > was && d <= now) { toldUpTo = i; showMoment(c); } });
     }
     let bang = null;
     slider.addEventListener('input', () => { cancelAnimationFrame(bang); bang = null; setNow(t0 + (t1 - t0) * slider.value / 1000); quiet(); });
@@ -738,7 +745,6 @@
         if (c.outro && window.ENDING_YOUTUBE) { tv.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(window.ENDING_YOUTUBE)}?autoplay=1&playsinline=1&rel=0" title="May the Music Never End, Greg Gilpin" allow="autoplay; encrypted-media" allowfullscreen></iframe><span>May the Music Never End · Greg Gilpin</span>`; tv.hidden = false; }
         else { tv.innerHTML = ''; tv.hidden = true; } $('#tourStep').textContent = `${i + 1} / ${TOUR.length}`;
         $('#tourNext').textContent = i === TOUR.length - 1 ? 'End of album' : 'Next track →';
-        ticks.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
         // the evidence: light only the stars this chapter is about, and fly to them
         back.length = 0; current = null; card.classList.remove('on'); selected = null; focusArtist = null; pair = null;
         const list = focusOf(c); tourSet = list ? new Set(list) : null;
