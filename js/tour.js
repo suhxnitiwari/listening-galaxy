@@ -1,4 +1,4 @@
-// The tour is an album: "Suhani's Version", 15 tracks and 5 from the vault, each one a finding about me.
+// The tour is an album, "in my head(phones)": 15 tracks and 4 from the vault, each one a finding about me.
 // Every number comes from data/galaxy.json ("facts"), which etl/galaxy_export.py computes from the warehouse;
 // only the words are written by hand. A track can move time, focus the sky on an artist, a song or a set of songs,
 // play a song, turn the sky to night or to emotion colors, count up a number, or fly the viewer home.
@@ -21,12 +21,12 @@ window.buildTour = (D, songs, artists) => {
     const cluster = [wolves, ...wolves.links.slice(0, 3).map(m => m.s)];
 
     const album = [
-        { name: 'positions', date: top.first, q: 'Who runs this galaxy?', title: top.name,
-          text: `${F.top.share}% of everything Suhani has ever played is ${top.name}. She owned ${F.top.owned} of ${F.top.months} months and was #1 in every era: high school, the summer before college, Austin, and 2026. ${F.loyal.count} songs survived every single year, led by ${title(F.loyal.song)} (${fmt(S(F.loyal.song).n)} plays). In 2024, the year everything changed, ${F.discovery[2024].comfort}% of her listening was songs she already knew.`,
-          verdict: 'Not a fan. A citizen. Suhani is very loyal.', focus: { artist: F.top.artist }, play: top.songs[0].i },
+        { name: 'side to side', date: top.first, q: 'Who runs this galaxy?', title: top.name,
+          text: `${F.top.share}% of everything Suhani has ever played is ${top.name}. She was Suhani's #1 artist in ${F.top.owned} of ${F.top.months} months and held the top spot through every version of her life in the dataset: high school, the summer before college, the move to Austin, and 2026. Nicki Minaj said it best on Side to Side, and in Suhani's listening galaxy, it's true: Ariana runs pop. And Suhani is very loyal: ${F.loyal.count} songs survived every single year.`,
+          verdict: "Ariana isn't Suhani's favorite artist. She's the gravitational center.", focus: { artist: F.top.artist }, play: top.songs[0].i },
 
-        { name: "the coup (Taylor's Version)", date: F.rival.first + '-01', q: 'Has anyone ever taken the throne?', title: 'A Cruel Summer',
-          text: `After ${F.rival.reign_before} straight months of ${top.name}, Summer 2023 was a Cruel Summer: college essays. ...Ready For It? ${rival.name} was. Suhani branched out to her whole catalog, album by album (${taylor2023.map(d => `${d.album}${d.date === '2023-03-17' ? ' the night the Eras Tour opened' : d.date === '2023-10-27' ? ' on release day' : ''}`).join(', ')}), but two albums carried the essays: ${F.taylor_favs.map(([a, n]) => `${a} (${fmt(n)} plays)`).join(' and ')}. Lover for the heart, reputation for the nerve. ${rival.name} took ${F.rival.months.filter(m => m < '2024').map(m => month(m).split(' ')[0]).join(', ')} 2023, and by the new year it was Look What You Made Me Do, Ariana: she was back.`,
+        { name: 'cruel summer', date: F.rival.first + '-01', q: 'Has anyone ever taken the throne?', title: 'Cruel Summer',
+          text: `After ${F.rival.reign_before} straight months of ${top.name}, Summer 2023 was a Cruel Summer: cruel to Ari, who lost her crown, and cruel to Suhani, who spent it writing college essays. ...Ready For It? ${rival.name} was. Suhani branched out to her whole catalog, album by album (${taylor2023.map(d => `${d.album}${d.date === '2023-03-17' ? ' the night the Eras Tour opened' : d.date === '2023-10-27' ? ' on release day' : ''}`).join(', ')}), but two albums carried the essays: ${F.taylor_favs.map(([a, n]) => `${a} (${fmt(n)} plays)`).join(' and ')}. Lover for the heart, reputation for the nerve. ${rival.name} took ${F.rival.months.filter(m => m < '2024').map(m => month(m).split(' ')[0]).join(', ')} 2023, and by the new year it was Look What You Made Me Do, Ariana: she was back.`,
           verdict: `Everyone else got a month or two: ${F.rival.others.map(([a, c, ms]) => `${A(a).name} (${ms.map(m => month(m).replace(' 20', " '")).join(', ')}${NOTES[A(a).name] ? ', ' + NOTES[A(a).name] : ''})`).join('; ')}. Only ${rival.name} ever made ${top.name} nervous.`,
           focus: { artists: [F.top.artist, F.rival.artist] }, play: F.taylor_song },
 
@@ -102,4 +102,4 @@ window.buildTour = (D, songs, artists) => {
     ];
     return [...album.map((t, i) => ({ ...t, label: `Track ${i + 1}` })), ...vault.map((t, i) => ({ ...t, label: `Track ${album.length + i + 1} (From The Vault)` }))];
 };
-window.ALBUM = "Suhani's Version";
+window.ALBUM = 'in my head(phones)';
