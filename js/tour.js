@@ -1,4 +1,4 @@
-// The tour is an album, "in my head(phones)": short tracks and a few from the vault, each one a finding about me in two lines.
+// The tour is an album, "in my head(phones)": two sides of short tracks and a few from the vault, each one a finding about me in two lines.
 // Every number comes from data/galaxy.json ("facts"), which etl/galaxy_export.py computes from the warehouse;
 // only the words are written by hand. A track can move time, focus the sky on an artist, a song or a set of songs,
 // play a song, turn the sky to night or to emotion colors, count up a number, or fly the viewer home.
@@ -16,59 +16,68 @@ window.buildTour = (D, songs, artists) => {
     const wolves = songs.find(s => s.title === 'Wolves' && s.A.name === 'Selena Gomez') || S(D.links[0][0]);
     const cluster = [wolves, ...wolves.links.slice(0, 3).map(m => m.s)];
 
-    const album = [
+    // Side A is Dallas: she works for the dream, and gets it. Side B is Austin: the dream isn't magic,
+    // October breaks her, nothing sounds right, and then the light comes back.
+    const sad = m => (M.octobers.find(o => o[0] === m) || [m, 0])[1];
+    const sideA = [
         { name: 'god is a woman', date: top.first, q: 'Who runs this galaxy?', title: top.name,
           text: `${F.top.share}% of everything Suhani has ever played is ${top.name}. She was #1 in ${F.top.owned} of ${F.top.months} months, through high school, the move to Austin, and 2026.`,
           verdict: "Not her favorite artist. Her gravitational center.", focus: { artist: F.top.artist }, play: top.songs[0].i },
 
-        { name: 'one last time, 519 times', date: F.loyal.peak + '-15', q: "What's her defining trait?", title: 'Loyalty', counter: S(F.loyal.song).n,
-          text: `${F.loyal.count} songs survived every year of the data. The one she's never gone a year without: ${title(F.loyal.song)}, ${fmt(S(F.loyal.song).n)} plays since her first week.`,
-          verdict: 'Apparently, she did not mean the title literally.', focus: { songs: F.loyal.songs }, play: F.loyal.song },
-
-        { name: 'cruel summer', date: F.rival.first + '-01', q: 'Who was trouble?', title: 'I Knew You Were Trouble',
-          text: `After ${F.rival.reign_before} straight months of Ari, ${rival.name} took over Summer 2023, essay season. Her biggest day: ${date(F.longest_session.start)}, ${F.longest_session.hours} hours, ${F.longest_session.listens} songs, the essays written in one sitting.`,
-          verdict: "Ari's comeback by the new year? Better Than Revenge.",
-          focus: { artists: [F.top.artist, F.rival.artist] }, play: F.taylor_song },
-
         { name: 'just like magic', date: F.day.date, q: `What happened on ${date(F.day.date)}?`, title: title(F.day.song), counter: F.day.count,
           text: `${F.day.count} plays of ${title(F.day.song)} in ${F.day.hours} hours, ${F.day.else ? 'barely anything else' : 'nothing else'} all day. She never pressed repeat; she just never let it stop.`,
-          verdict: 'Trying to manifest love into 2023. It did not work.', focus: { song: F.day.song }, play: F.day.song },
+          verdict: 'She believed in manifesting. Hold that thought.', focus: { song: F.day.song }, play: F.day.song },
+
+        { name: 'goodnight n go?', date: AN.first.date, q: 'How hard did she work for it?', title: `${AN.by_era.high_school} all-nighters`, night: true, counter: AN.by_era.high_school,
+          text: `${AN.by_era.high_school} times in high school alone, the music played every hour from midnight to 6 AM, mostly before exams. After midnight she's ${F.night[0][1]}× likelier to play ${A(F.night[0][0]).name}, her study partner.`,
+          verdict: 'Asleep at 5 AM? Not with a dream to chase.', focus: { artists: [F.night[0][0]] }, play: F.night_artist.song },
 
         { name: 'successful', date: '2023-03-01', q: 'When is she most likely to be listening?', title: `${hour(busiest)} on a school night`,
           text: `Her whole history peaks at ${hour(busiest)}: after school, through homework. Before 9 AM? Just ${F.before_9}% of everything.`,
           verdict: 'Not a morning person. A 5 PM-with-a-problem-set person.', focus: { songs: F.homework }, play: F.homework.find(i => title(i) === 'Problem') ?? F.homework[0] },
 
-        { name: 'goodnight n go?', date: AN.first.date, q: 'Who is 2 AM Suhani?', title: `${AN.count} all-nighters`, night: true, counter: AN.count,
-          text: `${AN.count} times the music played every hour from midnight to 6 AM, mostly before exams. After midnight she's ${F.night[0][1]}× likelier to play ${A(F.night[0][0]).name}, her all-nighter study partner.`,
-          verdict: 'Asleep at 5 AM? Never.', focus: { artists: [F.night[0][0]] }, play: F.night_artist.song },
+        { name: 'cruel summer', date: F.rival.first + '-01', q: 'What did the dream cost?', title: 'Essay season',
+          text: `After ${F.rival.reign_before} straight months of Ari, ${rival.name} took over Summer 2023, college essay season. Her biggest day: ${date(F.longest_session.start)}, ${F.longest_session.hours} hours, ${F.longest_session.listens} songs, the essays written in one sitting.`,
+          verdict: 'Writing her way to Austin.',
+          focus: { artists: [F.top.artist, F.rival.artist] }, play: F.taylor_song },
+
+        { name: 'one last time, 519 times', date: F.loyal.peak + '-15', q: "What's her defining trait?", title: 'Loyalty', counter: S(F.loyal.song).n,
+          text: `${F.loyal.count} songs survived every year of the data. The one she's never gone a year without: ${title(F.loyal.song)}, ${fmt(S(F.loyal.song).n)} plays since her first week.`,
+          verdict: 'Senior spring, on repeat. She did not mean the title literally.', focus: { songs: F.loyal.songs }, play: F.loyal.song },
+
+        { name: 'suburban legends', date: F.eras.austin_first.at, q: 'Did the dream come true?', title: 'UT Austin',
+          text: `Her first morning in Austin, ${clock(F.eras.austin_first.at)} on ${date(F.eras.austin_first.at)}, she pressed play on ${title(F.eras.austin_first.song)}: a song about the suburbs you grow up in.`,
+          verdict: 'Dream achieved. One last time (again), then goodbye, suburbs.', focus: { songs: [F.eras.austin_first.song, F.loyal.song] }, pair: [F.loyal.song, F.eras.austin_first.song], play: F.eras.austin_first.song },
+    ];
+    const sideB = [
+        { name: 'the version i auditioned for', date: '2024-10-01', q: 'Was college the dream?', title: 'Not magic',
+          text: `No people yet, and huge imposter syndrome. Party songs jumped from ${E.high_school.upbeat}% to ${E.austin.upbeat}%, and Hindi music, the sound of home, fell to ${F.desi_by_year[2024]}%.`,
+          verdict: "Auditioning for a version of herself she wasn't.", focus: { songs: [...F.fall2024.party, ...F.fall2024.newcomers.map(n => n[1])] }, play: F.fall2024.newcomers[0][1] },
+
+        { name: "we can't be friends (every october)", date: F.heartbreak.month + '-15', q: 'How bad did it get?', title: month(F.heartbreak.month), mood: true,
+          text: `Bad grades, no people, lonelier than ever. In ${month(F.heartbreak.month)}, ${sad(F.heartbreak.month)}% of what she played was sad, against a typical ${M.typical_sad}%, and 1 in 4 songs was a heartbreak song.`,
+          verdict: 'Nothing about it was magic.', focus: { mood: 'heartbreak' }, play: F.heartbreak.songs[0] },
 
         { name: 'the flight is coming', date: december.from, q: 'What happens when she goes home?', title: 'India',
           text: `December 2024 in India: ${december.desi}% of what she played was Hindi, against ${F.desi_overall}% normally.`,
-          verdict: 'Two weeks home and it all came back.', focus: { songs: december.all }, play: march.songs[0] },
+          verdict: 'Two weeks home and it all came back. Then the flight back.', focus: { songs: december.all }, play: march.songs[0] },
 
-        { name: 'suburban legends', date: F.eras.austin_first.at, q: 'How do you say goodbye to home?', title: 'Suburban Legends',
-          text: `Her first morning in Austin, ${clock(F.eras.austin_first.at)} on ${date(F.eras.austin_first.at)}, she pressed play on ${title(F.eras.austin_first.song)}: a song about the suburbs you grow up in.`,
-          verdict: 'One last time (again), then goodbye, suburbs.', focus: { songs: [F.eras.austin_first.song, F.loyal.song] }, pair: [F.loyal.song, F.eras.austin_first.song], play: F.eras.austin_first.song },
+        { name: 'thank u, next', date: P.spree.at, q: 'How lost did she get?', title: 'Nothing sounded right',
+          text: `In Austin she skipped ${E.austin.skip}% of the songs she started (${E.high_school.skip}% in high school), and even Ari fell to ${E.austin.top_share}% of her listening. ${clock(P.spree.at)}, ${date(P.spree.at)}: ${P.spree.count} skips in ${P.spree.seconds} seconds.`,
+          verdict: 'She called it picky. She was looking for herself.', focus: { all: true } },
 
-        { name: 'the version i auditioned for', date: '2024-10-01', q: 'How did college change her?', title: 'Trying to fit in',
-          text: `New city, huge imposter syndrome. Party songs jumped from ${E.high_school.upbeat}% to ${E.austin.upbeat}%, and Hindi music, the sound of home, fell to ${F.desi_by_year[2024]}%.`,
-          verdict: 'Auditioning a new version of herself.', focus: { songs: [...F.fall2024.party, ...F.fall2024.newcomers.map(n => n[1])] }, play: F.fall2024.newcomers[0][1] },
+        { name: 'the light is coming', date: '2025-09-15', q: 'And then?', title: 'The light', mood: true,
+          text: `September 2025, a year after the move, was her happiest month yet. And October, the month that broke her, fell from ${sad(F.heartbreak.month)}% sad to ${sad('2025-10')}%.`,
+          verdict: 'Everything October took, given back.', focus: { mood: 'confident' },
+          play: (songs.find(x => x.title.startsWith('the light is coming') && x.A === top) || top.songs[0]).i },
 
-        { name: "we can't be friends (every october)", date: F.heartbreak.month + '-15', q: 'Her loneliest, saddest month?', title: month(F.heartbreak.month), mood: true,
-          text: `October is her saddest month: ${M.sad_calendar[1]}% sad songs, against a typical ${M.typical_sad}%. In ${month(F.heartbreak.month)}, 1 in 4 songs was a heartbreak song.`,
-          verdict: 'College was lonely.', focus: { mood: 'heartbreak' }, play: F.heartbreak.songs[0] },
+        { name: 'yes, and?', date: '2026-09-15', q: 'And now?', title: 'September 2026', mood: true,
+          text: `Her happiest month ever: September 2026. Some social confidence, working on herself, settled in Austin. Hindi music is back to ${F.desi_by_year[2026]}%, Ari to ${E.y2026.top_share}%, her skips to ${E.y2026.skip}%.`,
+          verdict: 'Remembering who she is. Building who she wants to be.', focus: { songs: [...desi, ...F.year_now.songs] }, play: F.year_now.songs[0] },
 
-        { name: 'yes, and?', date: '2026-06-15', q: 'And 2026?', title: 'Remembering who she is', mood: true,
-          text: `Hindi music is back to ${F.desi_by_year[2026]}%, its highest since high school, and all four of her happiest months ever are from the last year.`,
-          verdict: 'Building who she wants to be.', focus: { songs: [...desi, ...F.year_now.songs] }, play: F.year_now.songs[0] },
-
-        { name: 'thank u, next', date: P.spree.at, q: 'How picky is she?', title: 'Picky, with receipts',
-          text: `${fmt(P.under_1s)} songs rejected in under a second. Once, ${P.spree.count} skips in ${P.spree.seconds} seconds.`,
-          verdict: 'Not indecisive. Picky.', focus: { all: true } },
-
-        { name: 'intro (end of the world)', date: D.period[1], q: 'What can a Spotify export reveal?', title: 'Austin, Texas',
-          text: `${fmt(D.totals.listens)} listens and ${fmt(D.totals.hours)} hours later, the girl who pressed play in Dallas is in Austin.`,
-          verdict: 'Still pressing play. May the music never end.', outro: true,
+        { name: 'intro (end of the world)', date: D.period[1], q: 'Is this the end?', title: 'Austin, Texas',
+          text: `${fmt(D.totals.listens)} listens and ${fmt(D.totals.hours)} hours later, the girl who pressed play in Dallas is home in Austin. Happy, for now. She'll move again, challenge herself again, fail again.`,
+          verdict: 'The story isn\'t over. May the music never end.', outro: true,
           play: (songs.find(x => x.title === 'intro (end of the world)' && x.A === top) || top.songs[0]).i,
           },
     ];
@@ -98,6 +107,7 @@ window.buildTour = (D, songs, artists) => {
           text: `${wolves.title} into ${cluster[1].title}, back to back ${wolves.links[0].c} times, always in that order.`,
           verdict: 'A middle-school playlist that never ended.', focus: { songs: cluster.map(s => s.i) }, pair: [wolves.i, cluster[1].i], play: wolves.i },
     ];
-    return [...album.map((t, i) => ({ ...t, label: `Track ${i + 1}` })), ...vault.map((t, i) => ({ ...t, label: `Track ${album.length + i + 1} (From The Vault)` }))];
+    const album = [...sideA.map(t => ({ ...t, side: 'Side A' })), ...sideB.map(t => ({ ...t, side: 'Side B' }))];
+    return [...album.map((t, i) => ({ ...t, label: `${t.side} · Track ${i + 1}` })), ...vault.map((t, i) => ({ ...t, label: `Track ${album.length + i + 1} (From The Vault)` }))];
 };
 window.ALBUM = 'in my head(phones)';

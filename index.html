@@ -7,7 +7,7 @@
 <meta name="description" content="Four years of my Spotify listening, mapped as a universe: every song is a star, every artist a constellation. Built on my own data warehouse.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/galaxy.css?v=62">
+<link rel="stylesheet" href="css/galaxy.css?v=70">
 </head>
 <body>
 <canvas id="sky" aria-label="A 3D galaxy of every song I have played: drag to spin, scroll to zoom, click a star"></canvas>
@@ -47,9 +47,20 @@
 <aside class="hud card" id="card" aria-live="polite"></aside>
 
 <div class="tour" id="tour" role="dialog" aria-label="Tour">
+    <div class="label np">Now playing</div><img class="art" id="tourArt" alt="" hidden>
     <div class="label" id="tourDate"></div><div class="q" id="tourQ"></div><h3 id="tourTitle"></h3><div class="count" id="tourCount" hidden></div><p id="tourText"></p><p class="verdict" id="tourVerdict"></p><div class="tourvideo" id="tourVideo" hidden></div>
     <div class="bar"><i id="tourBar"></i></div>
-    <div class="ctl"><span class="label" id="tourStep"></span><button class="pill" id="tourPrev">←</button><button class="pill" id="tourNext">Next →</button><button class="pill" id="tourEnd">Exit</button></div>
+    <div class="ctl"><span class="label" id="tourStep"></span><button class="pill" id="tourPrev" aria-label="Previous track">←</button><button class="pill" id="tourPlay" aria-label="Pause or play">❚❚</button><button class="pill" id="tourNext">Next →</button><button class="pill" id="tourEnd">Exit</button></div>
+    <div class="rel" id="tourRel" hidden></div>
+</div>
+
+<aside class="album" id="album" aria-label="The album, track by track"></aside>
+
+<div class="choose" id="choose" role="dialog" aria-label="What next">
+    <div class="label">May 2022 – now · four years in one sky</div>
+    <h3>Now, slowly, track by track.</h3>
+    <p>The album <i>in my head(phones)</i> goes back through those years and what each moment says about me.</p>
+    <div class="ctl"><button class="pill solid" id="chooseTour">▶ See it track by track</button><button class="pill" id="chooseSlow">↺ Replay it slowly</button><button class="pill" id="chooseFree">Explore the sky</button></div>
 </div>
 
 <div class="scrim" id="scrim"></div>
@@ -70,6 +81,19 @@
     </div>
 </div>
 
+<div class="modal yours" id="yours" role="dialog" aria-label="Get your own Spotify data">
+    <button class="x" data-close aria-label="Close">×</button>
+    <div class="label">Your turn</div><h2>Want yours too?</h2>
+    <p>Everything in this sky came from one file Spotify will send anyone who asks. Start by asking for yours:</p>
+    <ol>
+        <li>Open your Spotify <a href="https://www.spotify.com/account/privacy/" target="_blank" rel="noopener">account privacy page ↗</a> and sign in.</li>
+        <li>Under <b>Download your data</b>, tick <b>Extended streaming history</b>. It's the one with every play since you made your account; the default download only covers the last year.</li>
+        <li>Press <b>Request data</b>, then confirm from the email Spotify sends you.</li>
+        <li>Wait for the second email. Spotify says it can take up to 30 days; it's often sooner. You'll get a zip of JSON files, one row per play.</li>
+    </ol>
+    <p class="fine">Your export stays yours: it never has to leave your computer.</p>
+</div>
+
 <article class="drawer" id="how" role="dialog" aria-label="How I built this">
     <button class="x" data-close aria-label="Close">×</button>
     <div class="label">Case study</div>
@@ -85,7 +109,7 @@
     <section><div class="label">What the data revealed</div><h3>More than a playlist</h3>
         <p>A listening history is a diary nobody meant to keep. Timestamps, skips and sessions were enough to find my moods, my sleep, my routines, the big days of my life, my trips home and my cultural identity, none of which Spotify ever asked me about.</p>
         <div class="reveals" id="reveals"></div>
-        <p>Every one of these is computed by the pipeline and checked against what I remember; the tour, <i>in my head(phones)</i>, tells them as 15 tracks and 5 from the vault.</p>
+        <p>Every one of these is computed by the pipeline and checked against what I remember; the tour, <i>in my head(phones)</i>, tells them as an album: Side A in Dallas, Side B in Austin, and 5 from the vault.</p>
     </section>
 
     <section><div class="label">The pipeline</div><h3>From a zip file to a sky</h3>
@@ -124,7 +148,7 @@
 
 <audio id="audio" preload="none"></audio>
 <script>window.ENDING_YOUTUBE = null;   // a YouTube video ID of May the Music Never End (Greg Gilpin); it plays as the last track lands home</script>
-<script src="js/tour.js?v=62"></script>
-<script src="js/galaxy.js?v=62"></script>
+<script src="js/tour.js?v=70"></script>
+<script src="js/galaxy.js?v=70"></script>
 </body>
 </html>

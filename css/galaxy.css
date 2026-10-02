@@ -171,6 +171,17 @@ body.intro .skip { display: block; }
 body.intro .hud, body.intro .hud > * { animation: none !important; }
 body.intro .hud, body.intro .tip { opacity: 0 !important; visibility: hidden; }
 
+/* the replay: only the sky, the date, the timeline and the story's moments until the four years are done */
+.hero, .threads, .top, .time .lit, .time .row, .time .btns, .ticks { transition: opacity 1.2s, visibility 1.2s; }
+body.replay .hero, body.replay .threads, body.replay .top, body.replay .card, body.replay .time .lit, body.replay .time .row, body.replay .time .btns, body.replay .ticks, body.replay .tip { opacity: 0 !important; visibility: hidden; pointer-events: none; }
+body.replay .skip { display: block; } body.choosing .skip { display: none !important; }
+.choose { position: fixed; left: 50%; bottom: 230px; transform: translate(-50%, 20px); width: min(480px, calc(100% - 2 * var(--gut))); background: var(--panel); backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; opacity: 0; visibility: hidden; transition: opacity .6s, transform .6s, visibility .6s; z-index: 4; text-align: center; }
+.choose.on { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+.choose h3 { font: 400 28px/1.1 var(--serif); margin: 6px 0 8px; }
+.choose p { margin: 0; color: var(--soft); font-size: 14px; line-height: 1.45; }
+.choose .ctl { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+@media (max-width: 760px) { .choose { bottom: 200px; } }
+
 /* the ending flies home: only the last track's card stays */
 body.outro .hero, body.outro .threads, body.outro .time, body.outro .card { opacity: 0 !important; pointer-events: none; transition: opacity .8s; }
 
@@ -229,3 +240,64 @@ body.outro .hero, body.outro .threads, body.outro .time, body.outro .card { opac
     .tour { bottom: 220px; } .track canvas { height: 26px; } .time .lit { display: none; }
     .big { grid-template-columns: 1fr 1fr; }
 }
+
+/* the album as a tracklist */
+.album { position: fixed; z-index: 4; left: var(--gut); top: 74px; bottom: 212px; width: min(440px, calc(100% - 2 * var(--gut))); display: flex; flex-direction: column; background: var(--panel); backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: 16px; opacity: 0; visibility: hidden; transform: translateX(-12px); transition: opacity .5s, transform .5s, visibility .5s; }
+.album.on { opacity: 1; visibility: visible; transform: none; }
+.album .x { position: absolute; right: 10px; top: 8px; background: none; border: 0; color: var(--dim); font-size: 22px; cursor: pointer; }
+.album .x:hover { color: var(--ink); }
+.album .head { padding: 18px 44px 0 20px; }
+.album .acts { display: flex; gap: 12px; align-items: center; padding: 14px 20px 14px; }
+.album .icon { width: 36px; height: 36px; border-radius: 50%; border: 1px solid #ffffff38; background: none; color: var(--ink); font-size: 16px; cursor: pointer; transition: background .15s, border-color .15s; }
+.album .icon:hover { background: #ffffff14; border-color: #ffffff70; }
+.album .acts .pill { margin-left: auto; }
+.album .big { flex: none; width: 48px; height: 48px; display: grid; place-items: center; padding: 0; border-radius: 50%; border: 0; background: var(--pink); color: #1a0d16; font-size: 18px; cursor: pointer; transition: transform .15s, background .15s; }
+.album .big:hover { transform: scale(1.06); background: #ffc3d8; }
+.album h2 { font: 400 28px/1.05 var(--serif); margin: 4px 0 2px; }
+.album .meta { font: 11px var(--mono); color: var(--dim); letter-spacing: .04em; }
+.album .cols, .album li button { display: grid; grid-template-columns: 30px 1fr 70px 40px; gap: 10px; align-items: center; }
+.album .cols { padding: 0 20px 8px; border-bottom: 1px solid var(--line); font: 10px var(--mono); color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
+.album .cols span:first-child, .album .cols span:last-child, .album .n, .album .l { text-align: right; }
+.album ol { list-style: none; margin: 0; padding: 6px 8px 10px; overflow-y: auto; scrollbar-width: thin; }
+.album li.side { font: 500 10px var(--mono); color: var(--pink); text-transform: uppercase; letter-spacing: .1em; padding: 12px 12px 6px; }
+.album li button { width: 100%; background: none; border: 0; border-radius: 8px; padding: 7px 12px; color: var(--ink); text-align: left; cursor: pointer; font: inherit; }
+.album li button:hover { background: #ffffff10; }
+.album li button.on { background: #ffffff18; }
+.album .n { font: 13px var(--mono); color: var(--dim); }
+.album .n b { display: none; color: var(--ink); font-size: 11px; }
+.album li button:hover .n i, .album li button.on .n i { display: none; }
+.album li button:hover .n b, .album li button.on .n b { display: inline; }
+.album li button.on .n b { color: var(--pink); }
+.album .t { min-width: 0; }
+.album .t b { display: block; font-weight: 500; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.album li button.on .t b { color: var(--pink); }
+.album .t span { display: block; font-size: 12px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.album .d, .album .l { font: 11px var(--mono); color: var(--dim); }
+body.listening .hero, body.listening:has(.tour.on) .threads { opacity: 0 !important; visibility: hidden; pointer-events: none; }
+@media (max-width: 760px) { .album { top: 58px; max-height: 42vh; } .album .cols, .album .d { display: none; } .album li button { grid-template-columns: 26px 1fr 40px; } body.listening .tour ~ * {} body.listening:has(.tour.on) .album { display: none; } }
+.yours { width: min(560px, calc(100% - 2 * var(--gut))); }
+.yours p { color: var(--soft); line-height: 1.55; margin: 0 0 12px; }
+.yours ol { margin: 0 0 16px; padding-left: 22px; color: var(--soft); line-height: 1.55; } .yours li { margin-bottom: 10px; } .yours li b { color: var(--ink); font-weight: 500; }
+.yours a { color: var(--pink); } .yours .fine { font: 11px var(--mono); color: var(--dim); letter-spacing: .04em; }
+
+/* the album's cover, and now playing: the tour card as a right-hand column while the galaxy stays live in the middle */
+.album .head { display: grid; grid-template-columns: 92px 1fr; gap: 16px; align-items: end; }
+.album .head::before { content: ""; grid-row: span 3; width: 92px; height: 92px; border-radius: 8px; box-shadow: 0 8px 30px #0008;
+    background: radial-gradient(1.5px 1.5px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #fff, transparent), radial-gradient(2px 2px at 55% 65%, #FFE7F0, transparent), radial-gradient(1px 1px at 30% 80%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 75%, #fff, transparent), radial-gradient(circle at 45% 50%, #F7A8C4 0, #8A4A7A 30%, #2A1838 62%, #120C1E 100%); }
+.tour .np, .tour .art, .tour .rel { display: none; }
+.tour #tourPlay { min-width: 40px; }
+@media (min-width: 1101px) {
+    body.listening .tour { left: auto; right: var(--gut); top: 74px; bottom: 212px; width: 340px; transform: translateX(24px); overflow-y: auto; scrollbar-width: thin; }
+    body.listening .tour.on { transform: none; }
+    body.listening .tour .np { display: block; margin-bottom: 10px; }
+    body.listening .tour .art:not([hidden]) { display: block; width: 100%; height: min(260px, 28vh); object-fit: cover; border-radius: 10px; background: #1d1830; margin-bottom: 14px; box-shadow: 0 10px 40px #0008; }
+    body.listening .tour .ctl { flex-wrap: wrap; } body.listening .tour .ctl .label { flex-basis: 100%; }
+    body.listening .tour .rel:not([hidden]) { display: block; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+    .tour .rel button { display: grid; grid-template-columns: 40px 1fr; gap: 10px; align-items: center; width: 100%; background: none; border: 0; border-radius: 8px; padding: 6px; color: var(--ink); text-align: left; cursor: pointer; font: inherit; }
+    .tour .rel button:hover { background: #ffffff10; }
+    .tour .rel img { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; background: #1d1830; }
+    .tour .rel b { display: block; font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tour .rel i { display: block; font-style: normal; font-size: 11px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tour .rel .label { margin: 0 6px 6px; }
+}
+@media (max-width: 1100px) { body.listening:has(.tour.on) .album { display: none; } }

@@ -215,7 +215,7 @@
     const milky = spiral(5200, 4, [[170, 190, 255], [200, 210, 255], [255, 200, 215], [235, 235, 255]], [255, 222, 175]);
     const EARTH_IN_MW = [0.52, 0.18];   // where we live: out on an arm, not in the middle
     function drawSpiral(pts, cx, cy, R, rot, tilt, alpha) {
-        if (R < 1 || alpha <= 0) return;
+        if (!(R >= 1) || !isFinite(R + cx + cy) || alpha <= 0) return;
         const c = Math.cos(rot), sn = Math.sin(rot);
         const glow = g.createRadialGradient(cx, cy, 0, cx, cy, R * 0.45); glow.addColorStop(0, `rgba(255,230,210,${0.35 * alpha})`); glow.addColorStop(1, 'rgba(255,230,210,0)');
         g.fillStyle = glow; g.fillRect(cx - R * 0.45, cy - R * 0.45, R * 0.9, R * 0.9);
@@ -500,11 +500,11 @@
         toast.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('on'), 3200);
     }
     D.story.forEach((c, i) => { const b = document.createElement('button'); b.style.left = (Math.min(1, Math.max(0, kOf(day(c.date)))) * 100) + '%'; b.title = c.title; b.setAttribute('aria-label', `${c.title}, ${longDate(day(c.date))}`);
-        b.onclick = () => { endTour(); cancelAnimationFrame(bang); bang = null; setNow(day(c.date)); ticks.querySelectorAll('button').forEach((x, k) => x.classList.toggle('on', k === i));
+        b.onclick = () => { pauseOrEnd(); leaveReplay(); setNow(day(c.date)); ticks.querySelectorAll('button').forEach((x, k) => x.classList.toggle('on', k === i));
             if (c.song != null) flyToSong(songs[c.song]); else if (c.artist != null) flyToArtist(artists[c.artist]); showMoment(c); };
         ticks.appendChild(b); });
     let lastMonthDrawn = '';
-    const monthBy = new Map(D.months.map(m => [m.month, m])), ticker = $('#ticker'), toast = $('#toast'); let toastTimer = null, toldUpTo = -1;
+    const monthBy = new Map(D.months.map(m => [m.month, m])), ticker = $('#ticker'), toast = $('#toast'); let toastTimer = null, replaying = false;
     function setNow(t) {
         const was = now; now = Math.max(t0, Math.min(t1, t)); slider.value = Math.round(1000 * kOf(now));
         const m = new Date(now).toISOString().slice(0, 7);
@@ -513,21 +513,37 @@
             const M = monthBy.get(m); monthOwner = M ? artists[M.owner] : null;
             ticker.innerHTML = M ? `<b>${esc(artists[M.owner].name)}</b> owned it · ${fmt(M.listens)} listens · ${fmt(M.new_songs)} new stars` : '';
         }
-        // during the replay, the story's moments surface as the sky reaches them
-        if (bang && step < 0 && now > was) D.story.forEach((c, i) => { const d = day(c.date); if (i > toldUpTo && d > was && d <= now) { toldUpTo = i; showMoment(c); } });
     }
     let bang = null;
-    slider.addEventListener('input', () => { cancelAnimationFrame(bang); bang = null; setNow(t0 + (t1 - t0) * slider.value / 1000); quiet(); });
+    slider.addEventListener('input', () => { leaveReplay(); setNow(t0 + (t1 - t0) * slider.value / 1000); quiet(); });
     function sweep(from, to, ms, done) {
         cancelAnimationFrame(bang); const start = performance.now();
         const step = t => { const k = Math.min(1, (t - start) / ms); setNow(from + (to - from) * (1 - Math.pow(1 - k, 1.6))); if (k < 1) bang = requestAnimationFrame(step); else { bang = null; done && done(); } };
         bang = requestAnimationFrame(step);
     }
+    // the replay is four years with nothing else on screen: just the sky growing, the date and the timeline.
+    // When it's done, the viewer chooses: the album track by track, the four years again but slower, or the sky to themselves.
+    const REPLAY_MS = 30000, SLOW_MS = 90000, choose = $('#choose'), skipBtn = $('#skip');
+    function replay(ms = REPLAY_MS) {
+        replaying = true; document.body.classList.add('replay'); choose.classList.remove('on'); toast.classList.remove('on'); skipBtn.textContent = 'Skip to the end →';
+        cancelAnimationFrame(bang); setNow(t0); const start = performance.now();
+        // gentle in and out, so the first stars and the last months both get time
+        const tick = t => { const k = Math.min(1, (t - start) / ms); setNow(t0 + (t1 - t0) * (0.5 - 0.5 * Math.cos(Math.PI * k))); if (k < 1) bang = requestAnimationFrame(tick); else { bang = null; finishReplay(); } };
+        bang = requestAnimationFrame(tick);
+    }
+    // the sky stays clear while the choice is up; the rest of the interface comes back once one is made
+    function leaveReplay() { cancelAnimationFrame(bang); bang = null; replaying = false; document.body.classList.remove('replay', 'choosing'); choose.classList.remove('on'); }
+    function finishReplay() { cancelAnimationFrame(bang); bang = null; replaying = false; setNow(t1); document.body.classList.add('choosing');
+        setTimeout(() => { if (step < 0 && document.body.classList.contains('replay')) choose.classList.add('on'); }, 900); }
+    function bigBang(ms) { endTour(); closeCard(); fly = null; frontier = 0;
+        cam.yaw = -0.35; view.x = 0; view.y = W < 760 ? 30 - 70 / fitZ : 30; view.z = fitZ; intro.start = performance.now(); intro.touched = false;
+        replay(ms); }
+    $('#chooseSlow').onclick = () => bigBang(SLOW_MS);
+    $('#chooseTour').onclick = () => { leaveReplay(); openAlbum(); };
+    $('#chooseFree').onclick = leaveReplay;
     // the replay is the big bang again: whatever the tour or a card was looking at, the camera pulls back to the
     // whole sky, the disk collapses to a point and the galaxy grows out from its first star
-    $('#bang').onclick = () => { endTour(); closeCard(); toldUpTo = -1; fly = null; frontier = 0;
-        cam.yaw = -0.35; view.x = 0; view.y = W < 760 ? 30 - 70 / fitZ : 30; view.z = fitZ; intro.start = performance.now(); intro.touched = false;
-        setNow(t0); sweep(t0, t1, 16000); };
+    $('#bang').onclick = () => bigBang();
 
     // ---------- hover, cards, search ----------
     const tip = $('#tip'), audio = $('#audio'), card = $('#card');
@@ -676,7 +692,7 @@
         mark(); results.classList.add('on');
     }
     const mark = () => results.querySelectorAll('button').forEach((b, i) => b.classList.toggle('sel', i === sel));
-    function go(h) { if (!h) return; endTour(); h.A ? openArtist(h.A) : openSong(h.S); q.value = ''; results.classList.remove('on'); q.blur(); }
+    function go(h) { if (!h) return; pauseOrEnd(); h.A ? openArtist(h.A) : openSong(h.S); q.value = ''; results.classList.remove('on'); q.blur(); }
     q.addEventListener('input', search);
     q.addEventListener('keydown', e => { if (e.key === 'ArrowDown') { sel = Math.min(hits.length - 1, sel + 1); mark(); e.preventDefault(); } if (e.key === 'ArrowUp') { sel = Math.max(0, sel - 1); mark(); e.preventDefault(); } if (e.key === 'Enter') go(hits[sel]); if (e.key === 'Escape') { q.value = ''; results.classList.remove('on'); q.blur(); } });
     q.addEventListener('blur', () => setTimeout(() => results.classList.remove('on'), 150));
@@ -716,7 +732,7 @@
         pts.delete(e.pointerId); if (pts.size < 2) pinch = null;
         if (wasTap) {
             const s = pick(e.clientX, e.clientY);
-            if (s) { endTour(); openSong(s, { fly: false, listen: true }); }
+            if (s) { pauseOrEnd(); openSong(s, { fly: false, listen: true }); }
             else { ripples.push({ x: e.clientX, y: e.clientY, t: performance.now() }); if (card.classList.contains('on')) closeCard(); }
         }
         if (!pts.size) { drag = null; cv.classList.remove('drag'); }
@@ -725,7 +741,7 @@
     cv.addEventListener('wheel', e => { e.preventDefault(); fly = null; touched = performance.now(); intro.touched = true; zoomAt(e.clientX, e.clientY, view.z * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015))); quiet(); }, { passive: false });
 
     // ---------- tour: a case file on me, built by js/tour.js from the export's facts ----------
-    const tour = $('#tour'); let step = -1, tourTimer = null, moodBefore = null, countAnim = null;
+    const tour = $('#tour'); let step = -1, tourTimer = null, moodBefore = null, countAnim = null, paused = false;
     function focusOf(c) {
         const f = c.focus || {};
         if (f.artist != null) return artists[f.artist].songs;
@@ -740,9 +756,13 @@
         const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) + 160;
         flyTo(cx, cy, clamp(Math.min(W, H) * 0.75 / span, minZ(), 3.2));
     }
+    // slow enough to sit with: about a third of a second a word on top of a long pause, between 12 and 24 seconds
+    function trackMs(c) { const words = (c.text + ' ' + (c.verdict || '')).split(/\s+/).length; return clamp(5000 + words * 350, 12000, 24000); }
     function startTour(i = 0) {
+        openAlbum();
+        leaveReplay();
         step = i; const c = TOUR[i], d = day(c.date.slice(0, 10)); closeOverlays(); setThread(null); connectFrom = null; hint('');
-        clearTimeout(tourTimer); sweep(now, d, Math.min(2600, 600 + Math.abs(d - now) / DAY * 3));
+        clearTimeout(tourTimer); sweep(now, d, Math.min(5000, 1400 + Math.abs(d - now) / DAY * 6));
         $('#tourDate').textContent = `${window.ALBUM} · ${c.label} · “${c.name}” · ${longDate(d)}`; $('#tourQ').textContent = c.q; $('#tourTitle').textContent = c.title;
         $('#tourText').textContent = c.text; $('#tourVerdict').textContent = c.verdict || '';
         // the closing song: a YouTube embed (YouTube licenses what it hosts), shown small in the card and started by the tour's own click
@@ -768,28 +788,94 @@
         // the last track flies the viewer home: out of the galaxy and down to Austin
         if (c.outro) { setHome(AUSTIN, 'AUSTIN'); outro = { start: performance.now() }; document.body.classList.add('outro'); }
         else if (outro) { outro = null; setHome(DALLAS, 'DALLAS'); document.body.classList.remove('outro'); }
+        // now playing: the song's cover, and the songs behind this finding, each one a click away
+        const lead = c.play != null ? songs[c.play] : selected || (list && [...list].sort((a, b) => b.n - a.n)[0]);
+        const art = $('#tourArt'); art.hidden = !lead; art.src = blank; art.dataset.i = lead ? lead.i : '';
+        if (lead) cover(lead).then(u => { if (art.dataset.i === String(lead.i)) { art.src = u; art.hidden = u === blank; } });
+        const rel = (list || []).filter(s => s !== lead && s.born <= d).sort((a, b) => b.n - a.n).slice(0, 4), relBox = $('#tourRel');
+        relBox.hidden = !rel.length;
+        relBox.innerHTML = rel.length ? `<div class="label">Behind this track</div>` + rel.map(s => `<button data-s="${s.i}"><img alt="" src="${blank}"><span><b>${esc(s.title)}</b><i>${esc(s.A.name)} · ${fmt(s.n)} listens</i></span></button>`).join('') : '';
+        relBox.querySelectorAll('[data-s]').forEach(b => { const s = songs[+b.dataset.s]; cover(s).then(u => { b.querySelector('img').src = u; }); b.onclick = () => { pauseTour(); openSong(s); }; });
+        paused = false; $('#tourPlay').textContent = '❚❚';
         tour.classList.add('on'); $('#hero').classList.add('quiet');
-        // long enough to read: about a quarter second a word, between 7 and 14 seconds
-        const words = (c.text + ' ' + (c.verdict || '')).split(/\s+/).length, ms = clamp(3500 + words * 230, 7000, 14000);
+        const ms = trackMs(c); markTrack(i);
         const bar = $('#tourBar'); bar.style.transition = 'none'; bar.style.width = '0'; requestAnimationFrame(() => { bar.style.transition = `width ${ms}ms linear`; bar.style.width = '100%'; });
         tourTimer = setTimeout(() => step >= 0 && (step < TOUR.length - 1 ? startTour(step + 1) : endTour()), ms);
     }
+    // pausing holds the track where it is, so you can wander the sky; play picks the track back up from its start
+    function pauseTour() {
+        if (step < 0 || paused) return; paused = true; clearTimeout(tourTimer); audio.pause();
+        const bar = $('#tourBar'), w = getComputedStyle(bar).width; bar.style.transition = 'none'; bar.style.width = w;
+        $('#tourPlay').textContent = '▶'; $('#albumPlay').textContent = '▶';
+    }
+    function pauseOrEnd() { if (step >= 0) pauseTour(); else endTour(); }
     function endTour() {
-        if (step < 0) return; step = -1; clearTimeout(tourTimer); tour.classList.remove('on'); ticks.querySelectorAll('button').forEach(b => b.classList.remove('on')); audio.pause();
+        closeAlbum(); if (step < 0) return; step = -1; paused = false; clearTimeout(tourTimer); tour.classList.remove('on'); ticks.querySelectorAll('button').forEach(b => b.classList.remove('on')); audio.pause();
         tourSet = null; nightTarget = 0; pair = null; selected = null; focusArtist = null; if (moodBefore) { setColor(moodBefore); moodBefore = null; }
         $('#tourVideo').innerHTML = ''; $('#tourVideo').hidden = true;
         if (outro) { outro = null; setHome(DALLAS, 'DALLAS'); document.body.classList.remove('outro'); }
     }
-    $('#tourBtn').onclick = () => startTour(0);
+    // the album as a tracklist: Side A, Side B and the vault, the playing track lit, any track a click away
+    const album = $('#album'), mmss = ms => `${Math.floor(ms / 60000)}:${String(Math.round(ms / 1000) % 60).padStart(2, '0')}`;
+    const monthYear = t => new Date(t).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+    (() => {
+        const total = TOUR.reduce((a, c) => a + trackMs(c), 0);
+        let html = `<button class="x" id="albumX" aria-label="Close the album">×</button>
+            <div class="head"><div class="label">Album · Suhani Tiwari</div><h2>${esc(window.ALBUM)}</h2><div class="meta">${TOUR.length} tracks · ${Math.round(total / 60000)} min · ${fmt(D.totals.listens)} listens behind it</div></div>
+            <div class="acts"><button class="big" id="albumPlay" aria-label="Play the album">▶</button>
+                <button class="icon" id="albumSave" title="Download the report" aria-label="Download the report">↓</button>
+                <button class="pill" data-open="yours">Want yours too?</button></div>
+            <div class="cols"><span>#</span><span>Title</span><span>Date</span><span>◷</span></div><ol>`, side = null;
+        TOUR.forEach((c, i) => {
+            const sd = c.side || 'From the Vault';
+            if (sd !== side) { side = sd; html += `<li class="side">${esc(sd)}</li>`; }
+            html += `<li><button data-i="${i}"><span class="n"><i>${i + 1}</i><b>▶</b></span><span class="t"><b>${esc(c.name)}</b><span>${esc(c.title)}</span></span><span class="d">${monthYear(day(c.date.slice(0, 10)))}</span><span class="l">${mmss(trackMs(c))}</span></button></li>`;
+        });
+        album.innerHTML = html + '</ol>';
+        album.querySelectorAll('[data-i]').forEach(b => b.onclick = () => startTour(+b.dataset.i));
+        $('#albumPlay').onclick = () => step < 0 ? startTour(0) : paused ? startTour(step) : pauseTour();
+        $('#albumX').onclick = endTour;
+        $('#albumSave').onclick = saveReport;
+    })();
+    // the report: the whole album as one page to keep, every track's question, finding and verdict
+    function saveReport() {
+        const T = D.totals; let side = null, rows = '';
+        TOUR.forEach((c, i) => {
+            const sd = c.side || 'From the Vault';
+            if (sd !== side) { side = sd; rows += `<h2>${esc(sd)}</h2>`; }
+            rows += `<section><div class="k">${i + 1} · “${esc(c.name)}” · ${longDate(day(c.date.slice(0, 10)))}</div><p class="q">${esc(c.q)}</p><h3>${esc(c.title)}</h3><p>${esc(c.text)}</p>${c.verdict ? `<p class="v">${esc(c.verdict)}</p>` : ''}</section>`;
+        });
+        const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(window.ALBUM)} · Suhani Tiwari</title>
+<style>body{margin:0;background:#FBF7FA;color:#1C1424;font:16px/1.55 Georgia,serif}main{max-width:680px;margin:0 auto;padding:56px 24px 80px}
+.k{font:12px ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:#8A7F96}h1{font-weight:400;font-size:44px;line-height:1.05;margin:8px 0}
+.stats{display:flex;gap:28px;flex-wrap:wrap;margin:22px 0 8px}.stats b{display:block;font-size:26px;font-weight:400}.stats span{font:11px ui-monospace,Menlo,monospace;text-transform:uppercase;letter-spacing:.08em;color:#8A7F96}
+h2{font:500 12px ui-monospace,Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:#C2577F;margin:44px 0 0;padding-bottom:8px;border-bottom:1px solid #E6DCE6}
+section{padding:22px 0;border-bottom:1px solid #EEE6EE;break-inside:avoid}h3{font-weight:400;font-size:26px;margin:2px 0 8px}.q{font-style:italic;color:#C2577F;margin:8px 0 0}.v{font-weight:600}
+footer{margin-top:40px;font:12px ui-monospace,Menlo,monospace;color:#8A7F96}@media print{body{background:#fff}main{padding-top:0}}</style></head>
+<body><main><div class="k">Heavy Rotation · a report on my listening · May 2022 – ${monthYear(t1)}</div><h1>${esc(window.ALBUM)}</h1>
+<div class="stats"><div><b>${fmt(T.listens)}</b><span>listens</span></div><div><b>${fmt(T.songs)}</b><span>songs</span></div><div><b>${fmt(T.artists)}</b><span>artists</span></div><div><b>${fmt(T.hours)}</b><span>hours</span></div></div>
+${rows}<footer>Every number computed from my Spotify history by my own data warehouse. © ${new Date().getFullYear()} Suhani Tiwari · ${esc(location.origin + location.pathname)}</footer></main></body></html>`;
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([page], { type: 'text/html' }));
+        a.download = 'in-my-headphones-suhani-tiwari.html'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }
+    function openAlbum() { album.classList.add('on'); document.body.classList.add('listening'); }
+    function closeAlbum() { album.classList.remove('on'); document.body.classList.remove('listening'); markTrack(-1); }
+    function markTrack(i) {
+        album.querySelectorAll('[data-i]').forEach(b => b.classList.toggle('on', +b.dataset.i === i));
+        const on = album.querySelector('[data-i].on'); if (on) on.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        $('#albumPlay').textContent = i >= 0 ? '❚❚' : '▶';
+    }
+    $('#tourBtn').onclick = openAlbum;
     $('#tourNext').onclick = () => step < TOUR.length - 1 ? startTour(step + 1) : endTour();
     $('#tourPrev').onclick = () => startTour(Math.max(0, step - 1));
     $('#tourEnd').onclick = endTour;
+    $('#tourPlay').onclick = () => paused ? startTour(step) : pauseTour();
 
     // ---------- decoder and case study ----------
     const scrim = $('#scrim'); let openPanel = null;
     function openOverlay(id) { closeOverlays(); openPanel = $('#' + id); openPanel.classList.add('on'); scrim.classList.add('on'); if (id === 'how') history.replaceState(null, '', '#how'); }
     function closeOverlays() { if (openPanel) openPanel.classList.remove('on'); openPanel = null; scrim.classList.remove('on'); if (location.hash) history.replaceState(null, '', location.pathname); }
-    document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => { endTour(); openOverlay(b.dataset.open); });
+    document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => { pauseOrEnd(); openOverlay(b.dataset.open); });
     document.querySelectorAll('[data-close]').forEach(b => b.onclick = closeOverlays);
     scrim.onclick = closeOverlays;
     const T = D.totals, funnel = [['Raw records in the export', T.records], ['Songs (not podcasts or audiobooks)', T.song_records], ['Minus private sessions', T.song_records - T.private],
@@ -861,13 +947,13 @@
     const lines = [[100, 1900, 'Dallas · May 21, 2022', 'I press play.'],
         [2100, 3400, `${fmt(D.totals.listens)} listens later…`],
         [3600, 6000, NAME, 'my listening galaxy']];
-    function say(big, small) { prelude.innerHTML = `<div class="line"><b>${esc(big)}</b>${small ? `<span>${esc(small)}</span>` : ''}</div>`; const ln = prelude.querySelector('.line'); if (freeze != null) ln.classList.add('on'); else requestAnimationFrame(() => requestAnimationFrame(() => ln.classList.add('on'))); }
-    function hush() { const l = prelude.querySelector('.line'); if (l) l.classList.remove('on'); }
+    function say(big, small) { prelude.innerHTML = `<div class="line"><b>${esc(big)}</b>${small ? `<span>${esc(small)}</span>` : ''}</div>`; const ln = prelude.querySelector('.line'); if (freeze != null) ln.classList.add('on'); else requestAnimationFrame(() => requestAnimationFrame(() => ln.isConnected && !ln.dataset.gone && ln.classList.add('on'))); }
+    function hush() { const l = prelude.querySelector('.line'); if (l) { l.classList.remove('on'); l.dataset.gone = 1; } }   // gone: a fade-in still waiting on a frame mustn't bring it back
     if (!reduced) {
         document.body.classList.add('intro');
         if (freeze != null) { const l = lines.find(([a, b]) => freeze * 1000 >= a && freeze * 1000 < b); if (l) say(l[2], l[3]); }
         else for (const [a, b, big, small] of lines) { pre.timers.push(setTimeout(() => say(big, small), a), setTimeout(hush, b)); }
-        $('#skip').onclick = skipIntro;
+        skipBtn.onclick = () => { if (!pre.done) skipIntro(); else if (replaying) finishReplay(); };
     }
     function skipIntro() {
         if (pre.done || performance.now() >= pre.end) return;
@@ -876,8 +962,8 @@
     }
     function beginGalaxy(time) {
         pre.done = true; intro.start = time;
-        document.body.classList.remove('intro');
-        setTimeout(() => { if (!bang && step < 0) sweep(t0, t1, 16000); }, reduced ? 0 : 1200);
+        document.body.classList.add('replay'); document.body.classList.remove('intro');
+        setTimeout(() => { if (!bang && step < 0) replay(); }, reduced ? 0 : 1200);
     }
     addEventListener('keydown', e => { if (!pre.done && (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); skipIntro(); } });
     cv.addEventListener('click', () => { if (!pre.done) skipIntro(); });
