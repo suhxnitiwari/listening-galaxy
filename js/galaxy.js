@@ -162,6 +162,9 @@
     const KEYS = [[0, 0.6], [1, 2.9], [2, 4.7], [3.4, 7.2], [6, 12]];
     const scene = r => { for (let i = 1; i < KEYS.length; i++) if (r <= KEYS[i][0]) { const [a0, b0] = KEYS[i - 1], [a1, b1] = KEYS[i]; return b0 + (b1 - b0) * (r - a0) / (a1 - a0); } return 12; };
     const pre = { start: performance.now(), end: performance.now() + (reduced ? 0 : PRE_MS), done: false, timers: [] };
+    // ?frame=2.5 freezes the opening at 2.5 seconds, for reviewing it frame by frame
+    const freeze = new URLSearchParams(location.search).has('frame') ? parseFloat(new URLSearchParams(location.search).get('frame')) : null;
+    if (freeze != null) pre.end = Infinity;
     const intro = { start: pre.end, ms: 5600, touched: false };
     const R1 = Math.random, gs = () => R1() + R1() + R1() - 1.5, smooth = k => { k = clamp(k, 0, 1); return k * k * (3 - 2 * k); };
     const preStars = [...Array(1200)].map(() => [(R1() - 0.5) * 6, (R1() - 0.5) * 6, 0.3 + R1() * 6, R1()]);
@@ -285,7 +288,7 @@
     let frames = 0, fpsAt = performance.now(), lastT = performance.now();
     function frame(time) {
         const dt = Math.min(50, time - lastT); lastT = time;
-        if (time < pre.end) { drawPre(time); requestAnimationFrame(frame); return; }
+        if (time < pre.end) { drawPre(freeze != null ? pre.start + freeze * 1000 : time); requestAnimationFrame(frame); return; }
         if (!pre.done) beginGalaxy(time);
         frontier += (grown() - frontier) * 0.08;
         const ik = clamp((time - intro.start) / intro.ms, 0, 1), ie = 1 - (1 - ik) ** 3, sw = (1 - ie) * 2.6;
@@ -803,11 +806,12 @@
     const lines = [[100, 1900, 'Dallas · May 21, 2022', 'I press play.'],
         [2100, 3400, `${fmt(D.totals.listens)} listens later…`],
         [3600, 6000, NAME, 'my listening galaxy']];
-    function say(big, small) { prelude.innerHTML = `<div class="line"><b>${esc(big)}</b>${small ? `<span>${esc(small)}</span>` : ''}</div>`; requestAnimationFrame(() => requestAnimationFrame(() => prelude.querySelector('.line').classList.add('on'))); }
+    function say(big, small) { prelude.innerHTML = `<div class="line"><b>${esc(big)}</b>${small ? `<span>${esc(small)}</span>` : ''}</div>`; const ln = prelude.querySelector('.line'); if (freeze != null) ln.classList.add('on'); else requestAnimationFrame(() => requestAnimationFrame(() => ln.classList.add('on'))); }
     function hush() { const l = prelude.querySelector('.line'); if (l) l.classList.remove('on'); }
     if (!reduced) {
         document.body.classList.add('intro');
-        for (const [a, b, big, small] of lines) { pre.timers.push(setTimeout(() => say(big, small), a), setTimeout(hush, b)); }
+        if (freeze != null) { const l = lines.find(([a, b]) => freeze * 1000 >= a && freeze * 1000 < b); if (l) say(l[2], l[3]); }
+        else for (const [a, b, big, small] of lines) { pre.timers.push(setTimeout(() => say(big, small), a), setTimeout(hush, b)); }
         $('#skip').onclick = skipIntro;
     }
     function skipIntro() {
