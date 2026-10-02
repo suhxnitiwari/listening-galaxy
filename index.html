@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Listening Galaxy | Suhani Tiwari</title>
+<meta name="author" content="Suhani Tiwari"><meta name="copyright" content="© 2026 Suhani Tiwari. All rights reserved.">
+<meta name="description" content="Every song I have ever played on Spotify, as a star.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+    /* Concept 3: every song I've ever played is a star. Artists are constellations. Stars light up the day I found them. */
+    :root { --ink: #F3ECF4; --dim: #8F86A3; --pink: #F7A8C4; --serif: "Bodoni Moda", Georgia, serif; --sans: "Instrument Sans", system-ui, sans-serif; --mono: "JetBrains Mono", monospace; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #07060E; color: var(--ink); font-family: var(--sans); }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+    canvas.drag { cursor: grabbing; }
+    .hud { position: fixed; z-index: 2; pointer-events: none; }
+    .top { left: 0; right: 0; top: 0; display: flex; justify-content: space-between; padding: 24px clamp(20px, 4vw, 56px); font: 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+    .top a { pointer-events: auto; color: var(--dim); text-decoration: none; }
+    .intro { left: clamp(20px, 4vw, 56px); top: 76px; max-width: 520px; }
+    h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(38px, 5vw, 72px); line-height: 1.02; margin: 0; letter-spacing: -.02em; text-shadow: 0 4px 40px #000; }
+    h1 em { color: var(--pink); }
+    .intro p { color: #CFC6DA; font-size: 16px; max-width: 40ch; margin: 14px 0 0; text-shadow: 0 2px 20px #000; }
+    .count { margin-top: 18px; font: 13px var(--mono); color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
+    .count b { color: var(--ink); font-size: 22px; font-family: var(--serif); letter-spacing: 0; }
+    .time { left: 50%; bottom: 26px; transform: translateX(-50%); width: min(720px, calc(100% - 40px)); pointer-events: auto; text-align: center; }
+    .time .date { font-family: var(--serif); font-size: clamp(26px, 3vw, 40px); }
+    .time input { width: 100%; accent-color: #F7A8C4; margin-top: 8px; }
+    .time .row { display: flex; justify-content: space-between; font: 11px var(--mono); color: var(--dim); margin-top: 4px; }
+    .time button { margin-top: 10px; background: none; border: 1px solid #ffffff40; color: var(--ink); border-radius: 999px; padding: 8px 16px; font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; cursor: pointer; }
+    .tip { position: fixed; z-index: 3; display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; padding: 10px 14px 10px 10px; border-radius: 12px; background: rgba(20,16,32,.88); backdrop-filter: blur(10px); border: 1px solid #ffffff1f; pointer-events: none; opacity: 0; transition: opacity .15s; max-width: 340px; }
+    .tip.on { opacity: 1; } .tip img { width: 56px; height: 56px; border-radius: 6px; object-fit: cover; background: #222; }
+    .tip b { display: block; font-size: 15px; } .tip span { display: block; font-size: 12px; color: #CFC6DA; } .tip i { display: block; font: normal 11px var(--mono); color: var(--pink); margin-top: 4px; text-transform: uppercase; letter-spacing: .05em; }
+    .legend { right: clamp(20px, 4vw, 56px); top: 80px; text-align: right; font: 11px var(--mono); color: var(--dim); text-transform: uppercase; letter-spacing: .06em; line-height: 1.9; }
+    .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-left: 8px; vertical-align: -1px; }
+    @media (max-width: 700px) { .legend { display: none; } .intro { top: 64px; } }
+</style>
+</head>
+<body>
+<canvas id="sky"></canvas>
+<div class="hud top"><a href="https://suhanitiwari.com">Suhani Tiwari</a><span>The galaxy · 2022 – 2026</span></div>
+<div class="hud intro"><h1>Every song I've ever played is <em>a star.</em></h1>
+    <p>Bigger means more plays. Each constellation is an artist. Drag through time and watch them light up the day I found them. Hover a star, click to hear it.</p>
+    <div class="count"><b id="lit">0</b> stars lit · <span id="date0"></span></div></div>
+<div class="hud legend" id="legend"></div>
+<div class="hud time"><div class="date" id="date">May 2022</div><input type="range" id="slider" min="0" max="1000" value="0" aria-label="Time">
+    <div class="row"><span>May 2022</span><span>2023</span><span>2024</span><span>2025</span><span>now</span></div><button id="bang">▶ Replay four years</button></div>
+<div class="tip" id="tip"><img alt=""><div><b></b><span></span><i></i></div></div>
+<audio id="audio" preload="none"></audio>
+<script>
+(async () => {
+    const $ = s => document.querySelector(s), fmt = n => Math.round(n).toLocaleString('en-US');
+    const songs = (await fetch('data/universe.json').then(r => r.json())).map(s => ({ title: s.t, a: s.a, n: s.n, f: s.f }));
+    const t0 = new Date('2022-05-21T12:00:00').getTime(), t1 = new Date('2026-09-28T12:00:00').getTime();
+    const yearColor = { 2022: [126, 178, 255], 2023: [170, 140, 255], 2024: [255, 160, 220], 2025: [255, 190, 150], 2026: [255, 236, 170] };
+    $('#legend').innerHTML = Object.entries(yearColor).map(([y, c]) => `${y === '2022' ? 'found in ' : ''}${y}<i style="background:rgb(${c})"></i>`).join('<br>');
+
+    // constellations: artists ranked by plays, placed on a golden-angle spiral; the biggest sit at the center
+    const byArtist = new Map();
+    for (const s of songs) { if (!byArtist.has(s.a)) byArtist.set(s.a, { name: s.a, n: 0, songs: [] }); const A = byArtist.get(s.a); A.n += s.n; A.songs.push(s); }
+    const artists = [...byArtist.values()].sort((a, b) => b.n - a.n);
+    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    artists.forEach((A, k) => {
+        const ang = k * 2.39996, rad = k === 0 ? 0 : 120 + Math.sqrt(k) * 64;
+        A.x = Math.cos(ang) * rad; A.y = Math.sin(ang) * rad * 0.72;
+        const spread = 18 + Math.sqrt(A.songs.length) * 9;
+        A.songs.forEach(s => { const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * spread; s.x = A.x + Math.cos(a) * d; s.y = A.y + Math.sin(a) * d * 0.8;
+            s.r = 0.6 + Math.sqrt(s.n) * 0.42; s.time = new Date(s.f + 'T12:00:00').getTime(); s.c = yearColor[s.f.slice(0, 4)] || [255, 255, 255]; s.tw = rnd() * 6.28; });
+    });
+
+    const cv = $('#sky'), g = cv.getContext('2d');
+    let W, H, dpr, view = { x: 0, y: 30, z: 1 }, now = t0, hover = null;
+    const size = () => { dpr = devicePixelRatio || 1; W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; view.z = Math.min(W, H) / 900; };
+    addEventListener('resize', size); size();
+    const toScreen = s => [W / 2 + (s.x - view.x) * view.z, H / 2 + (s.y - view.y) * view.z];
+    const dust = [...Array(500)].map(() => [rnd() * 1, rnd() * 1, rnd() * 1.2]);
+
+    function draw(time) {
+        g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = '#07060E'; g.fillRect(0, 0, W, H);
+        for (const [x, y, r] of dust) { g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(x * W, y * H, r, r); }
+        let lit = 0;
+        g.globalCompositeOperation = 'lighter';
+        // Ariana's constellation glows like a nebula
+        const A0 = artists[0], [nx, ny] = toScreen(A0), neb = g.createRadialGradient(nx, ny, 0, nx, ny, 220 * view.z);
+        const k0 = Math.min(1, (now - t0) / ((t1 - t0) * 0.4));
+        neb.addColorStop(0, `rgba(247,168,196,${0.22 * k0})`); neb.addColorStop(1, 'rgba(247,168,196,0)'); g.fillStyle = neb; g.fillRect(nx - 240 * view.z, ny - 240 * view.z, 480 * view.z, 480 * view.z);
+        for (const s of songs) {
+            if (s.time > now) continue; lit++;
+            const age = Math.min(1, (now - s.time) / (864e5 * 30)), [x, y] = toScreen(s), r = s.r * view.z * (s === hover ? 2.4 : 1) * (0.6 + 0.4 * age);
+            if (x < -20 || y < -20 || x > W + 20 || y > H + 20) continue;
+            const tw = 0.75 + 0.25 * Math.sin(time / 700 + s.tw), [cr, cgc, cb] = s.c;
+            if (r > 1.6) { const halo = g.createRadialGradient(x, y, 0, x, y, r * 4); halo.addColorStop(0, `rgba(${cr},${cgc},${cb},${0.35 * tw})`); halo.addColorStop(1, `rgba(${cr},${cgc},${cb},0)`); g.fillStyle = halo; g.beginPath(); g.arc(x, y, r * 4, 0, 7); g.fill(); }
+            g.fillStyle = `rgba(${Math.min(255, cr + 60)},${Math.min(255, cgc + 60)},${Math.min(255, cb + 60)},${tw})`; g.beginPath(); g.arc(x, y, Math.max(0.5, r), 0, 7); g.fill();
+        }
+        g.globalCompositeOperation = 'source-over';
+        // constellation names, only once enough of them is lit
+        g.textAlign = 'center';
+        artists.slice(0, 14).forEach((A, k) => { const litK = A.songs.filter(s => s.time <= now).length / A.songs.length; if (litK < 0.25) return;
+            const [x, y] = toScreen(A); g.font = `${k === 0 ? 22 : 14}px "Bodoni Moda", Georgia, serif`; g.fillStyle = `rgba(243,236,244,${0.25 + 0.5 * litK})`; g.fillText(A.name, x, y + (k === 0 ? -150 : -26) * view.z); });
+        $('#lit').textContent = fmt(lit);
+        $('#date').textContent = new Date(now).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+
+    // time: the slider, and a "big bang" replay on load
+    const slider = $('#slider'); let bang = null;
+    slider.addEventListener('input', () => { cancelAnimationFrame(bang); bang = null; now = t0 + (t1 - t0) * slider.value / 1000; });
+    function replay() { cancelAnimationFrame(bang); const start = performance.now(), D = 14000;
+        const step = t => { const k = Math.min(1, (t - start) / D); now = t0 + (t1 - t0) * (1 - Math.pow(1 - k, 1.6)); slider.value = Math.round(1000 * (now - t0) / (t1 - t0)); if (k < 1) bang = requestAnimationFrame(step); else bang = null; };
+        bang = requestAnimationFrame(step); }
+    $('#bang').onclick = () => { slider.value = 0; now = t0; replay(); };
+    replay();
+    $('#date0').textContent = `${fmt(songs.length)} songs · ${fmt(artists.length)} artists`;
+
+    // hover a star, click to hear it; drag to pan, scroll to zoom
+    const tip = $('#tip'), audio = $('#audio');
+    let drag = null;
+    cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: 0 }; cv.classList.add('drag'); });
+    addEventListener('pointerup', e => { if (drag && drag.moved < 5 && hover) play(hover); drag = null; cv.classList.remove('drag'); });
+    cv.addEventListener('pointermove', e => {
+        if (drag) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved = Math.abs(dx) + Math.abs(dy); view.x = drag.vx - dx / view.z; view.y = drag.vy - dy / view.z; return; }
+        let best = null, bd = 14 * 14;
+        for (const s of songs) { if (s.time > now) continue; const [x, y] = toScreen(s), d = (x - e.clientX) ** 2 + (y - e.clientY) ** 2; if (d < bd && d < Math.max(bd, (s.r * view.z * 2) ** 2)) { bd = d; best = s; } }
+        if (best !== hover) { hover = best; if (best) tip.querySelector('img').src = art(best); }
+        if (hover) { tip.querySelector('b').textContent = hover.title; tip.querySelector('span').textContent = hover.a; tip.querySelector('i').textContent = `${fmt(hover.n)} plays · found ${new Date(hover.time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+            tip.style.left = Math.min(W - 350, e.clientX + 16) + 'px'; tip.style.top = (e.clientY + 16) + 'px'; tip.classList.add('on'); }
+        else tip.classList.remove('on');
+    });
+    cv.addEventListener('wheel', e => { e.preventDefault(); view.z = Math.max(0.3, Math.min(6, view.z * (e.deltaY < 0 ? 1.12 : 0.89))); }, { passive: false });
+    // covers and 30-second previews come straight from Apple's iTunes Search (JSONP, so this works as a plain static site)
+    const found = new Map();
+    function itunes(s) {
+        const key = s.title + '|' + s.a;
+        if (!found.has(key)) found.set(key, new Promise(resolve => {
+            const cb = 'it' + Math.random().toString(36).slice(2), tag = document.createElement('script');
+            const done = v => { clearTimeout(timer); delete window[cb]; tag.remove(); resolve(v || null); };
+            const timer = setTimeout(() => done(null), 6000);
+            window[cb] = d => done(d && d.results && d.results[0]);
+            tag.src = `https://itunes.apple.com/search?term=${encodeURIComponent(s.a + ' ' + s.title)}&entity=song&limit=1&callback=${cb}`;
+            tag.onerror = () => done(null); document.head.appendChild(tag);
+        }));
+        return found.get(key);
+    }
+    const blank = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+    function art(s) { itunes(s).then(it => { if (hover === s) tip.querySelector('img').src = it && it.artworkUrl100 ? it.artworkUrl100.replace('100x100bb', '300x300bb') : blank; }); return blank; }
+    async function play(s) { const it = await itunes(s); if (!it || !it.previewUrl) return; audio.src = it.previewUrl; audio.volume = .8; audio.play().catch(() => {}); }
+})();
+</script>
+</body>
+</html>
