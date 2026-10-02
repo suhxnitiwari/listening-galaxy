@@ -21,7 +21,8 @@ window.buildTour = (D, songs, artists) => {
     const cluster = [wolves, ...wolves.links.slice(0, 3).map(m => m.s)];
 
     const album = [
-        { name: 'god is a woman', date: top.first, q: 'Who runs this galaxy?', title: top.name,
+        { name: 'ariana runs pop',   // shortlisted: 'god is a woman'
+          date: top.first, q: 'Who runs this galaxy?', title: top.name,
           text: `${F.top.share}% of everything Suhani has ever played is ${top.name}: ${F.top_detail.days_nonstop} days of nonstop Ari, ${F.top_detail.songs} different songs, about ${F.top_detail.per_day} a day, on ${F.top_detail.days_share}% of all the days she pressed play. Her holy trinity: ${F.top_detail.albums.map(([a, n]) => `${a} (${fmt(n)})`).join(', ')}. She was #1 in ${F.top.owned} of ${F.top.months} months and through every version of Suhani's life: high school, the summer before college, the move to Austin, and 2026. Nicki Minaj said it best on Side to Side, and in this galaxy it's true: Ariana runs pop.`,
           verdict: "Ariana isn't Suhani's favorite artist. She's the gravitational center.", focus: { artist: F.top.artist }, play: top.songs[0].i },
 
@@ -46,7 +47,7 @@ window.buildTour = (D, songs, artists) => {
           text: `After midnight she's ${F.night[0][1]}× likelier to be playing ${A(F.night[0][0]).name}, ${F.night[1][1]}× ${A(F.night[1][0]).name} and ${F.night[2][1]}× ${A(F.night[2][0]).name}: upbeat songs by hardworking, self-made men that keep her awake. ${A(F.night[0][0]).name} showed up on ${date(F.night_artist.first)}, one week after her first all-nighter, and never left: ${fmt(F.night_artist.listens)} listens, ${title(F.night_artist.song)} alone ${F.night_artist.song_times}. After midnight, ${F.desi_by_hour.night}% of what she plays is South Asian (${F.desi_by_hour.day}% by day). Her late nights end on ${title(F.closers[0][0])} and ${title(F.closers[1][0])}: "Boy, bye. I'm going to build a better future without you, with someone who'll love me like AP Dhillon in the ${title(F.closers[1][0])} video."`,
           verdict: 'When everyone else is asleep, she goes home.', focus: { artists: F.night.map(n => n[0]) }, play: F.closers[1][0] },
 
-        { name: 'no sleep left to cry', date: AN.latest.date, q: 'When does she actually sleep?', title: `${AN.count} all-nighters`, night: true, counter: AN.count,
+        { name: 'goodnight n go?', date: AN.latest.date, q: 'When does she actually sleep?', title: `${AN.count} all-nighters`, night: true, counter: AN.count,
           text: `Most nights the music stops between ${hour(sleep[0])} and ${hour(sleep.at(-1))}. Except ${AN.count} times, when it played every single hour from midnight to 6 AM. The first: ${date(AN.first.date)}, ${title(AN.first.song)} by ${by(AN.first.song)} ${AN.first.times} times. ${AN.by_era.high_school} in high school, ${(AN.by_era.austin || 0) + (AN.by_era.y2026 || 0)} since Austin, a record ${AN.top_month[1]} in ${month(AN.top_month[0])}, and the latest on ${date(AN.latest.date)} (${title(AN.latest.song)} on repeat). Most end on a ${AN.top_weekday[0]} morning, and the song most often playing at 5 AM is ${title(F.night_song.five_am)}: ${F.night_song.five_am_times} times.`,
           verdict: `${title(F.night_song.five_am)}… asleep, honestly. Why ${AN.top_weekday[0]}s? Monday night is when the week's work peaks, with exams on Wednesdays and Thursdays.`, focus: { songs: AN.latest.songs }, play: F.night_song.five_am },
 
