@@ -46,7 +46,7 @@ window.buildTour = (D, songs, artists) => {
           text: `After midnight she's ${F.night[0][1]}× likelier to be playing ${A(F.night[0][0]).name}, ${F.night[1][1]}× ${A(F.night[1][0]).name} and ${F.night[2][1]}× ${A(F.night[2][0]).name}: upbeat songs by hardworking, self-made men that keep her awake. ${A(F.night[0][0]).name} showed up on ${date(F.night_artist.first)}, one week after her first all-nighter, and never left: ${fmt(F.night_artist.listens)} listens, ${title(F.night_artist.song)} alone ${F.night_artist.song_times}. After midnight, ${F.desi_by_hour.night}% of what she plays is South Asian (${F.desi_by_hour.day}% by day). Her late nights end on ${title(F.closers[0][0])} and ${title(F.closers[1][0])}: "Boy, bye. I'm going to build a better future without you, with someone who'll love me like AP Dhillon in the ${title(F.closers[1][0])} video."`,
           verdict: 'When everyone else is asleep, she goes home.', focus: { artists: F.night.map(n => n[0]) }, play: F.closers[1][0] },
 
-        { name: 'goodnight n go', date: AN.latest.date, q: 'When does she actually sleep?', title: `${AN.count} all-nighters`, night: true, counter: AN.count,
+        { name: 'no sleep left to cry', date: AN.latest.date, q: 'When does she actually sleep?', title: `${AN.count} all-nighters`, night: true, counter: AN.count,
           text: `Most nights the music stops between ${hour(sleep[0])} and ${hour(sleep.at(-1))}. Except ${AN.count} times, when it played every single hour from midnight to 6 AM. The first: ${date(AN.first.date)}, ${title(AN.first.song)} by ${by(AN.first.song)} ${AN.first.times} times. ${AN.by_era.high_school} in high school, ${(AN.by_era.austin || 0) + (AN.by_era.y2026 || 0)} since Austin, a record ${AN.top_month[1]} in ${month(AN.top_month[0])}, and the latest on ${date(AN.latest.date)} (${title(AN.latest.song)} on repeat). Most end on a ${AN.top_weekday[0]} morning, and the song most often playing at 5 AM is ${title(F.night_song.five_am)}: ${F.night_song.five_am_times} times.`,
           verdict: `${title(F.night_song.five_am)}… asleep, honestly. Why ${AN.top_weekday[0]}s? Monday night is when the week's work peaks, with exams on Wednesdays and Thursdays.`, focus: { songs: AN.latest.songs }, play: F.night_song.five_am },
 
@@ -83,13 +83,13 @@ window.buildTour = (D, songs, artists) => {
           verdict: 'Still pressing play.', outro: true },
     ];
     const vault = [
+        { name: "santa tell me why it's may", date: (F.off_season ? F.off_season.month : '2023-05') + '-15', q: 'What else does the data know?', title: 'The quirks file',
+          text: `${F.off_season ? `${F.off_season.times} plays of ${title(F.off_season.song)} by ${by(F.off_season.song)}, in ${month(F.off_season.month)}. ` : ''}And the rest of the evidence: she can skip ${A(F.skip.artist).name} in ${F.skip.median_seconds} seconds, but let one song loop ${F.day.count} times in a day. She hit back on ${title(F.rewound[0][0])} ${F.rewound[0][1]} times just to hear it again. She plays her favorite albums front to back, in order, unshuffled. Her all-nighters land on ${AN.top_weekday[0]}s. Her gym guilty pleasure is Chase Atlantic. She was up at ${clock(releaseNight ? releaseNight.first_at : '00:50')} for an album drop. And she packed ${F.trips[1].artists.some(a => A(a).name === 'One Direction') ? 'One Direction' : 'her favorites'} for India.`,
+          verdict: "She doesn't know why either. She's just weird like that.", focus: { songs: [F.off_season ? F.off_season.song : F.day.song, F.rewound[0][0], F.day.song] }, play: F.off_season ? F.off_season.song : F.rewound[0][0] },
+
         { name: 'phone down', date: '2025-04-15', q: `Why are ${F.instrumentals.count} of her plays instrumentals?`, title: 'Study mode', counter: F.instrumentals.count,
           text: `In 2025, ${F.instrumentals.count} plays of ${top.name} instrumentals, every one played start to finish. That's what it sounds like when she puts her phone away to study.`,
           verdict: 'The lyrics would have been a distraction.', focus: { songs: F.instrumentals.songs }, play: F.instrumentals.songs[0] },
-
-        ...(F.off_season ? [{ name: 'christmas in may', date: F.off_season.month + '-15', q: `Why ${title(F.off_season.song)} in ${month(F.off_season.month).split(' ')[0]}?`, title: 'Christmas in May',
-          text: `${F.off_season.times} plays of ${title(F.off_season.song)} by ${by(F.off_season.song)}, in ${month(F.off_season.month)}.`,
-          verdict: "She doesn't know either. She's just weird like that.", focus: { song: F.off_season.song }, play: F.off_season.song }] : []),
 
         { name: 'everytime', date: '2025-08-15', q: 'Which songs can she not let end?', title: title(F.opener[0]),
           text: `${title(F.opener[0])} opens more of her listening sessions than any other song (${F.opener[1]} times). It's her favorite. And the songs she hits back on to hear again: ${F.rewound.map(([i, n]) => `${title(i)} (${n} times)`).join(', ')}.`,
