@@ -1,6 +1,6 @@
-# Listening Galaxy
+# Heavy Rotation
 
-**Four years of my Spotify listening, mapped as a universe.** Every song I've played is a star, every artist is a constellation, and the sky replays itself from May 2022 to now.
+*My listening galaxy.* **Four years of my Spotify listening, mapped as a universe.** Every song I've played is a star, every artist is a constellation, and the sky replays itself from May 2022 to now.
 
 **→ [suhxnitiwari.github.io/listening-galaxy](https://suhxnitiwari.github.io/listening-galaxy/)**
 
@@ -8,7 +8,7 @@
 
 ## What you can do
 
-- **Fly out from Earth.** It opens on a planet made of dots, pulls back past the Moon and the solar system until everything collapses into one point, then a big bang becomes my galaxy.
+- **Fly out from Dallas.** It opens over Dallas at night on May 21, 2022, the day my history starts, pulls back to Earth, out to the Milky Way, past it, and dives into a new galaxy: Heavy Rotation.
 - **Watch it grow.** Four years replay in 16 seconds from the center outward, every star igniting on the day I first heard it, with a ticker of who owned each month. Drag the timeline to any month; the bars under it are listens per month, pink when my #1 artist owned it.
 - **Listen through my four years.** A tour of sixteen chapters the data found on its own (big artists arriving, the rival who took the most months from my #1, each year's song, my biggest day, my longest streak), each one playing its song.
 - **Touch the sky.** It's a 3D disk: drag to spin it, shift-drag to move, scroll to zoom. Stars lean toward your cursor, constellations draw themselves (with the artist's photo) as you come close, and clicking empty space sends a ripple through the galaxy.

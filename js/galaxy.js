@@ -154,68 +154,113 @@
     });
     const clouds = [...Array(14)].map((_, i) => { const r = 250 + rnd() * 1700, th = (i % 2) * Math.PI + Math.log(r / 50) * 1.9 + (rnd() - 0.5) * 0.5;
         return { x: Math.cos(th) * r, y: Math.sin(th) * r, r: 220 + rnd() * 380, c: gasColors[i % gasColors.length] }; });
-    // ---------- the prelude: from Earth, out past the solar system, into deep space, until everything is one point ----------
+    // ---------- the prelude: Dallas at night, out to Earth, out to the Milky Way, past it, and into a new galaxy ----------
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const pre = { start: performance.now(), end: performance.now() + (reduced ? 0 : 9400), done: false, timers: [] };
+    const PRE_MS = 12000;
+    const pre = { start: performance.now(), end: performance.now() + (reduced ? 0 : PRE_MS), done: false, timers: [] };
     const intro = { start: pre.end, ms: 5600, touched: false };
-    const preStars = [...Array(1200)].map(() => [(Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, 0.3 + Math.random() * 6, Math.random()]);
+    const R1 = Math.random, gs = () => R1() + R1() + R1() - 1.5, smooth = k => { k = clamp(k, 0, 1); return k * k * (3 - 2 * k); };
+    const preStars = [...Array(1200)].map(() => [(R1() - 0.5) * 6, (R1() - 0.5) * 6, 0.3 + R1() * 6, R1()]);
     const land = [];   // continents as dots, like everything else here
-    for (let c = 0; c < 9; c++) { const la = (Math.random() - 0.5) * 2, lo = c / 9 * 6.283 + Math.random() * 0.5, sp = 0.28 + Math.random() * 0.3;
-        for (let k = 0; k < 340; k++) { const gs = () => Math.random() + Math.random() + Math.random() - 1.5; land.push([clamp(la + gs() * sp, -1.45, 1.45), lo + gs() * sp * 1.6, Math.random()]); } }
-    const camBack = t => t < 2.2 ? 0 : Math.exp((t - 2.2) * 0.95) - 1;
+    for (let c = 0; c < 9; c++) { const la = (R1() - 0.5) * 2, lo = c / 9 * 6.283 + R1() * 0.5, sp = 0.28 + R1() * 0.3;
+        for (let k = 0; k < 340; k++) land.push([clamp(la + gs() * sp, -1.45, 1.45), lo + gs() * sp * 1.6, R1()]); }
+    // Dallas from above at night: a street grid that thins out from downtown, freeways, and the two loops (city radius = 1)
+    const city = [];
+    for (let k = 0; k < 2600; k++) { const r = Math.abs(gs()) * 0.75, a = R1() * 6.283; let x = Math.cos(a) * r, y = Math.sin(a) * r;
+        if (R1() < 0.5) x = Math.round(x / 0.045) * 0.045; else y = Math.round(y / 0.045) * 0.045;
+        city.push([x, y, R1() < 0.3 ? [255, 240, 215] : [255, 175, 95], 0.35 + R1() * 0.65]); }
+    for (let k = 0; k < 260; k++) city.push([gs() * 0.07, gs() * 0.07, [255, 248, 235], 1]);   // downtown
+    const roads = [[[-1.2, -0.15], [1.2, 0.12]], [[-0.1, -1.2], [0.08, 1.2]], [[-0.9, -0.9], [0.85, 0.8]], [[-1, 0.7], [0.9, -0.75]]];
+    // spiral galaxies, as points: the Milky Way (with Earth on an outer arm) and the new one
+    function spiral(n, arms, colors, coreC) {
+        return [...Array(n)].map((_, i) => {
+            if (i < n * 0.22) { const r = Math.abs(gs()) * 0.16, a = R1() * 6.283; return [Math.cos(a) * r * 1.4, Math.sin(a) * r, coreC, 0.6 + R1() * 0.4]; }
+            const r = 0.06 + Math.pow(R1(), 0.8) * 0.94, th = (i % arms) * 6.283 / arms + Math.log(r / 0.06) * 1.35 + gs() * 0.28 * (1 - r * 0.4);
+            return [Math.cos(th) * r, Math.sin(th) * r, colors[Math.floor(R1() * colors.length)], 0.25 + R1() * 0.6];
+        });
+    }
+    const milky = spiral(5200, 4, [[170, 190, 255], [200, 210, 255], [255, 200, 215], [235, 235, 255]], [255, 222, 175]);
+    const mine = spiral(5200, 2, [[247, 168, 196], [190, 150, 255], [255, 140, 190], [255, 214, 235]], [255, 236, 245]);
+    const EARTH_IN_MW = [0.52, 0.18];   // where we live: out on an arm, not in the middle
+    function drawSpiral(pts, cx, cy, R, rot, tilt, alpha) {
+        if (R < 1 || alpha <= 0) return;
+        const c = Math.cos(rot), sn = Math.sin(rot);
+        const glow = g.createRadialGradient(cx, cy, 0, cx, cy, R * 0.45); glow.addColorStop(0, `rgba(255,230,210,${0.35 * alpha})`); glow.addColorStop(1, 'rgba(255,230,210,0)');
+        g.fillStyle = glow; g.fillRect(cx - R * 0.45, cy - R * 0.45, R * 0.9, R * 0.9);
+        const ds = Math.max(0.6, R * 0.004);
+        for (const [x, y, col, b] of pts) { const X = cx + (x * c - y * sn) * R, Y = cy + (x * sn + y * c) * R * tilt; if (X < -2 || Y < -2 || X > W + 2 || Y > H + 2) continue;
+            g.fillStyle = `rgba(${col},${b * alpha})`; g.fillRect(X - ds / 2, Y - ds / 2, ds, ds); }
+    }
     function drawPre(time) {
-        const t = (time - pre.start) / 1000, cx = W / 2, cy = H / 2, M = Math.min(W, H), F = M * 0.5, fade = clamp(1 - (t - 7.2) / 1.3, 0, 1);
+        const t = (time - pre.start) / 1000, cx = W / 2, cy = H / 2, M = Math.min(W, H);
         g.setTransform(dpr, 0, 0, dpr, 0, 0); g.globalCompositeOperation = 'source-over'; g.fillStyle = '#03030a'; g.fillRect(0, 0, W, H);
-        // stars stream past as the camera flies backward
         g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
-        const back = camBack(t), backPrev = camBack(t - 0.06);
+
+        // stars: they stream inward while we pull away from Earth, then outward as we fly toward the new galaxy
+        const away = t < 2.6 ? 0 : Math.exp(Math.min(t, 6.5) * 0.6 - 1.56) - 1, toward = t < 8 ? 0 : (t - 8) * 1.4 + Math.pow(Math.max(0, t - 10), 2) * 2;
+        const starA = smooth((t - 2.4) / 1.2);
         for (const [x, y, z, b] of preStars) {
-            const z1 = z + back, z0 = z + backPrev, a = (0.25 + 0.6 * b) * fade * clamp(1.6 / z1 + 0.15, 0, 1); if (a < 0.02) continue;
-            g.strokeStyle = `rgba(${b > 0.75 ? '255,214,235' : b > 0.45 ? '200,210,255' : '255,255,255'},${a})`; g.lineWidth = clamp(1.6 / z1, 0.5, 2.2);
-            g.beginPath(); g.moveTo(cx + x * F / z0, cy + y * F / z0); g.lineTo(cx + x * F / z1 + 0.01, cy + y * F / z1); g.stroke();
+            let z1 = z + away - toward, z0 = z + (t < 6.5 ? Math.exp(Math.min(t - 0.05, 6.5) * 0.6 - 1.56) - 1 : away) - (t < 8 ? 0 : toward - 0.08);
+            z1 = ((z1 - 0.15) % 6 + 6) % 6 + 0.15; z0 = ((z0 - 0.15) % 6 + 6) % 6 + 0.15; if (Math.abs(z1 - z0) > 2) z0 = z1;
+            const a = (0.2 + 0.6 * b) * starA * clamp(1.6 / z1 + 0.1, 0, 1); if (a < 0.02) continue;
+            g.strokeStyle = `rgba(${b > 0.75 ? '255,214,235' : b > 0.45 ? '200,210,255' : '255,255,255'},${a})`; g.lineWidth = clamp(1.4 / z1, 0.5, 2.2);
+            g.beginPath(); g.moveTo(cx + x * M * 0.5 / z0, cy + y * M * 0.5 / z0); g.lineTo(cx + x * M * 0.5 / z1 + 0.01, cy + y * M * 0.5 / z1); g.stroke();
         }
-        // the solar system: orbits around a sun that slides in from the left as we pull back
-        const S = t < 2.2 ? 1 + 0.04 * (1 - t / 2.2) : Math.exp(-(t - 2.2) * 1.55), R = M * 0.24 * S, orbit = M * 0.24 * S * 700, sx = cx - orbit;
-        const vis = clamp((W * 1.8 - orbit) / W, 0, 1) * fade;
-        if (vis > 0) {
-            g.lineWidth = 1;
-            [[0.39, 4.1], [0.72, 1.6], [1, 0], [1.52, 2.3], [2.6, 5.2], [3.6, 0.9]].forEach(([r, ph], k) => {
-                g.strokeStyle = `rgba(200,210,255,${0.22 * vis})`; g.beginPath(); g.ellipse(sx, cy, orbit * r, orbit * r * 0.34, 0, 0, 7); g.stroke();
-                if (k !== 2) { const a = ph + t * (0.5 / r); g.fillStyle = `rgba(230,225,255,${0.8 * vis})`; g.beginPath(); g.arc(sx + Math.cos(a) * orbit * r, cy + Math.sin(a) * orbit * r * 0.34, 1.6, 0, 7); g.fill(); }
-            });
-            const SR = Math.max(4, orbit * 0.05), sun = g.createRadialGradient(sx, cy, 0, sx, cy, SR * 4);
-            sun.addColorStop(0, `rgba(255,250,230,${vis})`); sun.addColorStop(0.2, `rgba(255,200,120,${0.7 * vis})`); sun.addColorStop(1, 'rgba(255,150,80,0)'); g.fillStyle = sun; g.fillRect(sx - SR * 4, cy - SR * 4, SR * 8, SR * 8);
-        }
-        // Earth, made of dots, with a day side, a night side and city lights
-        if (R > 1.6) {
-            const rot = t * 0.22 + 1.6, tilt = 0.41, Lx = -0.55, Ly = -0.45, Lz = 0.7, ds = Math.max(0.7, R * 0.022);
-            const at = g.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.3); at.addColorStop(0, 'rgba(120,180,255,.5)'); at.addColorStop(1, 'rgba(120,180,255,0)');
+
+        // one continuous pull-back from a Dallas street to the whole planet (R = Earth's radius on screen)
+        const k = -4.6 + 6.8 * smooth(t / 4.6) + Math.max(0, t - 4.6) * 2.2, R = M * 0.26 * Math.exp(-k);
+        const cityR = R * 0.035, cityA = clamp((cityR - 4) / 20, 0, 1);
+        // Earth, night side toward us so the cities glow, Dallas at the center of the view
+        if (R < M * 4 && R > 1.2) {
+            const fadeE = clamp((5.2 - t) / 0.8, 0, 1), rot = 0.2 + t * 0.05, tilt = 0.3, Lx = 0.8, Ly = -0.25, Lz = -0.05, ds = Math.max(0.7, R * 0.02);
+            const at = g.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.3); at.addColorStop(0, `rgba(120,180,255,${0.45 * fadeE})`); at.addColorStop(1, 'rgba(120,180,255,0)');
             g.fillStyle = at; g.beginPath(); g.arc(cx, cy, R * 1.3, 0, 7); g.fill();
-            g.globalCompositeOperation = 'source-over'; g.save(); g.beginPath(); g.arc(cx, cy, R, 0, 7); g.clip();
-            const oc = g.createRadialGradient(cx + Lx * R * 0.5, cy + Ly * R * 0.5, R * 0.05, cx, cy, R * 1.05); oc.addColorStop(0, '#4f8fe6'); oc.addColorStop(0.45, '#1a4a9a'); oc.addColorStop(1, '#040b1e');
+            g.globalCompositeOperation = 'source-over'; g.save(); g.globalAlpha = fadeE; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.clip();
+            const oc = g.createRadialGradient(cx + Lx * R * 0.6, cy + Ly * R * 0.6, R * 0.05, cx, cy, R * 1.05); oc.addColorStop(0, '#3f7fd6'); oc.addColorStop(0.5, '#0f2d66'); oc.addColorStop(1, '#030916');
             g.fillStyle = oc; g.fillRect(cx - R, cy - R, R * 2, R * 2);
             const pts = [];
             for (const [la, lo, b] of land) { const x = Math.cos(la) * Math.sin(lo + rot), y0 = -Math.sin(la), z0 = Math.cos(la) * Math.cos(lo + rot), y = y0 * Math.cos(tilt) - z0 * Math.sin(tilt), z = y0 * Math.sin(tilt) + z0 * Math.cos(tilt);
                 if (z > 0) pts.push([cx + x * R, cy + y * R, x * Lx + y * Ly + z * Lz, b]); }
-            for (const [x, y, l, b] of pts) if (l > 0) { g.fillStyle = `rgba(${b > 0.8 ? '214,200,150' : '90,170,110'},${0.25 + 0.7 * l})`; g.fillRect(x - ds / 2, y - ds / 2, ds, ds); }
-            const sh = g.createRadialGradient(cx + Lx * R * 0.7, cy + Ly * R * 0.7, R * 0.3, cx + Lx * R * 0.7, cy + Ly * R * 0.7, R * 2.1);
-            sh.addColorStop(0, 'rgba(2,4,14,0)'); sh.addColorStop(0.4, 'rgba(2,4,14,.25)'); sh.addColorStop(0.75, 'rgba(2,4,14,.8)'); sh.addColorStop(1, 'rgba(2,4,14,.97)'); g.fillStyle = sh; g.fillRect(cx - R, cy - R, R * 2, R * 2);
+            for (const [x, y, l, b] of pts) if (l > 0) { g.fillStyle = `rgba(${b > 0.8 ? '214,200,150' : '90,170,110'},${0.2 + 0.7 * l})`; g.fillRect(x - ds / 2, y - ds / 2, ds, ds); }
+            const sh = g.createRadialGradient(cx + Lx * R * 0.8, cy + Ly * R * 0.8, R * 0.2, cx + Lx * R * 0.8, cy + Ly * R * 0.8, R * 2.1);
+            sh.addColorStop(0, 'rgba(2,4,14,0)'); sh.addColorStop(0.35, 'rgba(2,4,14,.3)'); sh.addColorStop(0.7, 'rgba(2,4,14,.85)'); sh.addColorStop(1, 'rgba(2,4,14,.97)'); g.fillStyle = sh; g.fillRect(cx - R, cy - R, R * 2, R * 2);
             g.globalCompositeOperation = 'lighter';
-            for (const [x, y, l, b] of pts) if (l < 0 && b > 0.7) { g.fillStyle = `rgba(255,205,120,${Math.min(0.9, -l * 1.5)})`; g.fillRect(x - ds / 3, y - ds / 3, ds * 0.66, ds * 0.66); }
+            for (const [x, y, l, b] of pts) if (l < 0 && b > 0.68) { g.fillStyle = `rgba(255,200,120,${Math.min(0.9, -l * 1.6)})`; g.fillRect(x - ds / 3, y - ds / 3, ds * 0.66, ds * 0.66); }
             g.restore(); g.globalCompositeOperation = 'lighter';
-            g.strokeStyle = 'rgba(150,200,255,.45)'; g.lineWidth = Math.max(0.6, R * 0.015); g.beginPath(); g.arc(cx, cy, R, 3.5, 5.6); g.stroke();
-            // the Moon
-            if (S < 0.95) { const ma = 2.4 + t * 0.35, mx = cx + Math.cos(ma) * R * 4, my = cy + Math.sin(ma) * R * 1.4, mr = Math.max(0.8, R * 0.27); g.fillStyle = `rgba(210,205,220,${0.85 * fade})`; g.beginPath(); g.arc(mx, my, mr, 0, 7); g.fill(); }
-        } else { g.fillStyle = `rgba(140,190,255,${fade})`; g.beginPath(); g.arc(cx, cy, 1.4, 0, 7); g.fill(); }
-        // the first song: a pink spark that lifts off the planet
-        if (t > 0.5) { const p = clamp((t - 0.5) / 1.8, 0, 1), e = 1 - (1 - p) ** 3, px = cx + (0.3 + 0.5 * e) * R * Math.max(S, 0.02) / Math.max(S, 0.02), py = cy - (0.6 + 0.55 * e) * R;
-            const pr = Math.max(1.2, 3 * Math.min(1, S * 1.5)), pulse = 0.6 + 0.4 * Math.sin(t * 6);
-            g.globalAlpha = fade; g.drawImage(sprite([247, 168, 196]), px - pr * 6, py - pr * 6, pr * 12, pr * 12); g.globalAlpha = 1;
-            g.fillStyle = `rgba(255,230,240,${pulse * fade})`; g.beginPath(); g.arc(px, py, pr, 0, 7); g.fill(); }
-        // everything collapses into one point, which grows white-hot
-        const core = clamp((t - 6) / 3.4, 0, 1);
-        if (core > 0) { const cr = 6 + core * core * 90, cg = g.createRadialGradient(cx, cy, 0, cx, cy, cr);
-            cg.addColorStop(0, `rgba(255,255,255,${core})`); cg.addColorStop(0.3, `rgba(255,200,230,${0.6 * core})`); cg.addColorStop(1, 'rgba(170,140,255,0)'); g.fillStyle = cg; g.fillRect(cx - cr, cy - cr, cr * 2, cr * 2); }
+            g.strokeStyle = `rgba(150,200,255,${0.5 * fadeE})`; g.lineWidth = Math.max(0.6, R * 0.015); g.beginPath(); g.arc(cx, cy, R, -0.9, 0.9); g.stroke();
+        } else if (R >= M * 4) { const bg = g.createRadialGradient(cx, cy, 0, cx, cy, M); bg.addColorStop(0, 'rgba(20,30,60,.5)'); bg.addColorStop(1, 'rgba(5,8,20,0)'); g.fillStyle = bg; g.fillRect(0, 0, W, H); }
+        // Dallas: streets, freeways and the loops, shrinking into one point of light
+        if (cityA > 0) {
+            g.globalAlpha = cityA; const ds = Math.max(0.8, cityR * 0.006);
+            g.strokeStyle = 'rgba(255,150,80,.35)'; g.lineWidth = Math.max(0.6, cityR * 0.005);
+            for (const [[a1, b1], [a2, b2]] of roads) { g.beginPath(); g.moveTo(cx + a1 * cityR, cy + b1 * cityR); g.lineTo(cx + a2 * cityR, cy + b2 * cityR); g.stroke(); }
+            for (const rr of [0.55, 0.3]) { g.beginPath(); g.ellipse(cx, cy, rr * cityR, rr * cityR * 0.92, 0.2, 0, 7); g.stroke(); }
+            for (const [x, y, c, b] of city) { const X = cx + x * cityR, Y = cy + y * cityR; if (X < -2 || Y < -2 || X > W + 2 || Y > H + 2) continue; g.fillStyle = `rgba(${c},${b * 0.85})`; g.fillRect(X - ds / 2, Y - ds / 2, ds, ds); }
+            g.globalAlpha = 1;
+        }
+        // me, pressing play: a pink pulse at the center that stays the brightest point all the way out
+        if (t < 8.4) { const pr = clamp(cityR * 0.02, 1.6, 5), pa = clamp((8.4 - t) / 0.8, 0, 1), ph = (t * 0.8) % 1;
+            g.globalAlpha = pa; g.drawImage(sprite([247, 168, 196]), cx - pr * 7, cy - pr * 7, pr * 14, pr * 14); g.globalAlpha = 1;
+            g.fillStyle = `rgba(255,235,245,${pa})`; g.beginPath(); g.arc(cx, cy, pr, 0, 7); g.fill();
+            if (t < 4) { g.strokeStyle = `rgba(247,168,196,${0.6 * (1 - ph) * pa})`; g.lineWidth = 1.2; g.beginPath(); g.arc(cx, cy, pr + ph * 60, 0, 7); g.stroke(); } }
+
+        // the Milky Way grows around that point (we live out on an arm), then we leave it behind
+        if (t > 4.4 && t < 9.4) {
+            const grow = Math.exp(-(6.6 - Math.min(t, 6.6)) * 2.6), Rg = M * 0.5 * grow * (t > 6.6 ? Math.exp(-(t - 6.6) * 0.9) : 1), rot = 0.6 + t * 0.04, tilt = 0.5;
+            const ex = (EARTH_IN_MW[0] * Math.cos(rot) - EARTH_IN_MW[1] * Math.sin(rot)) * Rg, ey = (EARTH_IN_MW[0] * Math.sin(rot) + EARTH_IN_MW[1] * Math.cos(rot)) * Rg * tilt;
+            const drift = smooth((t - 6.6) / 2.4), gx = cx - ex * (1 - drift) - drift * W * 0.42, gy = cy - ey * (1 - drift) + drift * H * 0.18;
+            drawSpiral(milky, gx, gy, Rg, rot, tilt, clamp((t - 4.4) / 0.6, 0, 1) * clamp((9.4 - t) / 1, 0, 1));
+            if (t > 5.4 && t < 7.4) { g.globalCompositeOperation = 'source-over'; g.font = '11px "JetBrains Mono", monospace'; g.textAlign = 'left'; g.fillStyle = `rgba(207,198,218,${clamp((t - 5.4) / 0.4, 0, 1) * clamp((7.4 - t) / 0.4, 0, 1)})`;
+                g.fillText('← YOU ARE HERE', gx + ex + 10, gy + ey + 4); g.globalCompositeOperation = 'lighter'; }
+        }
+        // a new galaxy comes out of the dark, and we dive into its heart
+        if (t > 7.2) {
+            const k2 = (t - 7.2) / (PRE_MS / 1000 - 7.2), Rn = M * 0.06 * Math.exp(k2 * 3.4), along2 = smooth(k2 * 1.25);
+            const nx = cx + (1 - along2) * W * 0.22, ny = cy - (1 - along2) * H * 0.12, rot = -0.4 + t * 0.12;
+            drawSpiral(mine, nx, ny, Rn, rot, 0.55, clamp((t - 7.2) / 1, 0, 1));
+            const core = smooth((k2 - 0.75) / 0.25); if (core > 0) { const cr = Math.max(W, H) * core, cg = g.createRadialGradient(nx, ny, 0, nx, ny, cr);
+                cg.addColorStop(0, `rgba(255,255,255,${core})`); cg.addColorStop(0.4, `rgba(255,200,230,${0.7 * core})`); cg.addColorStop(1, 'rgba(170,140,255,0)'); g.fillStyle = cg; g.fillRect(0, 0, W, H); }
+        }
         g.globalCompositeOperation = 'source-over';
     }
 
@@ -718,9 +763,12 @@
     // ---------- go: the big bang replays four years ----------
     // the prelude's words, in the middle of the screen
     const prelude = $('#prelude'), first = D.story[0] && D.story[0].song != null ? songs[D.story[0].song] : null;
-    const lines = [[400, 2500, longDate(t0), first ? `Somewhere on Earth, one song: ${first.title} by ${first.A.name}.` : 'Somewhere on Earth, one song.'],
-        [2900, 4300, 'Then another.'], [4500, 5900, 'And another.'],
-        [6100, 9000, `Four years. ${fmt(D.totals.listens)} listens.`, `${fmt(D.totals.songs)} songs, ${fmt(D.totals.artists)} artists.`], [9400, 12000, 'One universe.']];
+    const NAME = 'Heavy Rotation';
+    const lines = [[300, 2900, 'Dallas, Texas · May 21, 2022', first ? `I press play on ${first.title} by ${first.A.name}.` : 'I press play.'],
+        [3300, 5000, 'One song.', `Then ${fmt(D.totals.listens - 1)} more.`],
+        [5500, 7700, 'The Milky Way has at least 100 billion stars.', 'I wanted to see mine.'],
+        [8300, 11500, NAME, `A galaxy of ${fmt(D.totals.songs)} songs, ${fmt(D.totals.artists)} artists and four years of me.`],
+        [12100, 14600, 'It starts with one star.']];
     function say(big, small) { prelude.innerHTML = `<div class="line"><b>${esc(big)}</b>${small ? `<span>${esc(small)}</span>` : ''}</div>`; requestAnimationFrame(() => requestAnimationFrame(() => prelude.querySelector('.line').classList.add('on'))); }
     function hush() { const l = prelude.querySelector('.line'); if (l) l.classList.remove('on'); }
     if (!reduced) {
@@ -731,7 +779,7 @@
     function skipIntro() {
         if (pre.done || performance.now() >= pre.end) return;
         pre.timers.forEach(clearTimeout); pre.end = performance.now();
-        say('One universe.'); pre.timers = [setTimeout(hush, 2200)];
+        say('It starts with one star.'); pre.timers = [setTimeout(hush, 2200)];
     }
     function beginGalaxy(time) {
         pre.done = true; intro.start = time;
