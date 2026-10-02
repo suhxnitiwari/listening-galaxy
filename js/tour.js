@@ -10,6 +10,7 @@ window.buildTour = (D, songs, artists) => {
     const clock = t => { const [h, m] = t.slice(-5).split(':').map(Number); return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
     const hour = h => `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`;
     const NOTES = { 'Chase Atlantic': 'her gym guilty pleasure' };   // things only I know about the data
+    const Q = F.quirks;
     const E = F.eras.stats, top = A(F.top.artist), rival = A(F.rival.artist), AN = F.allnighters, M = F.moods;
     const desi = [...new Set(artists.filter(a => a.desi).flatMap(a => a.songs))].map(s => s.i);
     const sleep = [...F.sleep.hours].sort((a, b) => ((a + 12) % 24) - ((b + 12) % 24));
@@ -82,12 +83,23 @@ window.buildTour = (D, songs, artists) => {
           text: `Her moods, her sleep, the day she left home, her trips to India, the year she wrote her college essays, when she studies, even a Sephora ad: ${fmt(D.totals.listens)} listens later, the girl who pressed play in Dallas is in Austin.`,
           verdict: 'Still pressing play. May the music never end.', outro: true,
           play: (songs.find(x => x.title === 'intro (end of the world)' && x.A === top) || top.songs[0]).i,
-          link: { label: '♫ May the Music Never End · Greg Gilpin', url: window.ENDING_URL || null } },
+          },
     ];
     const vault = [
         { name: "santa tell me why it's may", date: (F.off_season ? F.off_season.month : '2023-05') + '-15', q: 'What else does the data know?', title: 'The quirks file',
-          text: `${F.off_season ? `${F.off_season.times} plays of ${title(F.off_season.song)} by ${by(F.off_season.song)}, in ${month(F.off_season.month)}. ` : ''}And the rest of the evidence: she can skip ${A(F.skip.artist).name} in ${F.skip.median_seconds} seconds, but let one song loop ${F.day.count} times in a day. She hit back on ${title(F.rewound[0][0])} ${F.rewound[0][1]} times just to hear it again. She plays her favorite albums front to back, in order, unshuffled. Her all-nighters land on ${AN.top_weekday[0]}s. Her gym guilty pleasure is Chase Atlantic. She was up at ${clock(releaseNight ? releaseNight.first_at : '00:50')} for an album drop. And she packed ${F.trips[1].artists.some(a => A(a).name === 'One Direction') ? 'One Direction' : 'her favorites'} for India.`,
-          verdict: "She doesn't know why either. She's just weird like that.", focus: { songs: [F.off_season ? F.off_season.song : F.day.song, F.rewound[0][0], F.day.song] }, play: F.off_season ? F.off_season.song : F.rewound[0][0] },
+          text: [
+            F.off_season && `${F.off_season.times} plays of ${title(F.off_season.song)} in ${month(F.off_season.month)}, and ${Q.summer_xmas} more Christmas songs in June, July and August.`,
+            `Halloween ${Q.halloween.date.slice(0, 4)}: ${title(Q.halloween.song)}, ${Q.halloween.times} times${Q.halloween.times === Q.halloween.of ? '. That was the whole day' : ''}.`,
+            `Valentine's Day ${Q.valentines.date.slice(0, 4)}: ${title(Q.valentines.song).split(' - ')[0]} from The Hunger Games, ${Q.valentines.times} times. Romance was not on the menu.`,
+            Q.new_year && `She rang in ${Q.new_year.at.slice(0, 4)} at exactly midnight with ${title(Q.new_year.song)}.`,
+            `${title(Q.one_hour.song)} by ${by(Q.one_hour.song)}: ${Q.one_hour.times} times in one hour.`,
+            `${title(Q.never_finished.song)} by ${by(Q.never_finished.song)}: started ${Q.never_finished.starts} times, skipped ${Q.never_finished.rate}%. She keeps landing on it anyway.`,
+            `Spotify closed on her while paused ${fmt(Q.naps)} times. She fell asleep. A lot.`,
+            Q.karaoke.length && `She has played ${Q.karaoke.length} different karaoke tracks${Q.karaoke.some(i => /Ariana|Tears|Side/i.test(title(i))) ? ', Ariana ones included' : ''}.`,
+            Q.hsm && `High School Musical: The Musical: The Series, ${Q.hsm[1]} plays.`,
+            `${fmt(Q.one_listen_artists)} artists got exactly one listen and never another.`,
+          ].filter(Boolean).join(' '),
+          verdict: "She doesn't know why either. She's just weird like that.", focus: { songs: [F.off_season ? F.off_season.song : F.day.song, Q.halloween.song, Q.valentines.song, Q.one_hour.song, Q.never_finished.song] }, play: F.off_season ? F.off_season.song : Q.one_hour.song, long: true },
 
         { name: '(instrumental)', date: '2025-04-15', q: `Why are ${F.instrumentals.count} of her plays instrumentals?`, title: 'Study mode', counter: F.instrumentals.count,
           text: `In 2025, ${F.instrumentals.count} plays of ${top.name} instrumentals, every one played start to finish. That's what it sounds like when she puts her phone away to study.`,

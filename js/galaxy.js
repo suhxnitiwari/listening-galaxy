@@ -733,7 +733,10 @@
         clearTimeout(tourTimer); sweep(now, d, Math.min(2600, 600 + Math.abs(d - now) / DAY * 3));
         $('#tourDate').textContent = `${window.ALBUM} · ${c.label} · “${c.name}” · ${longDate(d)}`; $('#tourQ').textContent = c.q; $('#tourTitle').textContent = c.title;
         $('#tourText').textContent = c.text; $('#tourVerdict').textContent = c.verdict || '';
-        const tl = $('#tourLink'); if (c.link && c.link.url) { tl.href = c.link.url; tl.textContent = c.link.label; tl.hidden = false; } else tl.hidden = true; $('#tourStep').textContent = `${i + 1} / ${TOUR.length}`;
+        // the closing song: a YouTube embed (YouTube licenses what it hosts), shown small in the card and started by the tour's own click
+        const tv = $('#tourVideo');
+        if (c.outro && window.ENDING_YOUTUBE) { tv.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(window.ENDING_YOUTUBE)}?autoplay=1&playsinline=1&rel=0" title="May the Music Never End, Greg Gilpin" allow="autoplay; encrypted-media" allowfullscreen></iframe><span>May the Music Never End · Greg Gilpin</span>`; tv.hidden = false; }
+        else { tv.innerHTML = ''; tv.hidden = true; } $('#tourStep').textContent = `${i + 1} / ${TOUR.length}`;
         $('#tourNext').textContent = i === TOUR.length - 1 ? 'End of album' : 'Next track →';
         ticks.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
         // the evidence: light only the stars this chapter is about, and fly to them
@@ -750,19 +753,20 @@
         const cn = $('#tourCount'); cancelAnimationFrame(countAnim);
         if (c.counter) { const t0c = performance.now(), go = t => { const k = Math.min(1, (t - t0c) / 2200); cn.textContent = fmt(c.counter * (1 - (1 - k) ** 3)); if (k < 1) countAnim = requestAnimationFrame(go); }; cn.hidden = false; countAnim = requestAnimationFrame(go); }
         else cn.hidden = true;
-        if (c.play != null) play(songs[c.play]); else audio.pause();
+        if (c.play != null && !(c.outro && window.ENDING_YOUTUBE)) play(songs[c.play]); else audio.pause();
         // the last track flies the viewer home: out of the galaxy and down to Austin
         if (c.outro) { setHome(AUSTIN, 'AUSTIN'); outro = { start: performance.now() }; document.body.classList.add('outro'); }
         else if (outro) { outro = null; setHome(DALLAS, 'DALLAS'); document.body.classList.remove('outro'); }
         tour.classList.add('on'); $('#hero').classList.add('quiet');
         // long enough to read: about a quarter second a word, between 9 and 18 seconds
-        const words = (c.text + ' ' + (c.verdict || '')).split(/\s+/).length, ms = clamp(3500 + words * 230, 9000, 18000);
+        const words = (c.text + ' ' + (c.verdict || '')).split(/\s+/).length, ms = clamp(3500 + words * 230, 9000, c.long ? 30000 : 18000);
         const bar = $('#tourBar'); bar.style.transition = 'none'; bar.style.width = '0'; requestAnimationFrame(() => { bar.style.transition = `width ${ms}ms linear`; bar.style.width = '100%'; });
         tourTimer = setTimeout(() => step >= 0 && (step < TOUR.length - 1 ? startTour(step + 1) : endTour()), ms);
     }
     function endTour() {
         if (step < 0) return; step = -1; clearTimeout(tourTimer); tour.classList.remove('on'); ticks.querySelectorAll('button').forEach(b => b.classList.remove('on')); audio.pause();
         tourSet = null; nightTarget = 0; pair = null; selected = null; focusArtist = null; if (moodBefore) { setColor(moodBefore); moodBefore = null; }
+        $('#tourVideo').innerHTML = ''; $('#tourVideo').hidden = true;
         if (outro) { outro = null; setHome(DALLAS, 'DALLAS'); document.body.classList.remove('outro'); }
     }
     $('#tourBtn').onclick = () => startTour(0);

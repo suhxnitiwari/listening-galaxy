@@ -7,7 +7,7 @@
 <meta name="description" content="Four years of my Spotify listening, mapped as a universe: every song is a star, every artist a constellation. Built on my own data warehouse.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/galaxy.css?v=37">
+<link rel="stylesheet" href="css/galaxy.css?v=39">
 </head>
 <body>
 <canvas id="sky" aria-label="A 3D galaxy of every song I have played: drag to spin, scroll to zoom, click a star"></canvas>
@@ -47,7 +47,7 @@
 <aside class="hud card" id="card" aria-live="polite"></aside>
 
 <div class="tour" id="tour" role="dialog" aria-label="Tour">
-    <div class="label" id="tourDate"></div><div class="q" id="tourQ"></div><h3 id="tourTitle"></h3><div class="count" id="tourCount" hidden></div><p id="tourText"></p><p class="verdict" id="tourVerdict"></p><a class="pill solid tourlink" id="tourLink" target="_blank" rel="noopener" hidden></a>
+    <div class="label" id="tourDate"></div><div class="q" id="tourQ"></div><h3 id="tourTitle"></h3><div class="count" id="tourCount" hidden></div><p id="tourText"></p><p class="verdict" id="tourVerdict"></p><div class="tourvideo" id="tourVideo" hidden></div>
     <div class="bar"><i id="tourBar"></i></div>
     <div class="ctl"><span class="label" id="tourStep"></span><button class="pill" id="tourPrev">←</button><button class="pill" id="tourNext">Next →</button><button class="pill" id="tourEnd">Exit</button></div>
 </div>
@@ -123,8 +123,8 @@
 </article>
 
 <audio id="audio" preload="none"></audio>
-<script>window.ENDING_URL = 'https://www.jwpepper.com/may-the-music-never-end-3200367/p';   // the official page for Greg Gilpin's May the Music Never End, once I have it</script>
-<script src="js/tour.js?v=37"></script>
-<script src="js/galaxy.js?v=37"></script>
+<script>window.ENDING_YOUTUBE = null;   // a YouTube video ID of May the Music Never End (Greg Gilpin); it plays as the last track lands home</script>
+<script src="js/tour.js?v=39"></script>
+<script src="js/galaxy.js?v=39"></script>
 </body>
 </html>

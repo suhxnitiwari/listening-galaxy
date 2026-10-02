@@ -105,8 +105,10 @@ canvas#sky.drag { cursor: grabbing; } canvas#sky.on-star { cursor: pointer; }
 .tour h3 { font: 400 28px/1.1 var(--serif); margin: 2px 0 6px; }
 .tour .q { font: italic 400 17px var(--serif); color: var(--pink); margin-top: 6px; }
 .tour .count { font: 400 64px/1 var(--serif); color: var(--ink); margin: 2px 0 6px; letter-spacing: -.02em; text-shadow: 0 0 30px #F7A8C466; }
-.tour .tourlink { display: inline-block; margin-top: 10px; text-decoration: none; }
-.tour .tourlink[hidden] { display: none; }
+.tourvideo { margin-top: 12px; display: grid; grid-template-columns: 160px 1fr; gap: 12px; align-items: center; }
+.tourvideo[hidden] { display: none; }
+.tourvideo iframe { width: 160px; height: 90px; border: 0; border-radius: 8px; }
+.tourvideo span { font: italic 15px var(--serif); color: var(--pink); }
 .tour .verdict { margin-top: 10px !important; color: var(--ink) !important; font-weight: 500; font-size: 14px; }
 .tour p { margin: 0; color: var(--soft); font-size: 14px; line-height: 1.45; }
 .tour .ctl { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
