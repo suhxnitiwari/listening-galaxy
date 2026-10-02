@@ -144,6 +144,10 @@ window.buildTour = (D, songs, artists) => {
           text: `Her moods (sad Octobers, a happy 2026), her sleep (${AN.count} all-nighters, mostly on ${AN.top_weekday[0]}s), the day she left home, her trips to India, the year she wrote her college essays, when she studies, even a Sephora ad. Her peak hour is ${hour(F.peak_hour)}. She skips in ${F.skip.median_seconds} seconds and lets a song loop ${F.day.count} times. And her culture: ${F.desi_by_hour.night}% of what she plays after midnight is South Asian, against ${F.desi_by_hour.day}% in the daytime. All three of her 2 AM artists sing in Hindi or Punjabi.`,
           verdict: 'When everyone else is asleep, she goes home.', focus: { songs: [...desi].map(s => s.i) }, night: true, play: A(F.night[0][0]).songs[0].i },
 
+        { date: D.period[1], q: 'Where is she now?', title: 'Austin, Texas',
+          text: `Out of the galaxy, past the Milky Way, back to Earth: ${fmt(D.totals.listens)} listens after Dallas, she's in Austin.`,
+          verdict: 'Still pressing play.', outro: true },
+
         { date: D.period[1], q: 'Case closed?', title: 'Heavy Rotation',
           text: `${fmt(D.totals.listens)} listens, ${fmt(D.totals.songs)} songs, ${fmt(D.totals.artists)} artists, ${fmt(D.totals.hours)} hours.`,
           verdict: 'Investigation ongoing.', focus: { all: true } },
