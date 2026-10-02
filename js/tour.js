@@ -10,6 +10,7 @@ window.buildTour = (D, songs, artists) => {
     const clock = t => { const [h, m] = t.slice(-5).split(':').map(Number); return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
     const hour = h => `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`;
     const NOTES = { 'Chase Atlantic': 'her gym guilty pleasure' };   // things only I know about the data
+    const CLOCK_SKIP = ['Bhangra Ta Sajda', 'Run Down The City', 'Si mes vers avaient des ailes', 'Sadqay', 'Until I Found You'];   // hours that don't sound like me
     const Q = F.quirks;
     const E = F.eras.stats, top = A(F.top.artist), rival = A(F.rival.artist), AN = F.allnighters, M = F.moods;
     const desi = [...new Set(artists.filter(a => a.desi).flatMap(a => a.songs))].map(s => s.i);
@@ -117,7 +118,11 @@ window.buildTour = (D, songs, artists) => {
             const lines = [[MS.up, 'Leave Me Lonely', 'Dangerous Woman', 'Sad girl to main character.'], [MS.up, "Now That We Don't Talk", 'imgonnagetyouback', 'Heartbreak, then immediately plotting revenge.'],
               [MS.down, 'yes, and?', "we can't be friends", 'Healed for exactly one song.'], [MS.down, 'We Are Never Ever Getting Back Together', 'All Too Well', 'Never ever. For about three minutes.']]
               .map(([list, a, b, joke]) => { const r = find(list, a, b); return r ? `${title(r[0]).split(' (')[0]} → ${title(r[1]).replace(" (Taylor's Version)", '').replace(' (From The Vault)', '')}, ${r[2]} times. ${joke}` : null; }).filter(Boolean);
-            return `${fmt(MS.total)} times she went straight from a heartbreak song into a party song, or the other way around. ${lines.join(' ')}`; })(),
+            // her day swings by the clock too: songs that own neighboring hours (from each hour's top ten, my #1 artist left out)
+            const at = (h, t) => F.clock[h][1].find(i => title(i).startsWith(t));
+            const ghost = at(14, 'Ghost'), close = at(15, 'Close To You'), lush = at(20, 'Lush Life'), kill = at(21, 'Kill Bill');
+            const clock = [ghost && close ? `At 2 PM it's ${title(ghost)} (someone is so far away); by 3 PM, ${title(close)}.` : '', lush && kill ? `${title(lush)} energy at 8 PM, ${title(kill)} by 9.` : ''].filter(Boolean).join(' ');
+            return `${fmt(MS.total)} times she went straight from a heartbreak song into a party song, or the other way around. ${lines.join(' ')} Even her clock swings: ${clock}`; })(),
           verdict: 'Heartbroken, healed, petty, heartbroken again, all before the song ends.', focus: { mood: 'heartbreak' }, mood: true,
           play: (songs.find(x => x.title === 'Dangerous Woman' && x.A === top) || top.songs[0]).i },
 
@@ -133,9 +138,6 @@ window.buildTour = (D, songs, artists) => {
           text: `${wolves.title} (${wolves.A.name}) and ${cluster[1].title} (${cluster[1].A.name}), back-to-back ${wolves.links[0].c} times, always in that order. Add ${cluster.slice(2).map(s => `${s.title} (${s.A.name})`).join(' and ')}: songs that all came out in 2017 and 2018, when she was in middle school, on a playlist she still plays the way she built it.`,
           verdict: 'A middle-school playlist that never ended.', focus: { songs: cluster.map(s => s.i) }, pair: [wolves.i, cluster[1].i], play: wolves.i },
 
-        ...(releaseNight ? [{ name: 'first in line', date: releaseNight.date, q: `Was she up when ${releaseNight.album} came out?`, title: `${clock(releaseNight.first_at)}, ${date(releaseNight.date)}`, night: true, counter: releaseNight.new_songs,
-          text: `Of course she was. ${releaseNight.album} by ${top.name}: ${releaseNight.new_songs} brand-new songs heard for the first time that night, the first at ${clock(releaseNight.first_at)}.`,
-          verdict: 'Day one. Minute one.', focus: { songs: songs.filter(s => s.A === top && s.first === releaseNight.date).map(s => s.i) }, play: releaseNight.song }] : []),
 
     ];
     return [...album.map((t, i) => ({ ...t, label: `Track ${i + 1}` })), ...vault.map((t, i) => ({ ...t, label: `Track ${album.length + i + 1} (From The Vault)` }))];
