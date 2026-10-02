@@ -732,7 +732,8 @@
         step = i; const c = TOUR[i], d = day(c.date.slice(0, 10)); closeOverlays(); setThread(null); connectFrom = null; hint('');
         clearTimeout(tourTimer); sweep(now, d, Math.min(2600, 600 + Math.abs(d - now) / DAY * 3));
         $('#tourDate').textContent = `${window.ALBUM} · ${c.label} · “${c.name}” · ${longDate(d)}`; $('#tourQ').textContent = c.q; $('#tourTitle').textContent = c.title;
-        $('#tourText').textContent = c.text; $('#tourVerdict').textContent = c.verdict || ''; $('#tourStep').textContent = `${i + 1} / ${TOUR.length}`;
+        $('#tourText').textContent = c.text; $('#tourVerdict').textContent = c.verdict || '';
+        const tl = $('#tourLink'); if (c.link && c.link.url) { tl.href = c.link.url; tl.textContent = c.link.label; tl.hidden = false; } else tl.hidden = true; $('#tourStep').textContent = `${i + 1} / ${TOUR.length}`;
         $('#tourNext').textContent = i === TOUR.length - 1 ? 'End of album' : 'Next track →';
         ticks.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
         // the evidence: light only the stars this chapter is about, and fly to them

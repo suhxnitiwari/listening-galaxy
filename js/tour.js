@@ -80,7 +80,9 @@ window.buildTour = (D, songs, artists) => {
 
         { name: 'intro (end of the world)', date: D.period[1], q: 'What can a Spotify export reveal?', title: 'Austin, Texas',
           text: `Her moods, her sleep, the day she left home, her trips to India, the year she wrote her college essays, when she studies, even a Sephora ad: ${fmt(D.totals.listens)} listens later, the girl who pressed play in Dallas is in Austin.`,
-          verdict: 'Still pressing play. May the music never end.', outro: true },
+          verdict: 'Still pressing play. May the music never end.', outro: true,
+          play: (songs.find(x => x.title === 'intro (end of the world)' && x.A === top) || top.songs[0]).i,
+          link: { label: '♫ May the Music Never End · Greg Gilpin', url: window.ENDING_URL || null } },
     ];
     const vault = [
         { name: "santa tell me why it's may", date: (F.off_season ? F.off_season.month : '2023-05') + '-15', q: 'What else does the data know?', title: 'The quirks file',
