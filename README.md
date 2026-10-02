@@ -40,7 +40,7 @@ The whole path from a raw export to something people can use. The warehouse and 
 - **Play the album.** *in my head(phones)*, a tour of me in two sides, 7 tracks in Dallas and 7 in Austin, and 5 from the vault, laid out as a tracklist (lift the needle to turn the record over between sides): who runs the galaxy, the cruel summer Taylor won, the day I played one song 119 times, my all-nighters (and why they land on Tuesdays), my college-essay marathon, the morning I left home, how college changed me, and how 2026 is changing me again. Every number in it is computed by the export; only the words are mine.
 - **Touch the sky.** It's a 3D disk: drag to spin it, shift-drag to move, scroll to zoom. Stars lean toward your cursor, constellations draw themselves (with the artist's photo) as you come close, and clicking empty space sends a ripple through the galaxy.
 - **Open any star.** Its card shows first listen, peak month, last listen, lifespan, usual hour, skip rate, biggest day, my mood tag, and the songs I play back-to-back with it, plus a 30-second preview.
-- **Color by emotion.** Switch from year found to mood: rose love, yellow party, orange confident, lavender bittersweet, blue heartbreak, violet dark.
+- **Color by emotion.** Switch from year found to mood: pink love, yellow party, orange confident, muted purple bittersweet, burgundy heartbreak, deep purple dark.
 - **Connect the stars.** Light up every pair of songs I play back-to-back, or every song of one mood.
 - **Compare two songs.** Pick any two stars to see what they share and the shortest chain of back-to-back plays between them.
 - **Search.** Press `/`, type an artist or a song, and the camera flies there.

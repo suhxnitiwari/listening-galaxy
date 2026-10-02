@@ -28,7 +28,7 @@
 
     const yearColor = { 2022: [150, 176, 246], 2023: [186, 160, 246], 2024: [238, 168, 214], 2025: [248, 188, 176], 2026: [246, 226, 186] };   // lavender haze: periwinkle, lilac, mauve, dusty rose, champagne
     // emotion colors: warm for happy, blue for sad, violet for gloomy
-    const moods = [['love', [255, 105, 150]], ['party', [255, 226, 80]], ['confident', [255, 150, 60]], ['bittersweet', [185, 150, 255]], ['heartbreak', [80, 140, 255]], ['dark', [140, 70, 200]]];
+    const moods = [['love', [255, 128, 196]], ['party', [255, 226, 80]], ['confident', [255, 150, 60]], ['bittersweet', [146, 120, 186]], ['heartbreak', [184, 36, 70]], ['dark', [104, 46, 164]]];
     const moodColor = Object.fromEntries(moods), noMood = [105, 100, 125];
 
     // ---------- layout: a 3D disk that grows outward in time. Artists sit on a golden-angle spiral in the order they
@@ -114,9 +114,12 @@
     const cv = $('#sky'), g = cv.getContext('2d');
     let W, H, dpr, view = { x: 0, y: 30, z: 1 }, sized = false, fitZ = 1;
     const minZ = () => fitZ * 0.7, maxZ = 8;
+    // the sky is soft glows, so it draws at 1.5× even on retina screens (44% fewer pixels than 2×), and drops to 1× if frames run slow
+    let dprCap = 1.5;
+    const perf = { ema: 16, since: 0 };
     function size() {
         if (!innerWidth || !innerHeight) return;   // a hidden window reports 0 × 0; zooming to fit that would make the camera NaN
-        dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr;
+        dpr = Math.min(dprCap, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr;
         fitZ = Math.min(W, H) / 900;
         if (!sized) { view.z = fitZ; if (W < 760) view.y = 30 - 70 / view.z; sized = true; }   // on phones the hero sits on top, so the galaxy starts lower
         drawMonths();
@@ -158,12 +161,20 @@
     });
     const clouds = [...Array(14)].map((_, i) => { const r = 250 + rnd() * 1700, th = (i % 2) * Math.PI + Math.log(r / 50) * 1.9 + (rnd() - 0.5) * 0.5;
         return { x: Math.cos(th) * r, y: Math.sin(th) * r, r: 220 + rnd() * 380, c: gasColors[i % gasColors.length] }; });
-    // the sky's background: deep plum, warming to a dusty mauve haze in the middle (cached until the window changes size)
-    let hazeFor = '', hazeGrad = null;
-    function hazeBg() {
-        if (hazeFor !== W + 'x' + H) { hazeFor = W + 'x' + H; hazeGrad = g.createRadialGradient(W * 0.5, H * 0.45, 0, W * 0.5, H * 0.45, Math.max(W, H) * 0.75);
-            hazeGrad.addColorStop(0, '#2A1E36'); hazeGrad.addColorStop(0.55, '#1B1425'); hazeGrad.addColorStop(1, '#100B16'); }
-        return hazeGrad;
+    // the sky's background, lavender haze: deep plum warming to mauve in the middle, with lilac and mauve fog,
+    // painted once into a small offscreen canvas and stretched over the sky every frame, drifting very slowly
+    let hazeFor = '', hazeCv = null;
+    function drawHaze(time) {
+        if (hazeFor !== W + 'x' + H) {
+            hazeFor = W + 'x' + H; hazeCv = document.createElement('canvas'); const w = hazeCv.width = Math.ceil(W / 4), h = hazeCv.height = Math.ceil(H / 4), x = hazeCv.getContext('2d');
+            const base = x.createRadialGradient(w * 0.5, h * 0.45, 0, w * 0.5, h * 0.45, Math.max(w, h) * 0.75);
+            base.addColorStop(0, '#2A1E36'); base.addColorStop(0.55, '#1B1425'); base.addColorStop(1, '#100B16'); x.fillStyle = base; x.fillRect(0, 0, w, h);
+            for (const [cx, cy, rr, c] of [[0.3, 0.35, 0.5, '200,170,220,.10'], [0.75, 0.7, 0.45, '232,186,214,.08'], [0.5, 1, 0.55, '170,140,210,.08']]) {
+                const fg = x.createRadialGradient(w * cx, h * cy, 0, w * cx, h * cy, Math.max(w, h) * rr); fg.addColorStop(0, `rgba(${c})`); fg.addColorStop(1, 'rgba(0,0,0,0)');
+                x.globalCompositeOperation = 'lighter'; x.fillStyle = fg; x.fillRect(0, 0, w, h); }
+        }
+        const k = reduced ? 0 : time / 40000, ox = Math.sin(k) * W * 0.03, oy = Math.cos(k * 0.8) * H * 0.02;
+        g.drawImage(hazeCv, -W * 0.05 + ox, -H * 0.05 + oy, W * 1.1, H * 1.1);
     }
     // ---------- the prelude: Dallas at night, out to Earth, out to the Milky Way, past it, and into a new galaxy ----------
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -325,6 +336,8 @@
     let frames = 0, fpsAt = performance.now(), lastT = performance.now();
     function frame(time) {
         const dt = Math.min(50, time - lastT); lastT = time;
+        if (pre.done && !document.hidden) { perf.ema += (dt - perf.ema) * 0.05; if (!perf.since) perf.since = time;
+            if (dprCap > 1 && perf.ema > 26 && time - perf.since > 4000) { dprCap = 1; size(); hazeFor = ''; } }
         if (time < pre.end) { drawPre(freeze != null ? pre.start + freeze * 1000 : time); requestAnimationFrame(frame); return; }
         if (outro) { const k = clamp((time - outro.start) / 6500, 0, 1); drawScene(9.2 - 9.0 * (1 - (1 - k) ** 2.2)); requestAnimationFrame(frame); return; }
         if (!pre.done) beginGalaxy(time);
@@ -340,7 +353,7 @@
         const yaw = cam.yaw + cam.ty, pitch = clamp(cam.pitch + cam.tp, 0, 1.45);
         cY = Math.cos(yaw); sY = Math.sin(yaw); cP = Math.cos(pitch); sP = Math.sin(pitch);
 
-        g.setTransform(dpr, 0, 0, dpr, 0, 0); g.globalCompositeOperation = 'source-over'; g.fillStyle = hazeBg(); g.fillRect(0, 0, W, H);
+        g.setTransform(dpr, 0, 0, dpr, 0, 0); g.globalCompositeOperation = 'source-over'; drawHaze(time);
         // dust in three depths drifts as the galaxy turns, so the sky has parallax
         for (const [x, y, r, d] of dust) {
             const X = ((x * W - yaw * W * 0.3 * d - view.x * view.z * d * 0.1) % W + W) % W, Y = ((y * H - pitch * H * 0.25 * d - view.y * view.z * d * 0.1) % H + H) % H;
@@ -770,6 +783,15 @@
         flyTo(cx, cy, clamp(Math.min(W, H) * 0.75 / span, minZ(), 3.2));
     }
     // slow enough to sit with: about a third of a second a word on top of a long pause, between 12 and 24 seconds
+    const why = $('#tourWhy');
+    why.onclick = () => { const open = $('#tourRel').hidden; $('#tourRel').hidden = !open; why.setAttribute('aria-expanded', String(open)); why.textContent = open ? 'Why it matters ↑' : 'Why it matters ↓'; };
+    // each track's headline number, for the tracklist: its own if tour.js names one, its count-up, else the first number in its title or text
+    function trackStat(c) {
+        if (c.stat != null) return c.stat;
+        if (c.counter) return fmt(c.counter);
+        const m = (c.title + ' · ' + c.text).match(/(\d[\d,]*(?:\.\d+)?)(%|×|\s?(?:AM|PM))?/);
+        return m ? m[1] + (m[2] || '') : '';
+    }
     function trackMs(c) { const words = (c.text + ' ' + (c.verdict || '')).split(/\s+/).length; return clamp(5000 + words * 350, 12000, 24000); }
     function startTour(i = 0) {
         openAlbum();
@@ -781,8 +803,8 @@
         // the closing song: a YouTube embed (YouTube licenses what it hosts), shown small in the card and started by the tour's own click
         const tv = $('#tourVideo');
         if (c.outro && window.ENDING_YOUTUBE) { tv.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(window.ENDING_YOUTUBE)}?autoplay=1&playsinline=1&rel=0" title="May the Music Never End, Greg Gilpin" allow="autoplay; encrypted-media" allowfullscreen></iframe><span>May the Music Never End · Greg Gilpin</span>`; tv.hidden = false; }
-        else { tv.innerHTML = ''; tv.hidden = true; } $('#tourStep').textContent = `${i + 1} / ${TOUR.length}`;
-        $('#tourNext').textContent = i === TOUR.length - 1 ? 'End of album' : 'Next track →';
+        else { tv.innerHTML = ''; tv.hidden = true; } $('#tourStep').textContent = `${i + 1} / ${TOUR.length}`; $('#pTitle').textContent = c.name;
+        $('#tourNext').setAttribute('aria-label', i === TOUR.length - 1 ? 'End of album' : 'Next track');
         // the evidence: light only the stars this chapter is about, and fly to them
         back.length = 0; current = null; card.classList.remove('on'); selected = null; focusArtist = null; pair = null;
         const list = focusOf(c); tourSet = list ? new Set(list) : null;
@@ -806,7 +828,7 @@
         const art = $('#tourArt'); art.hidden = !lead; art.src = blank; art.dataset.i = lead ? lead.i : '';
         if (lead) cover(lead).then(u => { if (art.dataset.i === String(lead.i)) { art.src = u; art.hidden = u === blank; } });
         const rel = (list || []).filter(s => s !== lead && s.born <= d).sort((a, b) => b.n - a.n).slice(0, 4), relBox = $('#tourRel');
-        relBox.hidden = !rel.length;
+        relBox.hidden = true; why.hidden = !rel.length; why.setAttribute('aria-expanded', 'false'); why.textContent = 'Why it matters ↓';
         relBox.innerHTML = rel.length ? `<div class="label">Behind this track</div>` + rel.map(s => `<button data-s="${s.i}"><img alt="" src="${blank}"><span><b>${esc(s.title)}</b><i>${esc(s.A.name)} · ${fmt(s.n)} listens</i></span></button>`).join('') : '';
         relBox.querySelectorAll('[data-s]').forEach(b => { const s = songs[+b.dataset.s]; cover(s).then(u => { b.querySelector('img').src = u; }); b.onclick = () => { pauseTour(); openSong(s); }; });
         paused = false; $('#tourPlay').textContent = '❚❚';
@@ -836,13 +858,12 @@
         let html = `<button class="x" id="albumX" aria-label="Close the album">×</button>
             <div class="head"><div class="label">Album · Suhani Tiwari</div><h2>${esc(window.ALBUM)}</h2><div class="meta">${TOUR.length} tracks · ${Math.round(total / 60000)} min · ${fmt(D.totals.listens)} listens behind it</div></div>
             <div class="acts"><button class="big" id="albumPlay" aria-label="Play the album">▶</button>
-                <button class="icon" id="albumSave" title="Download the report" aria-label="Download the report">↓</button>
-                <button class="pill" data-open="yours">Want yours too?</button></div>
-            <div class="cols"><span>#</span><span>Title</span><span>Date</span><span>◷</span></div><ol>`, side = null;
+                <button class="icon" id="albumSave" title="Download the report" aria-label="Download the report">↓</button></div>
+            <div class="cols"><span>#</span><span>Title</span><span>The number</span><span>Date</span></div><ol>`, side = null;
         TOUR.forEach((c, i) => {
             const sd = c.side || 'From the Vault';
             if (sd !== side) { side = sd; html += `<li class="side">${esc(sd)}</li>`; }
-            html += `<li><button data-i="${i}"><span class="n"><i>${i + 1}</i><b>▶</b></span><span class="t"><b>${esc(c.name)}</b><span>${esc(c.title)}</span></span><span class="d">${monthYear(day(c.date.slice(0, 10)))}</span><span class="l">${mmss(trackMs(c))}</span></button></li>`;
+            html += `<li><button data-i="${i}"><span class="n"><i>${i + 1}</i><b>▶</b></span><span class="t"><b>${esc(c.name)}</b><span>${esc(c.title)}</span></span><span class="s">${esc(trackStat(c))}</span><span class="d">${monthYear(day(c.date.slice(0, 10)))}</span></button></li>`;
         });
         album.innerHTML = html + '</ol>';
         album.querySelectorAll('[data-i]').forEach(b => b.onclick = () => startTour(+b.dataset.i));
@@ -871,12 +892,22 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([page], { type: 'text/html' }));
         a.download = 'in-my-headphones-suhani-tiwari.html'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
     }
+    (() => {
+        const moved = kOf(day(D.facts.eras.moved)) * 100;
+        $('#sides').innerHTML = `<span style="left:0;width:${moved}%">Side A · Dallas</span><span class="b" style="left:${moved}%;width:${100 - moved}%">Side B · Austin</span>`;
+        const tt = $('#tticks');
+        TOUR.forEach((c, i) => { const b = document.createElement('button'); b.dataset.i = i; if (!c.side) b.className = 'vault';
+            b.style.left = (clamp(kOf(day(c.date.slice(0, 10))), 0, 1) * 100) + '%'; b.title = `${i + 1} · ${c.name}`; b.setAttribute('aria-label', `Track ${i + 1}, ${c.name}`);
+            b.onclick = () => startTour(i); tt.appendChild(b); });
+    })();
     function openAlbum() { album.classList.add('on'); document.body.classList.add('listening'); }
     function closeAlbum() { album.classList.remove('on'); document.body.classList.remove('listening'); markTrack(-1); }
     function markTrack(i) {
         album.querySelectorAll('[data-i]').forEach(b => b.classList.toggle('on', +b.dataset.i === i));
+        $('#tticks').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.i === i));
+        if (i < 0) { $('#pTitle').textContent = window.ALBUM; $('#tourStep').textContent = ''; $('#tourBar').style.transition = 'none'; $('#tourBar').style.width = '0'; }
         const on = album.querySelector('[data-i].on'); if (on) on.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        $('#albumPlay').textContent = i >= 0 ? '❚❚' : '▶';
+        $('#albumPlay').textContent = $('#tourPlay').textContent = i >= 0 ? '❚❚' : '▶';
     }
     $('#tourBtn').onclick = openAlbum;
     $('#tourNext').onclick = () => step < TOUR.length - 1 ? nextTrack(step + 1) : endTour();
@@ -911,7 +942,7 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
     $('#flipSkip').onclick = () => { const i = flipTo; closeFlip(); startTour(i); };
     $('#tourPrev').onclick = () => startTour(Math.max(0, step - 1));
     $('#tourEnd').onclick = endTour;
-    $('#tourPlay').onclick = () => paused ? startTour(step) : pauseTour();
+    $('#tourPlay').onclick = () => step < 0 ? startTour(0) : paused ? startTour(step) : pauseTour();
 
     // ---------- decoder and case study ----------
     const scrim = $('#scrim'); let openPanel = null;
@@ -1005,7 +1036,7 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
     function beginGalaxy(time) {
         pre.done = true; intro.start = time;
         document.body.classList.add('replay'); document.body.classList.remove('intro');
-        setTimeout(() => { if (!bang && step < 0) replay(); }, reduced ? 0 : 500);
+        setTimeout(() => { if (!bang && step < 0 && !album.classList.contains('on')) replay(); }, reduced ? 0 : 500);
     }
     addEventListener('keydown', e => { if (!pre.done && (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); skipIntro(); } });
     cv.addEventListener('click', () => { if (!pre.done) skipIntro(); });
