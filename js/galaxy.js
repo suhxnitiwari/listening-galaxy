@@ -791,8 +791,8 @@
         ['Sleep', `${f.allnighters.count} all-nighters, found as music in every hour from midnight to 6 AM, mostly ending on ${f.allnighters.top_weekday[0]} mornings before exams.`],
         ['Routine', `${f.weekday_peak.high_school.three_to_eight}% of high-school weekday listening fell between 3 and 8 PM: homework hours. Only ${f.before_9}% happens before 9 AM.`],
         ['Life events', `The morning I moved to Austin, a 14-hour college-essay session, a 119-play day, an album I was awake for at 12:50 AM.`],
-        ['Travel', `Flights show up as hours of offline listening; on a trip to India, ${tr.desi}% of what I played was South Asian, against ${f.desi_overall}% normally.`],
-        ['Identity', `South Asian music fell from ${f.desi_by_year[2022]}% to ${f.desi_by_year[2024]}% the year I left home and is back to ${f.desi_by_year[2026]}% now; after midnight it's ${f.desi_by_hour.night}%.`],
+        ['Travel', `Flights show up as hours of offline listening; on a trip to India, ${tr.desi}% of what I played was Hindi, against ${f.desi_overall}% normally.`],
+        ['Identity', `Hindi music fell from ${f.desi_by_year[2022]}% to ${f.desi_by_year[2024]}% the year I left home and is back to ${f.desi_by_year[2026]}% now; after midnight it's ${f.desi_by_hour.night}%.`],
         ['Personality', `${f.discover.by_skip}% of the songs I know, I found by skipping into them, and I decide in ${f.skip.median_seconds} seconds.`]];
       $('#reveals').innerHTML = rows.map(([k, v]) => `<div><b>${k}</b><span>${v}</span></div>`).join(''); }
     if (location.hash === '#how') openOverlay('how');
