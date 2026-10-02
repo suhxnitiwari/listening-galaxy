@@ -83,7 +83,7 @@ canvas#sky.drag { cursor: grabbing; } canvas#sky.on-star { cursor: pointer; }
 .card.on { transform: none; }
 .card .x { position: absolute; right: 12px; top: 10px; background: none; border: 0; color: var(--dim); font-size: 20px; cursor: pointer; }
 .card .head { display: grid; grid-template-columns: 76px 1fr; gap: 14px; align-items: center; margin-right: 18px; }
-.card .head img { width: 76px; height: 76px; border-radius: 8px; object-fit: cover; background: #1d1830; }
+.card .head > img { width: 76px; height: 76px; border-radius: 8px; object-fit: cover; background: #1d1830; }
 .card h2 { font: 400 24px/1.1 var(--serif); margin: 4px 0 2px; }
 .card .who { background: none; border: 0; padding: 0; color: var(--soft); font-size: 14px; cursor: pointer; text-decoration: underline; text-decoration-color: #ffffff40; text-underline-offset: 3px; }
 .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; margin: 18px 0 0; }
@@ -100,7 +100,7 @@ canvas#sky.drag { cursor: grabbing; } canvas#sky.on-star { cursor: pointer; }
 .mood { display: inline-block; font: 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; padding: 3px 8px; border-radius: 999px; border: 1px solid currentColor; }
 
 /* tour */
-.tour { left: 50%; bottom: 196px; transform: translate(-50%, 20px); width: min(480px, calc(100% - 2 * var(--gut))); background: var(--panel); backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s; z-index: 4; }
+.tour { position: fixed; left: 50%; bottom: 196px; transform: translate(-50%, 20px); width: min(480px, calc(100% - 2 * var(--gut))); background: var(--panel); backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s; z-index: 4; }
 .tour.on { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
 .tour h3 { font: 400 26px var(--serif); margin: 4px 0 4px; }
 .tour p { margin: 0; color: var(--soft); font-size: 14px; line-height: 1.45; }
@@ -148,6 +148,18 @@ canvas#sky.drag { cursor: grabbing; } canvas#sky.on-star { cursor: pointer; }
 .live { font: 12px var(--mono); color: var(--dim); }
 .live b { color: var(--ink); font-weight: 500; }
 
+/* the prelude: words in the middle of the screen while we fly out from Earth */
+.prelude { position: fixed; inset: 0; z-index: 8; display: grid; place-items: center; pointer-events: none; text-align: center; padding: 0 24px; }
+.prelude .line { opacity: 0; transform: scale(.96); filter: blur(6px); transition: opacity 1s, transform 2.4s cubic-bezier(.2,.8,.2,1), filter 1s; }
+.prelude .line.on { opacity: 1; transform: none; filter: none; }
+.prelude b { display: block; font: 400 clamp(38px, 6vw, 84px)/1.05 var(--serif); letter-spacing: -.01em; text-shadow: 0 0 40px #000, 0 0 80px #000; }
+.prelude span { display: block; margin-top: 14px; font: 13px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: #CFC6DA; text-shadow: 0 0 20px #000; }
+.skip { position: fixed; z-index: 9; right: 24px; bottom: 22px; background: none; border: 1px solid #ffffff30; border-radius: 999px; color: #CFC6DA; padding: 8px 14px; font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; display: none; }
+.skip:hover { color: var(--ink); border-color: #ffffff70; }
+body.intro .skip { display: block; }
+body.intro .hud, body.intro .hud > * { animation: none !important; }
+body.intro .hud, body.intro .tip { opacity: 0 !important; visibility: hidden; }
+
 /* the opening: the interface arrives after the big bang */
 @keyframes arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .hero > *, .threads, .time, .top { animation: arrive 1.4s cubic-bezier(.2,.8,.2,1) both; }
@@ -173,7 +185,7 @@ canvas#sky.drag { cursor: grabbing; } canvas#sky.on-star { cursor: pointer; }
 /* cards: back button, photos, compare */
 .card .back { background: none; border: 0; padding: 0; margin-bottom: 12px; color: var(--pink); font: 500 11px var(--mono); letter-spacing: .06em; cursor: pointer; max-width: calc(100% - 30px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 .card .back:hover { color: var(--ink); }
-.card .head img.round { border-radius: 50%; }
+.card .head > img.round { border-radius: 50%; }
 .ava { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; background: #1d1830; vertical-align: -6px; margin-right: 7px; }
 .results .ava { width: 28px; height: 28px; margin: 0; }
 .results .dot { width: 9px; height: 9px; border-radius: 50%; justify-self: center; }

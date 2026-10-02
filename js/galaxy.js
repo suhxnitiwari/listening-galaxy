@@ -30,10 +30,13 @@
     const moods = [['love', [255, 105, 150]], ['party', [255, 226, 80]], ['confident', [255, 150, 60]], ['bittersweet', [185, 150, 255]], ['heartbreak', [80, 140, 255]], ['dark', [140, 70, 200]]];
     const moodColor = Object.fromEntries(moods), noMood = [105, 100, 125];
 
-    // ---------- layout: a 3D disk. Artists on a golden-angle spiral by hours, songs in a cloud around each ----------
+    // ---------- layout: a 3D disk that grows outward in time. Artists sit on a golden-angle spiral in the order they
+    // entered my life, so distance from the center means "when", and songs gather in a cloud around each artist ----------
     let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    artists.forEach((A, k) => {
-        const ang = k * 2.39996, rad = k === 0 ? 0 : 120 + Math.sqrt(k) * 64;
+    const byArrival = [...artists].sort((a, b) => a.first.localeCompare(b.first) || a.i - b.i);
+    const radiusOf = k => 40 + Math.sqrt(k) * 66;
+    byArrival.forEach((A, k) => {
+        const ang = k * 2.39996, rad = radiusOf(k); A.arrival = k;
         A.x = Math.cos(ang) * rad; A.y = Math.sin(ang) * rad; A.z = (rnd() - 0.5) * (40 + rad * 0.18);   // the disk thickens toward the rim
         A.spread = 14 + Math.sqrt(A.songs.length) * 9.5;
         const turn = rnd() * 6.28;
@@ -147,23 +150,93 @@
     const gasColors = [[247, 168, 196], [170, 140, 255], [126, 178, 255], [255, 214, 150], [255, 140, 190]];
     const gas = [...Array(2400)].map((_, i) => {
         const t = Math.pow(rnd(), 0.6), r = 50 + t * 2300, th = (i % 2) * Math.PI + Math.log(r / 50) * 1.9 + (rnd() - 0.5) * 0.9;
-        return [Math.cos(th) * r, Math.sin(th) * r, (rnd() - 0.5) * (30 + r * 0.12), gasColors[Math.floor(rnd() * gasColors.length)], 0.8 + rnd() * 2.2, 0.4 + rnd() * 0.6];
+        return [Math.cos(th) * r, Math.sin(th) * r, (rnd() - 0.5) * (30 + r * 0.12), gasColors[Math.floor(rnd() * gasColors.length)], 0.8 + rnd() * 2.2, 0.4 + rnd() * 0.6, r];
     });
     const clouds = [...Array(14)].map((_, i) => { const r = 250 + rnd() * 1700, th = (i % 2) * Math.PI + Math.log(r / 50) * 1.9 + (rnd() - 0.5) * 0.5;
         return { x: Math.cos(th) * r, y: Math.sin(th) * r, r: 220 + rnd() * 380, c: gasColors[i % gasColors.length] }; });
-    const intro = { start: performance.now(), ms: 5600, touched: false };
+    // ---------- the prelude: from Earth, out past the solar system, into deep space, until everything is one point ----------
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const pre = { start: performance.now(), end: performance.now() + (reduced ? 0 : 9400), done: false, timers: [] };
+    const intro = { start: pre.end, ms: 5600, touched: false };
+    const preStars = [...Array(1200)].map(() => [(Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, 0.3 + Math.random() * 6, Math.random()]);
+    const land = [];   // continents as dots, like everything else here
+    for (let c = 0; c < 9; c++) { const la = (Math.random() - 0.5) * 2, lo = c / 9 * 6.283 + Math.random() * 0.5, sp = 0.28 + Math.random() * 0.3;
+        for (let k = 0; k < 340; k++) { const gs = () => Math.random() + Math.random() + Math.random() - 1.5; land.push([clamp(la + gs() * sp, -1.45, 1.45), lo + gs() * sp * 1.6, Math.random()]); } }
+    const camBack = t => t < 2.2 ? 0 : Math.exp((t - 2.2) * 0.95) - 1;
+    function drawPre(time) {
+        const t = (time - pre.start) / 1000, cx = W / 2, cy = H / 2, M = Math.min(W, H), F = M * 0.5, fade = clamp(1 - (t - 7.2) / 1.3, 0, 1);
+        g.setTransform(dpr, 0, 0, dpr, 0, 0); g.globalCompositeOperation = 'source-over'; g.fillStyle = '#03030a'; g.fillRect(0, 0, W, H);
+        // stars stream past as the camera flies backward
+        g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
+        const back = camBack(t), backPrev = camBack(t - 0.06);
+        for (const [x, y, z, b] of preStars) {
+            const z1 = z + back, z0 = z + backPrev, a = (0.25 + 0.6 * b) * fade * clamp(1.6 / z1 + 0.15, 0, 1); if (a < 0.02) continue;
+            g.strokeStyle = `rgba(${b > 0.75 ? '255,214,235' : b > 0.45 ? '200,210,255' : '255,255,255'},${a})`; g.lineWidth = clamp(1.6 / z1, 0.5, 2.2);
+            g.beginPath(); g.moveTo(cx + x * F / z0, cy + y * F / z0); g.lineTo(cx + x * F / z1 + 0.01, cy + y * F / z1); g.stroke();
+        }
+        // the solar system: orbits around a sun that slides in from the left as we pull back
+        const S = t < 2.2 ? 1 + 0.04 * (1 - t / 2.2) : Math.exp(-(t - 2.2) * 1.55), R = M * 0.24 * S, orbit = M * 0.24 * S * 700, sx = cx - orbit;
+        const vis = clamp((W * 1.8 - orbit) / W, 0, 1) * fade;
+        if (vis > 0) {
+            g.lineWidth = 1;
+            [[0.39, 4.1], [0.72, 1.6], [1, 0], [1.52, 2.3], [2.6, 5.2], [3.6, 0.9]].forEach(([r, ph], k) => {
+                g.strokeStyle = `rgba(200,210,255,${0.22 * vis})`; g.beginPath(); g.ellipse(sx, cy, orbit * r, orbit * r * 0.34, 0, 0, 7); g.stroke();
+                if (k !== 2) { const a = ph + t * (0.5 / r); g.fillStyle = `rgba(230,225,255,${0.8 * vis})`; g.beginPath(); g.arc(sx + Math.cos(a) * orbit * r, cy + Math.sin(a) * orbit * r * 0.34, 1.6, 0, 7); g.fill(); }
+            });
+            const SR = Math.max(4, orbit * 0.05), sun = g.createRadialGradient(sx, cy, 0, sx, cy, SR * 4);
+            sun.addColorStop(0, `rgba(255,250,230,${vis})`); sun.addColorStop(0.2, `rgba(255,200,120,${0.7 * vis})`); sun.addColorStop(1, 'rgba(255,150,80,0)'); g.fillStyle = sun; g.fillRect(sx - SR * 4, cy - SR * 4, SR * 8, SR * 8);
+        }
+        // Earth, made of dots, with a day side, a night side and city lights
+        if (R > 1.6) {
+            const rot = t * 0.22 + 1.6, tilt = 0.41, Lx = -0.55, Ly = -0.45, Lz = 0.7, ds = Math.max(0.7, R * 0.022);
+            const at = g.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.3); at.addColorStop(0, 'rgba(120,180,255,.5)'); at.addColorStop(1, 'rgba(120,180,255,0)');
+            g.fillStyle = at; g.beginPath(); g.arc(cx, cy, R * 1.3, 0, 7); g.fill();
+            g.globalCompositeOperation = 'source-over'; g.save(); g.beginPath(); g.arc(cx, cy, R, 0, 7); g.clip();
+            const oc = g.createRadialGradient(cx + Lx * R * 0.5, cy + Ly * R * 0.5, R * 0.05, cx, cy, R * 1.05); oc.addColorStop(0, '#4f8fe6'); oc.addColorStop(0.45, '#1a4a9a'); oc.addColorStop(1, '#040b1e');
+            g.fillStyle = oc; g.fillRect(cx - R, cy - R, R * 2, R * 2);
+            const pts = [];
+            for (const [la, lo, b] of land) { const x = Math.cos(la) * Math.sin(lo + rot), y0 = -Math.sin(la), z0 = Math.cos(la) * Math.cos(lo + rot), y = y0 * Math.cos(tilt) - z0 * Math.sin(tilt), z = y0 * Math.sin(tilt) + z0 * Math.cos(tilt);
+                if (z > 0) pts.push([cx + x * R, cy + y * R, x * Lx + y * Ly + z * Lz, b]); }
+            for (const [x, y, l, b] of pts) if (l > 0) { g.fillStyle = `rgba(${b > 0.8 ? '214,200,150' : '90,170,110'},${0.25 + 0.7 * l})`; g.fillRect(x - ds / 2, y - ds / 2, ds, ds); }
+            const sh = g.createRadialGradient(cx + Lx * R * 0.7, cy + Ly * R * 0.7, R * 0.3, cx + Lx * R * 0.7, cy + Ly * R * 0.7, R * 2.1);
+            sh.addColorStop(0, 'rgba(2,4,14,0)'); sh.addColorStop(0.4, 'rgba(2,4,14,.25)'); sh.addColorStop(0.75, 'rgba(2,4,14,.8)'); sh.addColorStop(1, 'rgba(2,4,14,.97)'); g.fillStyle = sh; g.fillRect(cx - R, cy - R, R * 2, R * 2);
+            g.globalCompositeOperation = 'lighter';
+            for (const [x, y, l, b] of pts) if (l < 0 && b > 0.7) { g.fillStyle = `rgba(255,205,120,${Math.min(0.9, -l * 1.5)})`; g.fillRect(x - ds / 3, y - ds / 3, ds * 0.66, ds * 0.66); }
+            g.restore(); g.globalCompositeOperation = 'lighter';
+            g.strokeStyle = 'rgba(150,200,255,.45)'; g.lineWidth = Math.max(0.6, R * 0.015); g.beginPath(); g.arc(cx, cy, R, 3.5, 5.6); g.stroke();
+            // the Moon
+            if (S < 0.95) { const ma = 2.4 + t * 0.35, mx = cx + Math.cos(ma) * R * 4, my = cy + Math.sin(ma) * R * 1.4, mr = Math.max(0.8, R * 0.27); g.fillStyle = `rgba(210,205,220,${0.85 * fade})`; g.beginPath(); g.arc(mx, my, mr, 0, 7); g.fill(); }
+        } else { g.fillStyle = `rgba(140,190,255,${fade})`; g.beginPath(); g.arc(cx, cy, 1.4, 0, 7); g.fill(); }
+        // the first song: a pink spark that lifts off the planet
+        if (t > 0.5) { const p = clamp((t - 0.5) / 1.8, 0, 1), e = 1 - (1 - p) ** 3, px = cx + (0.3 + 0.5 * e) * R * Math.max(S, 0.02) / Math.max(S, 0.02), py = cy - (0.6 + 0.55 * e) * R;
+            const pr = Math.max(1.2, 3 * Math.min(1, S * 1.5)), pulse = 0.6 + 0.4 * Math.sin(t * 6);
+            g.globalAlpha = fade; g.drawImage(sprite([247, 168, 196]), px - pr * 6, py - pr * 6, pr * 12, pr * 12); g.globalAlpha = 1;
+            g.fillStyle = `rgba(255,230,240,${pulse * fade})`; g.beginPath(); g.arc(px, py, pr, 0, 7); g.fill(); }
+        // everything collapses into one point, which grows white-hot
+        const core = clamp((t - 6) / 3.4, 0, 1);
+        if (core > 0) { const cr = 6 + core * core * 90, cg = g.createRadialGradient(cx, cy, 0, cx, cy, cr);
+            cg.addColorStop(0, `rgba(255,255,255,${core})`); cg.addColorStop(0.3, `rgba(255,200,230,${0.6 * core})`); cg.addColorStop(1, 'rgba(170,140,255,0)'); g.fillStyle = cg; g.fillRect(cx - cr, cy - cr, cr * 2, cr * 2); }
+        g.globalCompositeOperation = 'source-over';
+    }
 
     // ---------- state ----------
     let now = t0, hover = null, selected = null, focusArtist = null, pair = null, connectFrom = null, nearArtist = null, playing = null, touched = performance.now();
     const mouse = { x: -1e4, y: -1e4, on: false }, trail = [], ripples = [], births = [];
     let prevNow = t0, monthOwner = null;
     const lit = s => s.born <= now;
+    const arrivals = byArrival.map(A => day(A.first));
+    let frontier = 0;   // the galaxy's edge at the current moment, in world units
+    function grown() { let lo = 0, hi = arrivals.length; while (lo < hi) { const m = (lo + hi) >> 1; if (arrivals[m] <= now) lo = m + 1; else hi = m; } return radiusOf(Math.max(0, lo - 1)) + 160; }
+    const reach = r => clamp((frontier - r) / 220, 0, 1);   // 1 inside the frontier, fading to 0 just past it
     const brightness = s => now <= s.gone ? 1 : Math.max(0.28, 1 - (now - s.gone) / (365 * DAY));   // fades in the year after its last listen
 
     // ---------- frame ----------
     let frames = 0, fpsAt = performance.now(), lastT = performance.now();
     function frame(time) {
         const dt = Math.min(50, time - lastT); lastT = time;
+        if (time < pre.end) { drawPre(time); requestAnimationFrame(frame); return; }
+        if (!pre.done) beginGalaxy(time);
+        frontier += (grown() - frontier) * 0.08;
         const ik = clamp((time - intro.start) / intro.ms, 0, 1), ie = 1 - (1 - ik) ** 3, sw = (1 - ie) * 2.6;
         bangE = 0.015 + 0.985 * ie; bC = Math.cos(sw); bS = Math.sin(sw);
         if (ik < 1 && !intro.touched) { cam.pitch = 0.1 + 0.85 * ie; view.z = fitZ * (1.8 - 0.8 * ie); }
@@ -179,20 +252,22 @@
         // dust in three depths drifts as the galaxy turns, so the sky has parallax
         for (const [x, y, r, d] of dust) {
             const X = ((x * W - yaw * W * 0.3 * d - view.x * view.z * d * 0.1) % W + W) % W, Y = ((y * H - pitch * H * 0.25 * d - view.y * view.z * d * 0.1) % H + H) % H;
-            g.fillStyle = `rgba(255,255,255,${0.08 + d * 0.18})`; g.fillRect(X, Y, r * (0.5 + d), r * (0.5 + d));
+            g.fillStyle = `rgba(255,255,255,${(0.08 + d * 0.18) * (0.15 + 0.85 * kOf(now))})`; g.fillRect(X, Y, r * (0.5 + d), r * (0.5 + d));
         }
         // orbit rings on the galactic plane: they make the tilt and the spin readable
-        g.lineWidth = 1; g.strokeStyle = 'rgba(200,190,255,.05)';
-        for (const R of rings) { g.beginPath(); for (let k = 0; k <= 96; k++) { const a = k / 96 * 6.2832, [x, y] = project(Math.cos(a) * R, Math.sin(a) * R, 0); k ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
+        g.lineWidth = 1;
+        for (const R of rings) { if (reach(R) <= 0) continue; g.strokeStyle = `rgba(200,190,255,${0.05 * reach(R)})`; g.beginPath(); for (let k = 0; k <= 96; k++) { const a = k / 96 * 6.2832, [x, y] = project(Math.cos(a) * R, Math.sin(a) * R, 0); k ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
 
         g.globalCompositeOperation = 'lighter';
         // nebula clouds and gas: bright while the galaxy is being born, then a faint haze on the disk
-        for (const c of clouds) { const [x, y, f] = project(c.x, c.y, 0), R = c.r * view.z * f; if (x < -R || y < -R || x > W + R || y > H + R) continue;
-            g.globalAlpha = ik < 1 ? 0.08 + 0.22 * (1 - ik) : 0.08; g.drawImage(sprite(c.c), x - R, y - R * cP, R * 2, R * 2 * Math.max(0.3, cP)); }
+        for (const c of clouds) { const [x, y, f] = project(c.x, c.y, 0), R = c.r * view.z * f, rc = reach(Math.hypot(c.x, c.y)); if (!rc || x < -R || y < -R || x > W + R || y > H + R) continue;
+            g.globalAlpha = (ik < 1 ? 0.08 + 0.22 * (1 - ik) : 0.08) * rc; g.drawImage(sprite(c.c), x - R, y - R * cP, R * 2, R * 2 * Math.max(0.3, cP)); }
         g.globalAlpha = 1;
         const gasA = ik < 1 ? 0.3 + 0.6 * (1 - ik) : 0.3;
-        for (const p of gas) { const [x, y, f] = project(p[0], p[1], p[2]); if (x < 0 || y < 0 || x > W || y > H) continue;
-            const r = Math.max(0.6, p[4] * view.z * f * 0.6); g.fillStyle = `rgba(${p[3]},${gasA * p[5] * clamp(0.3 + 0.55 * f, 0.3, 1)})`; g.fillRect(x - r / 2, y - r / 2, r, r); }
+        for (const p of gas) { const rg = reach(p[6]); if (!rg) continue; const [x, y, f] = project(p[0], p[1], p[2]); if (x < 0 || y < 0 || x > W || y > H) continue;
+            const r = Math.max(0.6, p[4] * view.z * f * 0.6); g.fillStyle = `rgba(${p[3]},${gasA * p[5] * rg * clamp(0.3 + 0.55 * f, 0.3, 1)})`; g.fillRect(x - r / 2, y - r / 2, r, r); }
+        // the growing edge: a faint luminous rim where new artists are arriving
+        if (frontier < 2500 && pre.done) { g.strokeStyle = 'rgba(247,168,196,.07)'; g.lineWidth = 2; g.beginPath(); for (let k = 0; k <= 96; k++) { const a = k / 96 * 6.2832, [x, y] = project(Math.cos(a) * frontier, Math.sin(a) * frontier, 0); k ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
         // the first light: a white-hot flash and a shockwave
         const kf = clamp((time - intro.start) / 2600, 0, 1);
         if (kf < 1) { const [cx, cy] = project(0, 0, 0), e = 1 - (1 - kf) ** 2, R = 30 + Math.max(W, H) * 0.45 * e, fl = g.createRadialGradient(cx, cy, 0, cx, cy, R);
@@ -565,15 +640,17 @@
         $('#tourText').textContent = who + c.text; $('#tourStep').textContent = `${i + 1} / ${D.story.length}`;
         $('#tourNext').textContent = i === D.story.length - 1 ? 'Finish' : 'Next →';
         ticks.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
-        closeCard();
-        if (c.song != null) { selected = songs[c.song]; flyToSong(selected); }
-        else if (c.artist != null) { focusArtist = artists[c.artist]; flyToArtist(focusArtist); }
-        else { intro.touched = true; flyTo(0, 30, fitZ); }
+        // each chapter opens its star and plays it, so the tour is a listening tour
+        back.length = 0; current = null;
+        const small = W < 760;   // on phones the card would cover the tour, so the star is just highlighted
+        if (c.song != null) { if (small) { closeCard(); selected = songs[c.song]; flyToSong(selected); play(selected); } else openSong(songs[c.song], { listen: true, push: false }); }
+        else if (c.artist != null) { if (small) { closeCard(); focusArtist = artists[c.artist]; flyToArtist(focusArtist); } else openArtist(artists[c.artist], { push: false }); play(artists[c.artist].songs[0]); }
+        else { closeCard(); intro.touched = true; flyTo(0, 30, fitZ); }
         tour.classList.add('on'); $('#hero').classList.add('quiet');
-        const bar = $('#tourBar'); bar.style.transition = 'none'; bar.style.width = '0'; requestAnimationFrame(() => { bar.style.transition = 'width 7s linear'; bar.style.width = '100%'; });
-        tourTimer = setTimeout(() => step >= 0 && (step < D.story.length - 1 ? startTour(step + 1) : endTour()), 7000);
+        const bar = $('#tourBar'); bar.style.transition = 'none'; bar.style.width = '0'; requestAnimationFrame(() => { bar.style.transition = 'width 10s linear'; bar.style.width = '100%'; });
+        tourTimer = setTimeout(() => step >= 0 && (step < D.story.length - 1 ? startTour(step + 1) : endTour()), 10000);
     }
-    function endTour() { if (step < 0) return; step = -1; clearTimeout(tourTimer); tour.classList.remove('on'); ticks.querySelectorAll('button').forEach(b => b.classList.remove('on')); selected = null; focusArtist = null; }
+    function endTour() { if (step < 0) return; step = -1; clearTimeout(tourTimer); tour.classList.remove('on'); ticks.querySelectorAll('button').forEach(b => b.classList.remove('on')); audio.pause(); }
     $('#tourBtn').onclick = () => startTour(0);
     $('#tourNext').onclick = () => step < D.story.length - 1 ? startTour(step + 1) : endTour();
     $('#tourPrev').onclick = () => startTour(Math.max(0, step - 1));
@@ -639,8 +716,32 @@
     audio.addEventListener('ended', () => { playing = null; syncPlay(); });
 
     // ---------- go: the big bang replays four years ----------
+    // the prelude's words, in the middle of the screen
+    const prelude = $('#prelude'), first = D.story[0] && D.story[0].song != null ? songs[D.story[0].song] : null;
+    const lines = [[400, 2500, longDate(t0), first ? `Somewhere on Earth, one song: ${first.title} by ${first.A.name}.` : 'Somewhere on Earth, one song.'],
+        [2900, 4300, 'Then another.'], [4500, 5900, 'And another.'],
+        [6100, 9000, `Four years. ${fmt(D.totals.listens)} listens.`, `${fmt(D.totals.songs)} songs, ${fmt(D.totals.artists)} artists.`], [9400, 12000, 'One universe.']];
+    function say(big, small) { prelude.innerHTML = `<div class="line"><b>${esc(big)}</b>${small ? `<span>${esc(small)}</span>` : ''}</div>`; requestAnimationFrame(() => requestAnimationFrame(() => prelude.querySelector('.line').classList.add('on'))); }
+    function hush() { const l = prelude.querySelector('.line'); if (l) l.classList.remove('on'); }
+    if (!reduced) {
+        document.body.classList.add('intro');
+        for (const [a, b, big, small] of lines) { pre.timers.push(setTimeout(() => say(big, small), a), setTimeout(hush, b)); }
+        $('#skip').onclick = skipIntro;
+    }
+    function skipIntro() {
+        if (pre.done || performance.now() >= pre.end) return;
+        pre.timers.forEach(clearTimeout); pre.end = performance.now();
+        say('One universe.'); pre.timers = [setTimeout(hush, 2200)];
+    }
+    function beginGalaxy(time) {
+        pre.done = true; intro.start = time;
+        document.body.classList.remove('intro');
+        setTimeout(() => { if (!bang && step < 0) sweep(t0, t1, 16000); }, reduced ? 0 : 1900);
+    }
+    addEventListener('keydown', e => { if (!pre.done && (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); skipIntro(); } });
+    cv.addEventListener('click', () => { if (!pre.done) skipIntro(); });
+
     setColor('year');
     addEventListener('resize', size); size();
     requestAnimationFrame(frame);
-    sweep(t0, t1, 16000);
 })();
