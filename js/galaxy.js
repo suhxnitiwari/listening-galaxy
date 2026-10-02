@@ -156,7 +156,10 @@
         return { x: Math.cos(th) * r, y: Math.sin(th) * r, r: 220 + rnd() * 380, c: gasColors[i % gasColors.length] }; });
     // ---------- the prelude: Dallas at night, out to Earth, out to the Milky Way, past it, and into a new galaxy ----------
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const PRE_MS = 12000;
+    const PRE_MS = 6000;
+    // real seconds -> scene seconds: Dallas flies by, Earth is a glimpse, the Milky Way a beat, then straight to the new galaxy
+    const KEYS = [[0, 0.6], [1, 2.9], [2, 4.7], [3.4, 7.2], [6, 12]];
+    const scene = r => { for (let i = 1; i < KEYS.length; i++) if (r <= KEYS[i][0]) { const [a0, b0] = KEYS[i - 1], [a1, b1] = KEYS[i]; return b0 + (b1 - b0) * (r - a0) / (a1 - a0); } return 12; };
     const pre = { start: performance.now(), end: performance.now() + (reduced ? 0 : PRE_MS), done: false, timers: [] };
     const intro = { start: pre.end, ms: 5600, touched: false };
     const R1 = Math.random, gs = () => R1() + R1() + R1() - 1.5, smooth = k => { k = clamp(k, 0, 1); return k * k * (3 - 2 * k); };
@@ -192,7 +195,7 @@
             g.fillStyle = `rgba(${col},${b * alpha})`; g.fillRect(X - ds / 2, Y - ds / 2, ds, ds); }
     }
     function drawPre(time) {
-        const t = (time - pre.start) / 1000, cx = W / 2, cy = H / 2, M = Math.min(W, H);
+        const t = scene((time - pre.start) / 1000), cx = W / 2, cy = H / 2, M = Math.min(W, H);
         g.setTransform(dpr, 0, 0, dpr, 0, 0); g.globalCompositeOperation = 'source-over'; g.fillStyle = '#03030a'; g.fillRect(0, 0, W, H);
         g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
 
@@ -251,11 +254,11 @@
             const drift = smooth((t - 6.6) / 2.4), gx = cx - ex * (1 - drift) - drift * W * 0.42, gy = cy - ey * (1 - drift) + drift * H * 0.18;
             drawSpiral(milky, gx, gy, Rg, rot, tilt, clamp((t - 4.4) / 0.6, 0, 1) * clamp((9.4 - t) / 1, 0, 1));
             if (t > 5.4 && t < 7.4) { g.globalCompositeOperation = 'source-over'; g.font = '11px "JetBrains Mono", monospace'; g.textAlign = 'left'; g.fillStyle = `rgba(207,198,218,${clamp((t - 5.4) / 0.4, 0, 1) * clamp((7.4 - t) / 0.4, 0, 1)})`;
-                g.fillText('← YOU ARE HERE', gx + ex + 10, gy + ey + 4); g.globalCompositeOperation = 'lighter'; }
+                g.fillText('← YOU ARE HERE · ORION ARM', gx + ex + 10, gy + ey + 4); g.globalCompositeOperation = 'lighter'; }
         }
         // a new galaxy comes out of the dark, and we dive into its heart
         if (t > 7.2) {
-            const k2 = (t - 7.2) / (PRE_MS / 1000 - 7.2), Rn = M * 0.06 * Math.exp(k2 * 3.4), along2 = smooth(k2 * 1.25);
+            const k2 = (t - 7.2) / (12 - 7.2), Rn = M * 0.06 * Math.exp(k2 * 3.4), along2 = smooth(k2 * 1.25);
             const nx = cx + (1 - along2) * W * 0.22, ny = cy - (1 - along2) * H * 0.12, rot = -0.4 + t * 0.12;
             drawSpiral(mine, nx, ny, Rn, rot, 0.55, clamp((t - 7.2) / 1, 0, 1));
             const core = smooth((k2 - 0.75) / 0.25); if (core > 0) { const cr = Math.max(W, H) * core, cg = g.createRadialGradient(nx, ny, 0, nx, ny, cr);
@@ -764,11 +767,9 @@
     // the prelude's words, in the middle of the screen
     const prelude = $('#prelude'), first = D.story[0] && D.story[0].song != null ? songs[D.story[0].song] : null;
     const NAME = 'Heavy Rotation';
-    const lines = [[300, 2900, 'Dallas, Texas · May 21, 2022', first ? `I press play on ${first.title} by ${first.A.name}.` : 'I press play.'],
-        [3300, 5000, 'One song.', `Then ${fmt(D.totals.listens - 1)} more.`],
-        [5500, 7700, 'The Milky Way has at least 100 billion stars.', 'I wanted to see mine.'],
-        [8300, 11500, NAME, `A galaxy of ${fmt(D.totals.songs)} songs, ${fmt(D.totals.artists)} artists and four years of me.`],
-        [12100, 14600, 'It starts with one star.']];
+    const lines = [[100, 1900, 'Dallas · May 21, 2022', 'I press play.'],
+        [2100, 3400, `${fmt(D.totals.listens)} listens later…`],
+        [3600, 6000, NAME, 'my listening galaxy']];
     function say(big, small) { prelude.innerHTML = `<div class="line"><b>${esc(big)}</b>${small ? `<span>${esc(small)}</span>` : ''}</div>`; requestAnimationFrame(() => requestAnimationFrame(() => prelude.querySelector('.line').classList.add('on'))); }
     function hush() { const l = prelude.querySelector('.line'); if (l) l.classList.remove('on'); }
     if (!reduced) {
@@ -779,12 +780,12 @@
     function skipIntro() {
         if (pre.done || performance.now() >= pre.end) return;
         pre.timers.forEach(clearTimeout); pre.end = performance.now();
-        say('It starts with one star.'); pre.timers = [setTimeout(hush, 2200)];
+        say(NAME, 'my listening galaxy'); pre.timers = [setTimeout(hush, 1600)];
     }
     function beginGalaxy(time) {
         pre.done = true; intro.start = time;
         document.body.classList.remove('intro');
-        setTimeout(() => { if (!bang && step < 0) sweep(t0, t1, 16000); }, reduced ? 0 : 1900);
+        setTimeout(() => { if (!bang && step < 0) sweep(t0, t1, 16000); }, reduced ? 0 : 1200);
     }
     addEventListener('keydown', e => { if (!pre.done && (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); skipIntro(); } });
     cv.addEventListener('click', () => { if (!pre.done) skipIntro(); });
