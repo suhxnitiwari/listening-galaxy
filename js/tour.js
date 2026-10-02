@@ -21,8 +21,7 @@ window.buildTour = (D, songs, artists) => {
     const cluster = [wolves, ...wolves.links.slice(0, 3).map(m => m.s)];
 
     const album = [
-        { name: 'ariana runs pop',   // shortlisted: 'god is a woman'
-          date: top.first, q: 'Who runs this galaxy?', title: top.name,
+        { name: 'god is a woman',date: top.first, q: 'Who runs this galaxy?', title: top.name,
           text: `${F.top.share}% of everything Suhani has ever played is ${top.name}: ${F.top_detail.days_nonstop} days of nonstop Ari, ${F.top_detail.songs} different songs, about ${F.top_detail.per_day} a day, on ${F.top_detail.days_share}% of all the days she pressed play. Her holy trinity: ${F.top_detail.albums.map(([a, n]) => `${a} (${fmt(n)})`).join(', ')}. She was #1 in ${F.top.owned} of ${F.top.months} months and through every version of Suhani's life: high school, the summer before college, the move to Austin, and 2026. Nicki Minaj said it best on Side to Side, and in this galaxy it's true: Ariana runs pop.`,
           verdict: "Ariana isn't Suhani's favorite artist. She's the gravitational center.", focus: { artist: F.top.artist }, play: top.songs[0].i },
 
