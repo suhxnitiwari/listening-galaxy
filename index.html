@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="css/galaxy.css">
 </head>
 <body>
-<canvas id="sky" aria-label="A galaxy of every song I have played: drag to move, scroll to zoom, click a star"></canvas>
+<canvas id="sky" aria-label="A 3D galaxy of every song I have played: drag to spin, scroll to zoom, click a star"></canvas>
 
 <header class="hud top">
     <a class="me" href="https://suhanitiwari.com">Suhani Tiwari</a>
@@ -21,16 +21,20 @@
 <div class="hud hero" id="hero">
     <div class="label">Listening Galaxy · 2022 – 2026</div>
     <h1>Every song I've ever played is <em>a star.</em></h1>
-    <p>Four years of my Spotify history, mapped as a universe. Every star is a song and every constellation is an artist, built from the data warehouse I engineered from my raw listening export.</p>
+    <p>Four years of my Spotify history mapped as a universe, where every star is a song and every constellation an artist, built on the data warehouse I engineered from my raw listening export.</p>
     <div class="stats"><div><b data-total="listens">91,210</b>listens</div><div><b data-total="songs">4,648</b>songs</div><div><b data-total="artists">1,231</b>artists</div><div><b data-total="hours">4,397</b>hours</div></div>
     <div class="ctas"><button class="pill solid" id="tourBtn">▶ Take the tour</button><button class="pill" data-open="how">How I built this</button></div>
 </div>
+
+<div class="hint" id="hint" role="status"></div>
+<div class="toast" id="toast" role="status"></div>
 
 <aside class="hud threads" id="threads" aria-label="Connections between songs"><div class="label">Connect the stars</div></aside>
 
 <div class="hud time">
     <div class="date" id="date">May 2022</div>
-    <div class="lit"><b id="lit">0</b> stars lit</div>
+    <div class="ticker" id="ticker"></div>
+    <div class="lit"><b id="lit">0</b> stars lit · drag to spin · shift-drag to move · scroll to zoom</div>
     <div class="track"><canvas id="months" aria-hidden="true"></canvas><div class="ticks" id="ticks"></div>
         <input type="range" id="slider" min="0" max="1000" value="0" aria-label="Move through time"></div>
     <div class="row"><span>May 2022</span><span>2023</span><span>2024</span><span>2025</span><span>2026</span></div>
@@ -53,14 +57,14 @@
     <div class="label">Decoder</div><h2>How to read the sky</h2>
     <div class="decode">
         <div><svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="4" fill="#F3ECF4"/></svg><p><b>A star</b>One song I've listened to for at least 30 seconds, Spotify's own threshold for a stream.</p></div>
-        <div><svg viewBox="0 0 54 54"><circle cx="15" cy="27" r="2" fill="#F3ECF4"/><circle cx="35" cy="27" r="8" fill="#F3ECF4"/></svg><p><b>Size</b>How many times I've listened. Radius grows with the square root, so area tracks listens.</p></div>
-        <div><svg viewBox="0 0 54 54"><circle cx="12" cy="27" r="4" fill="rgb(126,178,255)"/><circle cx="27" cy="18" r="4" fill="rgb(170,140,255)"/><circle cx="27" cy="36" r="4" fill="rgb(255,160,220)"/><circle cx="42" cy="27" r="4" fill="rgb(255,236,170)"/></svg><p><b>Color</b>The year I first heard it: blue 2022, violet 2023, pink 2024, peach 2025, gold 2026.</p></div>
-        <div><svg viewBox="0 0 54 54"><circle cx="17" cy="27" r="5" fill="#F3ECF4"/><circle cx="37" cy="27" r="5" fill="#F3ECF4" opacity=".3"/></svg><p><b>Brightness</b>Whether I still play it. A star fades in the year after the last time I listened to it.</p></div>
-        <div><svg viewBox="0 0 54 54"><g stroke="#C8BEFF" stroke-opacity=".6"><line x1="12" y1="34" x2="24" y2="20"/><line x1="24" y1="20" x2="40" y2="24"/><line x1="24" y1="20" x2="30" y2="40"/></g><circle cx="12" cy="34" r="2.5" fill="#F3ECF4"/><circle cx="24" cy="20" r="4" fill="#F3ECF4"/><circle cx="40" cy="24" r="2.5" fill="#F3ECF4"/><circle cx="30" cy="40" r="2" fill="#F3ECF4"/></svg><p><b>Constellation</b>One artist. Its lines are the shortest path through their songs (a minimum spanning tree), drawn when you come close.</p></div>
-        <div><svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="3" fill="#F7A8C4"/><circle cx="27" cy="27" r="12" fill="none" stroke="#ffffff30"/><circle cx="27" cy="27" r="21" fill="none" stroke="#ffffff18"/></svg><p><b>Position</b>Artists sit on a golden-angle spiral ranked by hours, my #1 at the center. Inside each, the most-played songs are closest to the middle.</p></div>
-        <div><svg viewBox="0 0 54 54"><path d="M10 38 Q27 6 44 30" fill="none" stroke="#FFD696" stroke-width="1.4"/><circle cx="10" cy="38" r="3" fill="#F3ECF4"/><circle cx="44" cy="30" r="3" fill="#F3ECF4"/></svg><p><b>Gold arcs</b>Songs I play back-to-back in the same listening session, scored so my most-played artist doesn't link to everything.</p></div>
-        <div><svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="6" fill="#F7A8C4"/><circle cx="27" cy="27" r="15" fill="none" stroke="#F7A8C4" stroke-opacity=".4"/></svg><p><b>Moods</b>I tagged my ~400 most-played songs by hand: love, bittersweet, confident, party, heartbreak, dark.</p></div>
-        <div><svg viewBox="0 0 54 54"><rect x="8" y="30" width="5" height="12" fill="#F7A8C4"/><rect x="16" y="20" width="5" height="22" fill="#F7A8C4"/><rect x="24" y="26" width="5" height="16" fill="#6B2A48"/><rect x="32" y="14" width="5" height="28" fill="#F7A8C4"/><rect x="40" y="24" width="5" height="18" fill="#F7A8C4"/></svg><p><b>Timeline</b>Listens per month. Pink months were owned by my #1 artist, plum months by someone else. Dots are story chapters.</p></div>
+        <div><svg viewBox="0 0 54 54"><circle cx="15" cy="27" r="2" fill="#F3ECF4"/><circle cx="35" cy="27" r="8" fill="#F3ECF4"/></svg><p><b>Size</b>How many times I've listened, with the radius growing by the square root so area tracks listens.</p></div>
+        <div><svg viewBox="0 0 54 54"><circle cx="12" cy="27" r="4" fill="rgb(126,178,255)"/><circle cx="27" cy="18" r="4" fill="rgb(170,140,255)"/><circle cx="27" cy="36" r="4" fill="rgb(255,160,220)"/><circle cx="42" cy="27" r="4" fill="rgb(255,236,170)"/></svg><p><b>Color: year found</b>Blue 2022, violet 2023, pink 2024, peach 2025, gold 2026.</p></div>
+        <div><svg viewBox="0 0 54 54"><circle cx="12" cy="20" r="4" fill="rgb(255,105,150)"/><circle cx="27" cy="20" r="4" fill="rgb(255,226,80)"/><circle cx="42" cy="20" r="4" fill="rgb(255,150,60)"/><circle cx="12" cy="36" r="4" fill="rgb(185,150,255)"/><circle cx="27" cy="36" r="4" fill="rgb(80,140,255)"/><circle cx="42" cy="36" r="4" fill="rgb(140,70,200)"/></svg><p><b>Color: emotion</b>Rose love, yellow party, orange confident, lavender bittersweet, blue heartbreak and violet dark, tagged by me or inferred from what I play a song with.</p></div>
+        <div><svg viewBox="0 0 54 54"><circle cx="17" cy="27" r="5" fill="#F3ECF4"/><circle cx="37" cy="27" r="5" fill="#F3ECF4" opacity=".3"/></svg><p><b>Brightness</b>Whether I still play it, since a star fades in the year after its last listen.</p></div>
+        <div><svg viewBox="0 0 54 54"><g stroke="#C8BEFF" stroke-opacity=".6"><line x1="12" y1="34" x2="24" y2="20"/><line x1="24" y1="20" x2="40" y2="24"/><line x1="24" y1="20" x2="30" y2="40"/></g><circle cx="12" cy="34" r="2.5" fill="#F3ECF4"/><circle cx="24" cy="20" r="4" fill="#F3ECF4"/><circle cx="40" cy="24" r="2.5" fill="#F3ECF4"/><circle cx="30" cy="40" r="2" fill="#F3ECF4"/></svg><p><b>Constellation</b>One artist, whose lines are the shortest path through their songs (a minimum spanning tree).</p></div>
+        <div><svg viewBox="0 0 54 54"><ellipse cx="27" cy="29" rx="22" ry="9" fill="none" stroke="#ffffff30"/><ellipse cx="27" cy="29" rx="12" ry="5" fill="none" stroke="#ffffff20"/><circle cx="27" cy="29" r="3" fill="#F7A8C4"/></svg><p><b>Position</b>Artists sit on a golden-angle spiral in a 3D disk ranked by hours with my #1 at the center, and inside each the most-played songs sit closest to the middle.</p></div>
+        <div><svg viewBox="0 0 54 54"><path d="M10 38 Q27 6 44 30" fill="none" stroke="#FFD696" stroke-width="1.4"/><circle cx="10" cy="38" r="3" fill="#F3ECF4"/><circle cx="44" cy="30" r="3" fill="#F3ECF4"/></svg><p><b>Gold arcs</b>Songs I play back-to-back in the same listening session.</p></div>
+        <div><svg viewBox="0 0 54 54"><rect x="8" y="30" width="5" height="12" fill="#F7A8C4"/><rect x="16" y="20" width="5" height="22" fill="#F7A8C4"/><rect x="24" y="26" width="5" height="16" fill="#6B2A48"/><rect x="32" y="14" width="5" height="28" fill="#F7A8C4"/><rect x="40" y="24" width="5" height="18" fill="#F7A8C4"/></svg><p><b>Timeline</b>Listens per month, pink when my #1 artist owned it and plum when someone else did, with dots for story chapters.</p></div>
     </div>
 </div>
 
@@ -68,42 +72,44 @@
     <button class="x" data-close aria-label="Close">×</button>
     <div class="label">Case study</div>
     <h2>How I built Listening Galaxy</h2>
-    <p>Spotify Wrapped sums up a year in a few cards. I wanted to see the whole thing at once: how artists entered my life, took over, faded and came back. So I built a data warehouse from my raw listening history, then drew it as a sky you can move through in time.</p>
+    <p>Spotify Wrapped sums up a year in a few cards, so I built a data warehouse from my raw listening history and drew all four years as a sky you can move through, to see how artists entered my life, took over, faded and came back.</p>
 
     <section><div class="label">The data</div><h3>Four years, one export</h3>
         <div class="big"><div><b data-total="records">182,293</b>raw records</div><div><b data-total="listens">91,210</b>real listens</div><div><b data-total="sessions">5,053</b>sessions</div><div><b data-total="songs">4,648</b>songs</div><div><b data-total="artists">1,231</b>artists</div><div><b data-total="links">1,887</b>song links</div></div>
-        <p>Spotify's extended streaming history is one record per play: a timestamp, the track, how many milliseconds I listened, why it started and why it ended. About half of them last under 30 seconds. Here's how the raw file becomes the stars you see:</p>
+        <p>Spotify's extended streaming history is one record per play (timestamp, track, milliseconds listened, why it started and ended), and about half of them last under 30 seconds, so here's how the raw file narrows down to the stars you see:</p>
         <div class="funnel" id="funnel"></div>
     </section>
 
     <section><div class="label">The pipeline</div><h3>From a zip file to a sky</h3>
         <div class="flow">
-            <div><b>Extract · Python</b><span>Read every <code>Streaming_History_Audio_*.json</code> straight out of Spotify's zip. The raw files never leave my laptop.</span></div><i>↓</i>
-            <div><b>Transform · Python</b><span>Keep songs only, drop private sessions and the fields that aren't mine to publish (IP, country, device), convert to Austin time, de-duplicate records, remove known overnight loops, and merge the many IDs Spotify gives one song (single, album, deluxe).</span></div><i>↓</i>
-            <div><b>Model · PostgreSQL star schema</b><span>One fact table of plays and five dimensions: track, artist, album, date and session. Integrity checks run before anything is loaded.</span></div><i>↓</i>
+            <div><b>Extract · Python</b><span>Every <code>Streaming_History_Audio_*.json</code> is read straight out of Spotify's zip, and the raw files never leave my laptop.</span></div><i>↓</i>
+            <div><b>Transform · Python</b><span>Songs only, no private sessions, no IP, country or device, Austin time, de-duplicated, overnight loops removed and the many IDs Spotify gives one song merged into one.</span></div><i>↓</i>
+            <div><b>Model · PostgreSQL star schema</b><span>One fact table of plays and five dimensions (track, artist, album, date, session), checked for integrity before anything loads.</span></div><i>↓</i>
             <div><b>Analyze · SQL</b><span>Window functions and CTEs for eras, streaks and obsessions, served by FastAPI at <a href="https://listening-history.onrender.com">listening-history</a>.</span></div><i>↓</i>
-            <div><b>Export · Python</b><span><code>galaxy_export.py</code> answers the galaxy's questions from the same tables: each song's first, peak and last month, each artist's orbit, which songs I play back-to-back, and the story chapters. It writes one small JSON file with summaries only, never single plays.</span></div><i>↓</i>
-            <div><b>Render · Canvas + JavaScript</b><span>No framework and no build step. A canvas draws every star, line and particle at 60 frames per second, and the timeline replays four years in fourteen seconds.</span></div>
+            <div><b>Export · Python</b><span><code>galaxy_export.py</code> turns the same tables into one small JSON of per-song and per-artist summaries, links, moods and story chapters, never single plays.</span></div><i>↓</i>
+            <div><b>Render · Canvas + JavaScript</b><span>No framework and no build step, just one canvas projecting every star, line and particle into 3D at 60 frames per second.</span></div>
         </div>
     </section>
 
     <section><div class="label">The hard parts</div><h3>What took the most thinking</h3>
         <ol class="hard">
-            <li><b>One song, many IDs.</b> Spotify gives the single, the album cut and the deluxe edition different IDs. I merge them on a normalized title (no accents, case or punctuation) plus artist, so a song's history isn't split across three stars.</li>
-            <li><b>Bad data is still data.</b> A song left on repeat overnight logged 145 plays while I slept. The pipeline removes each loop by date and title, with the reason written next to it in the code, so the cleaning is reviewable rather than hidden.</li>
-            <li><b>Which songs belong together?</b> I count how often two songs play back-to-back inside one session (a new session starts after 30 quiet minutes), then score each pair with cosine similarity: <code>together ÷ √(listens A × listens B)</code>. Raw counts would connect my #1 artist to everything; the score finds pairs that really travel together, and half of them cross between artists.</li>
-            <li><b>Thousands of stars, one frame.</b> Each glow is drawn from a pre-rendered sprite instead of a new gradient every frame. Hit-testing reuses the positions computed for drawing, and constellation lines are found once, as minimum spanning trees.</li>
-            <li><b>Time as state.</b> Every star knows when it was born and when it went quiet. Dragging the timeline changes one number, and every star, line and label works out its own state from it, so the timeline, the tour and the replay all share one code path.</li>
+            <li><b>One song, many IDs.</b> Spotify gives the single, the album cut and the deluxe edition separate IDs, so I merge them on a normalized title plus artist and every song keeps one history.</li>
+            <li><b>Bad data is still data.</b> A song left on repeat overnight logged 145 plays while I slept, so the pipeline drops each loop by date and title with the reason written right next to it.</li>
+            <li><b>Which songs belong together?</b> I count how often two songs play back-to-back inside one session and score each pair by cosine similarity, <code>together ÷ √(listens A × listens B)</code>, so my #1 artist doesn't link to everything and half the links cross artists.</li>
+            <li><b>Moods for songs I never tagged.</b> I hand-tagged <span data-total="moods_tagged">389</span> songs, and every other song borrows the mood that wins 60% of its back-to-back links (label propagation), which adds <span data-total="moods_inferred">617</span> more and colors <span data-share>82%</span> of my listening without guessing the rest.</li>
+            <li><b>What two songs share.</b> Pick any two stars and a breadth-first search finds the shortest chain of back-to-back plays between them, next to everything else they have in common.</li>
+            <li><b>Thousands of stars in 3D.</b> Glows come from cached sprites, hit-testing reuses the projected positions and constellation lines are computed once as minimum spanning trees, so 4,648 stars spin at 60 fps.</li>
+            <li><b>Time as state.</b> Every star knows when it was born and when it went quiet, so the timeline, the replay and the tour all just move one number.</li>
         </ol>
         <p class="live">Running on your device right now: <b id="fps">–</b> frames per second, <b data-total="songs">4,648</b> stars, data file <b id="kb">–</b> KB.</p>
     </section>
 
     <section><div class="label">Data and privacy</div><h3>What I left out on purpose</h3>
-        <p>The galaxy is built only from listening metadata. IP addresses, countries and devices are dropped in the first transform, private sessions are excluded, and the raw export is never committed to GitHub. The published file holds summaries per song and artist, not a log of when I listened.</p>
+        <p>IP addresses, countries and devices are dropped in the first transform, private sessions are excluded, the raw export never touches GitHub, and the published file holds summaries per song and artist instead of a log of when I listened.</p>
     </section>
 
     <section class="credit"><div class="label">Built by Suhani Tiwari</div>
-        <p><b>Data engineering · Data modeling · Visualization · Front-end development.</b> MIS at McCombs, UT Austin. I made Listening Galaxy to show that personal behavioral data can be explored as a story, not just read off a dashboard.</p>
+        <p><b>Data engineering · Data modeling · Visualization · Front-end development.</b> I'm an MIS student at McCombs, UT Austin, and I made Listening Galaxy to show that personal behavioral data can be explored as a story, not just read off a dashboard.</p>
         <div class="links"><a class="pill" href="https://github.com/suhxnitiwari/listening-galaxy">Galaxy source ↗</a><a class="pill" href="https://github.com/suhxnitiwari/listening-history">Pipeline source ↗</a><a class="pill" href="https://listening-history.onrender.com">The SQL app ↗</a><a class="pill solid" href="https://suhanitiwari.com">More of my work ↗</a></div>
     </section>
 </article>
