@@ -21,11 +21,11 @@ window.buildTour = (D, songs, artists) => {
     const cluster = [wolves, ...wolves.links.slice(0, 3).map(m => m.s)];
 
     const album = [
-        { name: 'side to side', date: top.first, q: 'Who runs this galaxy?', title: top.name,
+        { name: 'god is a woman', date: top.first, q: 'Who runs this galaxy?', title: top.name,
           text: `${F.top.share}% of everything Suhani has ever played is ${top.name}: ${F.top_detail.days_nonstop} days of nonstop Ari, ${F.top_detail.songs} different songs, about ${F.top_detail.per_day} a day, on ${F.top_detail.days_share}% of all the days she pressed play. Her holy trinity: ${F.top_detail.albums.map(([a, n]) => `${a} (${fmt(n)})`).join(', ')}. She was #1 in ${F.top.owned} of ${F.top.months} months and through every version of Suhani's life: high school, the summer before college, the move to Austin, and 2026. Nicki Minaj said it best on Side to Side, and in this galaxy it's true: Ariana runs pop.`,
           verdict: "Ariana isn't Suhani's favorite artist. She's the gravitational center.", focus: { artist: F.top.artist }, play: top.songs[0].i },
 
-        { name: 'one last time. again.', date: F.loyal.peak + '-15', q: "What's her defining trait?", title: 'Loyalty', counter: S(F.loyal.song).n,
+        { name: 'one last time, 519 times', date: F.loyal.peak + '-15', q: "What's her defining trait?", title: 'Loyalty', counter: S(F.loyal.song).n,
           text: `Suhani's defining behavioral trait is loyalty. ${F.loyal.count} songs survived every single year of the data. In 2024, the year her whole life changed, she found just ${fmt(F.discovery[2024].new_artists)} new artists (down from ${fmt(F.discovery[2023].new_artists)}) and ${F.discovery[2024].comfort}% of everything she played was a song she already knew. And the song she's never once gone a year without? ${title(F.loyal.song)}, there since her first week of data (${date(S(F.loyal.song).first)}): ${fmt(S(F.loyal.song).n)} plays.`,
           verdict: 'Apparently, she did not mean the title literally.', focus: { songs: F.loyal.songs }, play: F.loyal.song },
 
@@ -34,27 +34,27 @@ window.buildTour = (D, songs, artists) => {
           verdict: `And Ari's comeback by the new year? Better Than Revenge. Nobody else ever lasted more than a month or two: ${F.rival.others.map(([a, c, ms]) => `${A(a).name} (${ms.map(m => month(m).replace(' 20', " '")).join(', ')}${NOTES[A(a).name] ? ', ' + NOTES[A(a).name] : ''})`).join('; ')}.`,
           focus: { artists: [F.top.artist, F.rival.artist] }, play: F.taylor_song },
 
-        { name: '119', date: F.day.date, q: `What happened on ${date(F.day.date)}?`, title: title(F.day.song), counter: F.day.count,
+        { name: 'just like magic', date: F.day.date, q: `What happened on ${date(F.day.date)}?`, title: title(F.day.song), counter: F.day.count,
           text: `${F.day.count} plays of ${title(F.day.song)} by ${by(F.day.song)}, from ${clock(F.day.from)} to ${clock(F.day.to)}: ${F.day.hours} hours, and ${F.day.else ? 'barely anything else' : 'not one other song'} all day. ${F.day.autoplayed} of those plays started because the last one ended. She didn't press repeat 119 times; she just never let it stop. And she still hasn't: ${F.day.all_versions} plays across every version, ${F.day.since} of them after that day. Januarys are her manifesting season: ${month(M.in_love[0][0])} was ${M.in_love[0][1]}% love songs, the most of any month.`,
           verdict: "Someone was trying to manifest love into her 2023. (P.S. Try harder next time. It did not work.) She's still manifesting it.", focus: { song: F.day.song }, play: F.day.song },
 
-        { name: 'problem (set)', date: '2023-03-01', q: 'When is she most likely to be listening?', title: `${hour(busiest)} on a school night`,
+        { name: 'successful', date: '2023-03-01', q: 'When is she most likely to be listening?', title: `${hour(busiest)} on a school night`,
           text: `Her whole history peaks at ${hour(busiest)}. On high-school weekdays the music came on after school and stayed on through homework: ${F.weekday_peak.high_school.three_to_eight}% of it between 3 and 8 PM (${F.weekday_peak.austin.three_to_eight}% in college). The homework soundtrack: ${F.homework.map(title).join(', ')}${F.homework.every(i => S(i).A === top || /Ariana/.test(title(i))) ? `, and every one of them has ${top.name} on it` : ''}. Before 9 AM? Just ${F.before_9}% of everything, and those mornings are her saddest hours: ${F.morning_heartbreak.morning}% heartbreak songs, against ${F.morning_heartbreak.rest}% the rest of the day.`,
           verdict: 'Suhani is not a morning person. She is a 5 PM-with-a-problem-set person.', focus: { songs: F.homework }, play: F.homework.find(i => title(i) === 'Problem') ?? F.homework[0] },
 
-        { name: 'with you', date: F.night_artist.first, q: 'Who is 2 AM Suhani?', title: 'A different person', night: true,
+        { name: 'ghar after dark', date: F.night_artist.first, q: 'Who is 2 AM Suhani?', title: 'A different person', night: true,
           text: `After midnight she's ${F.night[0][1]}× likelier to be playing ${A(F.night[0][0]).name}, ${F.night[1][1]}× ${A(F.night[1][0]).name} and ${F.night[2][1]}× ${A(F.night[2][0]).name}: upbeat songs by hardworking, self-made men that keep her awake. ${A(F.night[0][0]).name} showed up on ${date(F.night_artist.first)}, one week after her first all-nighter, and never left: ${fmt(F.night_artist.listens)} listens, ${title(F.night_artist.song)} alone ${F.night_artist.song_times}. After midnight, ${F.desi_by_hour.night}% of what she plays is South Asian (${F.desi_by_hour.day}% by day). Her late nights end on ${title(F.closers[0][0])} and ${title(F.closers[1][0])}: "Boy, bye. I'm going to build a better future without you, with someone who'll love me like AP Dhillon in the ${title(F.closers[1][0])} video."`,
           verdict: 'When everyone else is asleep, she goes home.', focus: { artists: F.night.map(n => n[0]) }, play: F.closers[1][0] },
 
-        { name: 'better off', date: AN.latest.date, q: 'When does she actually sleep?', title: `${AN.count} all-nighters`, night: true, counter: AN.count,
+        { name: 'goodnight n go', date: AN.latest.date, q: 'When does she actually sleep?', title: `${AN.count} all-nighters`, night: true, counter: AN.count,
           text: `Most nights the music stops between ${hour(sleep[0])} and ${hour(sleep.at(-1))}. Except ${AN.count} times, when it played every single hour from midnight to 6 AM. The first: ${date(AN.first.date)}, ${title(AN.first.song)} by ${by(AN.first.song)} ${AN.first.times} times. ${AN.by_era.high_school} in high school, ${(AN.by_era.austin || 0) + (AN.by_era.y2026 || 0)} since Austin, a record ${AN.top_month[1]} in ${month(AN.top_month[0])}, and the latest on ${date(AN.latest.date)} (${title(AN.latest.song)} on repeat). Most end on a ${AN.top_weekday[0]} morning, and the song most often playing at 5 AM is ${title(F.night_song.five_am)}: ${F.night_song.five_am_times} times.`,
           verdict: `${title(F.night_song.five_am)}… asleep, honestly. Why ${AN.top_weekday[0]}s? Monday night is when the week's work peaks, with exams on Wednesdays and Thursdays.`, focus: { songs: AN.latest.songs }, play: F.night_song.five_am },
 
-        { name: 'the essay marathon', date: F.longest_session.start, q: `What happened on ${date(F.longest_session.start)}?`, title: `${F.longest_session.hours} hours`,
+        { name: 'dear admissions committee', date: F.longest_session.start, q: `What happened on ${date(F.longest_session.start)}?`, title: `${F.longest_session.hours} hours`,
           text: `Her longest session ever: ${clock(F.longest_session.start)} to ${clock(F.longest_session.end)} the next morning, more music than the ${F.trips[0].flight_hours[1]} hours she played on her whole flight home from India. ${F.longest_session.listens} songs, ${F.longest_session.artist_listens} of them ${A(F.longest_session.artist).name}, ${title(F.longest_session.song)} alone ${F.longest_session.song_times} times. Her college essays, written in one sitting.`,
           verdict: `${rival.name} was for the creative part. ${A(F.longest_session.artist).name} was for the 3 AM grind.`, focus: { song: F.longest_session.song }, play: F.longest_session.song },
 
-        { name: 'flight mode', date: december.from, q: 'What happens when she goes home?', title: 'India',
+        { name: 'airplane mode', date: december.from, q: 'What happens when she goes home?', title: 'India',
           text: `Twice the data goes quiet for hours at a time: flights. In March 2024 she flew to India the week ${march.album[0]} came out and played it ${march.album[1]} times in ${Math.round((new Date(march.to) - new Date(march.from)) / 864e5) + 1} days. In December 2024, the year she'd nearly forgotten her roots, it was all ${december.artists.filter(a => A(a).desi).slice(0, 4).map(a => A(a).name).join(', ')}: ${december.desi}% of what she played in India was South Asian, against ${F.desi_overall}% normally.${december.artists.some(a => A(a).name === 'One Direction') ? ' (And a little One Direction, for balance.)' : ''}`,
           verdict: 'Two weeks home and it all came back.', focus: { songs: december.all }, play: december.songs[0] },
 
@@ -62,11 +62,11 @@ window.buildTour = (D, songs, artists) => {
           text: `April 2024, her last spring in her parents' house in Dallas: ${title(F.loyal.song)} had its biggest month ever, ${F.loyal.peak_times} plays. Four months later, at ${clock(F.eras.austin_first.at)} on ${date(F.eras.austin_first.at)}, her first morning in Austin, she pressed play on ${title(F.eras.austin_first.song)}, a song about the suburbs you grow up in and the people you leave there.${F.heartbreak.songs.includes(F.eras.austin_first.song) ? ` Two months later it was still her #${F.heartbreak.songs.indexOf(F.eras.austin_first.song) + 1} song.` : ''}`,
           verdict: 'One last time (again), then goodbye, suburbs.', focus: { songs: [F.eras.austin_first.song, F.loyal.song] }, pair: [F.loyal.song, F.eras.austin_first.song], play: F.eras.austin_first.song },
 
-        { name: 'taste', date: '2024-10-01', q: 'How did college change her?', title: 'Trying to fit in',
+        { name: 'the version i auditioned for', date: '2024-10-01', q: 'How did college change her?', title: 'Trying to fit in',
           text: `Away from Mom and Dad, trying to be a blank canvas without knowing who she was yet. Late-night listening jumped from ${E.high_school.late}% to ${E.austin.late}%, party and confident songs from ${E.high_school.upbeat}% to ${E.austin.upbeat}%: ${F.fall2024.party.slice(0, 3).map(title).join(', ')}, and a whole new cast moved in, ${F.fall2024.newcomers.map(([a, s]) => `${A(a).name} (${title(s)})`).join(', ')}. She was trying hard to fit in, and skipping more than ever (${E.austin.skip}%). South Asian music fell to ${F.desi_by_year[2024]}%. But her #1 new song that semester? ${title(F.fall2024.top_new)}, in Hindi.`,
           verdict: 'New city, new sound, and for a while, a little less of herself. Not all of her, though.', focus: { songs: [...F.fall2024.party, F.fall2024.top_new, ...F.fall2024.newcomers.map(n => n[1])] }, play: F.fall2024.newcomers[0][1] },
 
-        { name: 'october', date: F.heartbreak.month + '-15', q: 'Her loneliest, saddest month?', title: month(F.heartbreak.month), mood: true,
+        { name: "we can't be friends (every october)", date: F.heartbreak.month + '-15', q: 'Her loneliest, saddest month?', title: month(F.heartbreak.month), mood: true,
           text: `Across the past four years, October is her saddest month: ${M.sad_calendar[1]}% sad songs on average, against a typical ${M.typical_sad}%. The days go from bright to dark and short, and something about it gets her. ${month(F.heartbreak.month)} was the worst: 1 in 4 songs a heartbreak song, and her top two were ${F.heartbreak.songs.map(title).join(' and ')}. ACL, Texas–OU in Dallas, Halloweekend: everyone seemed to have plans. She didn't.`,
           verdict: 'College was lonely. Being away from home was lonely.', focus: { mood: 'heartbreak' }, play: F.heartbreak.songs[0] },
 
