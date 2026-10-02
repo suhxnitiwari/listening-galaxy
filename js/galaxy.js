@@ -114,6 +114,7 @@
     let W, H, dpr, view = { x: 0, y: 30, z: 1 }, sized = false, fitZ = 1;
     const minZ = () => fitZ * 0.7, maxZ = 8;
     function size() {
+        if (!innerWidth || !innerHeight) return;   // a hidden window reports 0 × 0; zooming to fit that would make the camera NaN
         dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr;
         fitZ = Math.min(W, H) / 900;
         if (!sized) { view.z = fitZ; if (W < 760) view.y = 30 - 70 / view.z; sized = true; }   // on phones the hero sits on top, so the galaxy starts lower
@@ -522,7 +523,11 @@
         const step = t => { const k = Math.min(1, (t - start) / ms); setNow(from + (to - from) * (1 - Math.pow(1 - k, 1.6))); if (k < 1) bang = requestAnimationFrame(step); else { bang = null; done && done(); } };
         bang = requestAnimationFrame(step);
     }
-    $('#bang').onclick = () => { endTour(); toldUpTo = -1; setNow(t0); sweep(t0, t1, 16000); };
+    // the replay is the big bang again: whatever the tour or a card was looking at, the camera pulls back to the
+    // whole sky, the disk collapses to a point and the galaxy grows out from its first star
+    $('#bang').onclick = () => { endTour(); closeCard(); toldUpTo = -1; fly = null; frontier = 0;
+        cam.yaw = -0.35; view.x = 0; view.y = W < 760 ? 30 - 70 / fitZ : 30; view.z = fitZ; intro.start = performance.now(); intro.touched = false;
+        setNow(t0); sweep(t0, t1, 16000); };
 
     // ---------- hover, cards, search ----------
     const tip = $('#tip'), audio = $('#audio'), card = $('#card');
@@ -764,8 +769,8 @@
         if (c.outro) { setHome(AUSTIN, 'AUSTIN'); outro = { start: performance.now() }; document.body.classList.add('outro'); }
         else if (outro) { outro = null; setHome(DALLAS, 'DALLAS'); document.body.classList.remove('outro'); }
         tour.classList.add('on'); $('#hero').classList.add('quiet');
-        // long enough to read: about a quarter second a word, between 9 and 18 seconds
-        const words = (c.text + ' ' + (c.verdict || '')).split(/\s+/).length, ms = clamp(3500 + words * 230, 9000, c.long ? 30000 : 18000);
+        // long enough to read: about a quarter second a word, between 7 and 14 seconds
+        const words = (c.text + ' ' + (c.verdict || '')).split(/\s+/).length, ms = clamp(3500 + words * 230, 7000, 14000);
         const bar = $('#tourBar'); bar.style.transition = 'none'; bar.style.width = '0'; requestAnimationFrame(() => { bar.style.transition = `width ${ms}ms linear`; bar.style.width = '100%'; });
         tourTimer = setTimeout(() => step >= 0 && (step < TOUR.length - 1 ? startTour(step + 1) : endTour()), ms);
     }
