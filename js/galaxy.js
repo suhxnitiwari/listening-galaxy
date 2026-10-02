@@ -164,16 +164,30 @@
     const intro = { start: pre.end, ms: 5600, touched: false };
     const R1 = Math.random, gs = () => R1() + R1() + R1() - 1.5, smooth = k => { k = clamp(k, 0, 1); return k * k * (3 - 2 * k); };
     const preStars = [...Array(1200)].map(() => [(R1() - 0.5) * 6, (R1() - 0.5) * 6, 0.3 + R1() * 6, R1()]);
-    const land = [];   // continents as dots, like everything else here
-    for (let c = 0; c < 9; c++) { const la = (R1() - 0.5) * 2, lo = c / 9 * 6.283 + R1() * 0.5, sp = 0.28 + R1() * 0.3;
-        for (let k = 0; k < 340; k++) land.push([clamp(la + gs() * sp, -1.45, 1.45), lo + gs() * sp * 1.6, R1()]); }
-    // Dallas from above at night: a street grid that thins out from downtown, freeways, and the two loops (city radius = 1)
-    const city = [];
-    for (let k = 0; k < 2600; k++) { const r = Math.abs(gs()) * 0.75, a = R1() * 6.283; let x = Math.cos(a) * r, y = Math.sin(a) * r;
-        if (R1() < 0.5) x = Math.round(x / 0.045) * 0.045; else y = Math.round(y / 0.045) * 0.045;
-        city.push([x, y, R1() < 0.3 ? [255, 240, 215] : [255, 175, 95], 0.35 + R1() * 0.65]); }
-    for (let k = 0; k < 260; k++) city.push([gs() * 0.07, gs() * 0.07, [255, 248, 235], 1]);   // downtown
-    const roads = [[[-1.2, -0.15], [1.2, 0.12]], [[-0.1, -1.2], [0.08, 1.2]], [[-0.9, -0.9], [0.85, 0.8]], [[-1, 0.7], [0.9, -0.75]]];
+    // Earth at night: real cities at their real coordinates (lat, lon, size), and the interstates between Dallas and its neighbors
+    const DALLAS = [32.78, -96.80];
+    const CITIES = [[32.78, -96.8, 6], [32.75, -97.33, 3.5], [29.76, -95.37, 6], [30.27, -97.74, 3], [29.42, -98.49, 3.5], [35.47, -97.52, 2], [36.15, -95.99, 1.5],
+        [32.5, -93.75, 1], [33.58, -101.85, 1], [31.76, -106.49, 1.5], [31.55, -97.15, 0.8], [33.21, -97.13, 0.8], [39.74, -104.99, 3], [39.1, -94.58, 2.5], [29.95, -90.07, 2],
+        [35.15, -90.05, 1.8], [34.75, -92.29, 1], [33.75, -84.39, 4.5], [41.88, -87.63, 7], [33.45, -112.07, 4.5], [25.69, -100.32, 4], [19.43, -99.13, 8], [20.67, -103.35, 3],
+        [34.05, -118.24, 9], [37.77, -122.42, 5], [47.61, -122.33, 3.5], [40.71, -74.0, 10], [42.36, -71.06, 4], [38.9, -77.04, 4.5], [25.76, -80.19, 4.5], [28.54, -81.38, 2.5],
+        [38.63, -90.2, 2.5], [44.98, -93.27, 3], [39.96, -82.99, 2], [42.33, -83.05, 3.5], [36.17, -115.14, 2.5], [40.76, -111.89, 2], [35.23, -80.84, 2.5], [36.16, -86.78, 2.5],
+        [43.65, -79.38, 5], [45.5, -73.57, 3.5], [49.28, -123.12, 2.5], [21.16, -86.85, 1], [23.13, -82.38, 2], [4.71, -74.07, 5], [-12.05, -77.04, 5], [-23.55, -46.63, 10],
+        [-22.91, -43.17, 6], [-34.6, -58.38, 7], [-33.45, -70.67, 4.5], [51.51, -0.13, 8], [48.86, 2.35, 7], [40.42, -3.7, 5], [52.52, 13.4, 4], [41.9, 12.5, 3.5], [55.76, 37.62, 7],
+        [30.04, 31.24, 7], [6.52, 3.38, 6], [-26.2, 28.05, 4], [25.2, 55.27, 3.5], [28.61, 77.21, 9], [19.08, 72.88, 9], [12.97, 77.59, 5], [22.57, 88.36, 6], [13.08, 80.27, 4],
+        [17.39, 78.49, 4], [23.81, 90.41, 7], [31.23, 121.47, 9], [39.9, 116.4, 8], [22.32, 114.17, 6], [35.68, 139.69, 10], [37.57, 126.98, 7], [1.35, 103.82, 4], [13.76, 100.5, 5],
+        [-6.2, 106.85, 7], [14.6, 120.98, 6], [-33.87, 151.21, 4], [-37.81, 144.96, 3.5], [41.01, 28.98, 7], [35.69, 51.39, 6], [24.86, 67.0, 7], [33.69, 73.05, 3], [31.55, 74.34, 5]];
+    const lights = [];
+    for (const [la, lo, w] of CITIES) for (let k = 0; k < 18 + w * 26; k++) { const sg = 0.07 * Math.sqrt(w); lights.push([la + gs() * sg, lo + gs() * sg * 1.2, R1() < 0.25 ? [255, 240, 215] : [255, 180, 100], 0.4 + R1() * 0.6]); }
+    const HIGHWAYS = [[[29.42, -98.49], [30.27, -97.74], [31.55, -97.15], [32.78, -96.8], [33.21, -97.13], [35.47, -97.52], [39.1, -94.58]],   // I-35
+        [[32.78, -96.8], [29.76, -95.37]], [[31.76, -106.49], [32.75, -97.33], [32.78, -96.8], [32.5, -93.75], [33.75, -84.39]],              // I-45, I-20
+        [[32.78, -96.8], [34.75, -92.29], [35.15, -90.05]], [[29.42, -98.49], [29.76, -95.37], [29.95, -90.07]]];                             // I-30, I-10
+    for (const route of HIGHWAYS) for (let i = 1; i < route.length; i++) { const [a, b] = [route[i - 1], route[i]], n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.03);
+        for (let k = 0; k < n; k++) { const u = k / n; lights.push([a[0] + (b[0] - a[0]) * u + gs() * 0.01, a[1] + (b[1] - a[1]) * u + gs() * 0.01, [255, 160, 80], 0.25 + R1() * 0.25]); } }
+    const RAD = Math.PI / 180, cLa = Math.cos(DALLAS[0] * RAD), sLa = Math.sin(DALLAS[0] * RAD);
+    function onGlobe(la, lo, spin) {   // a point on the globe, turned so Dallas faces the camera; returns [x, y, z] with z > 0 on the near side
+        const L = la * RAD, O = (lo - DALLAS[1]) * RAD + spin, x = Math.cos(L) * Math.sin(O), y0 = Math.sin(L), z0 = Math.cos(L) * Math.cos(O);
+        return [x, y0 * cLa - z0 * sLa, y0 * sLa + z0 * cLa];
+    }
     // spiral galaxies, as points: the Milky Way (with Earth on an outer arm) and the new one
     function spiral(n, arms, colors, coreC) {
         return [...Array(n)].map((_, i) => {
@@ -210,39 +224,27 @@
             g.beginPath(); g.moveTo(cx + x * M * 0.5 / z0, cy + y * M * 0.5 / z0); g.lineTo(cx + x * M * 0.5 / z1 + 0.01, cy + y * M * 0.5 / z1); g.stroke();
         }
 
-        // one continuous pull-back from a Dallas street to the whole planet (R = Earth's radius on screen)
-        const k = -4.6 + 6.8 * smooth(t / 4.6) + Math.max(0, t - 4.6) * 2.2, R = M * 0.26 * Math.exp(-k);
-        const cityR = R * 0.035, cityA = clamp((cityR - 4) / 20, 0, 1);
-        // Earth, night side toward us so the cities glow, Dallas at the center of the view
-        if (R < M * 4 && R > 1.2) {
-            const fadeE = clamp((5.2 - t) / 0.8, 0, 1), rot = 0.2 + t * 0.05, tilt = 0.3, Lx = 0.8, Ly = -0.25, Lz = -0.05, ds = Math.max(0.7, R * 0.02);
-            const at = g.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.3); at.addColorStop(0, `rgba(120,180,255,${0.45 * fadeE})`); at.addColorStop(1, 'rgba(120,180,255,0)');
-            g.fillStyle = at; g.beginPath(); g.arc(cx, cy, R * 1.3, 0, 7); g.fill();
-            g.globalCompositeOperation = 'source-over'; g.save(); g.globalAlpha = fadeE; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.clip();
-            const oc = g.createRadialGradient(cx + Lx * R * 0.6, cy + Ly * R * 0.6, R * 0.05, cx, cy, R * 1.05); oc.addColorStop(0, '#3f7fd6'); oc.addColorStop(0.5, '#0f2d66'); oc.addColorStop(1, '#030916');
-            g.fillStyle = oc; g.fillRect(cx - R, cy - R, R * 2, R * 2);
-            const pts = [];
-            for (const [la, lo, b] of land) { const x = Math.cos(la) * Math.sin(lo + rot), y0 = -Math.sin(la), z0 = Math.cos(la) * Math.cos(lo + rot), y = y0 * Math.cos(tilt) - z0 * Math.sin(tilt), z = y0 * Math.sin(tilt) + z0 * Math.cos(tilt);
-                if (z > 0) pts.push([cx + x * R, cy + y * R, x * Lx + y * Ly + z * Lz, b]); }
-            for (const [x, y, l, b] of pts) if (l > 0) { g.fillStyle = `rgba(${b > 0.8 ? '214,200,150' : '90,170,110'},${0.2 + 0.7 * l})`; g.fillRect(x - ds / 2, y - ds / 2, ds, ds); }
-            const sh = g.createRadialGradient(cx + Lx * R * 0.8, cy + Ly * R * 0.8, R * 0.2, cx + Lx * R * 0.8, cy + Ly * R * 0.8, R * 2.1);
-            sh.addColorStop(0, 'rgba(2,4,14,0)'); sh.addColorStop(0.35, 'rgba(2,4,14,.3)'); sh.addColorStop(0.7, 'rgba(2,4,14,.85)'); sh.addColorStop(1, 'rgba(2,4,14,.97)'); g.fillStyle = sh; g.fillRect(cx - R, cy - R, R * 2, R * 2);
-            g.globalCompositeOperation = 'lighter';
-            for (const [x, y, l, b] of pts) if (l < 0 && b > 0.68) { g.fillStyle = `rgba(255,200,120,${Math.min(0.9, -l * 1.6)})`; g.fillRect(x - ds / 3, y - ds / 3, ds * 0.66, ds * 0.66); }
-            g.restore(); g.globalCompositeOperation = 'lighter';
-            g.strokeStyle = `rgba(150,200,255,${0.5 * fadeE})`; g.lineWidth = Math.max(0.6, R * 0.015); g.beginPath(); g.arc(cx, cy, R, -0.9, 0.9); g.stroke();
-        } else if (R >= M * 4) { const bg = g.createRadialGradient(cx, cy, 0, cx, cy, M); bg.addColorStop(0, 'rgba(20,30,60,.5)'); bg.addColorStop(1, 'rgba(5,8,20,0)'); g.fillStyle = bg; g.fillRect(0, 0, W, H); }
-        // Dallas: streets, freeways and the loops, shrinking into one point of light
-        if (cityA > 0) {
-            g.globalAlpha = cityA; const ds = Math.max(0.8, cityR * 0.006);
-            g.strokeStyle = 'rgba(255,150,80,.35)'; g.lineWidth = Math.max(0.6, cityR * 0.005);
-            for (const [[a1, b1], [a2, b2]] of roads) { g.beginPath(); g.moveTo(cx + a1 * cityR, cy + b1 * cityR); g.lineTo(cx + a2 * cityR, cy + b2 * cityR); g.stroke(); }
-            for (const rr of [0.55, 0.3]) { g.beginPath(); g.ellipse(cx, cy, rr * cityR, rr * cityR * 0.92, 0.2, 0, 7); g.stroke(); }
-            for (const [x, y, c, b] of city) { const X = cx + x * cityR, Y = cy + y * cityR; if (X < -2 || Y < -2 || X > W + 2 || Y > H + 2) continue; g.fillStyle = `rgba(${c},${b * 0.85})`; g.fillRect(X - ds / 2, Y - ds / 2, ds, ds); }
-            g.globalAlpha = 1;
+        // one continuous pull-back from above Dallas to the whole planet (R = Earth's radius on screen)
+        const k = -4.6 + 6.8 * smooth(t / 4.6) + Math.max(0, t - 4.6) * 2.2, R = M * 0.26 * Math.exp(-k), fadeE = clamp((5.2 - t) / 0.8, 0, 1), spin = Math.max(0, t - 3.4) * 0.06;   // hold still over Dallas, then let the planet turn
+        if (R > 1.2 && fadeE > 0) {
+            // the planet: a dark ocean-blue sphere, a thin daylight edge, and an atmosphere
+            if (R < M * 6) {
+                const at = g.createRadialGradient(cx, cy, R * 0.94, cx, cy, R * 1.25); at.addColorStop(0, `rgba(110,170,255,${0.4 * fadeE})`); at.addColorStop(1, 'rgba(110,170,255,0)');
+                g.fillStyle = at; g.beginPath(); g.arc(cx, cy, R * 1.25, 0, 7); g.fill();
+                g.globalCompositeOperation = 'source-over'; g.globalAlpha = fadeE;
+                const oc = g.createRadialGradient(cx + R * 0.75, cy - R * 0.2, R * 0.05, cx, cy, R); oc.addColorStop(0, '#3b6fc0'); oc.addColorStop(0.35, '#0d2552'); oc.addColorStop(1, '#040a1a');
+                g.fillStyle = oc; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.fill(); g.globalAlpha = 1; g.globalCompositeOperation = 'lighter';
+                g.strokeStyle = `rgba(150,200,255,${0.45 * fadeE})`; g.lineWidth = Math.max(0.6, R * 0.012); g.beginPath(); g.arc(cx, cy, R, -0.9, 0.9); g.stroke();
+            } else { const bg = g.createRadialGradient(cx, cy, 0, cx, cy, M); bg.addColorStop(0, 'rgba(14,26,56,.6)'); bg.addColorStop(1, 'rgba(4,8,20,0)'); g.fillStyle = bg; g.fillRect(0, 0, W, H); }
+            // city lights, the way Earth looks at night from orbit
+            const ds = clamp(R * 0.0016, 0.7, 2.2);
+            for (const [la, lo, c, b] of lights) { const [x, y, z] = onGlobe(la, lo, spin); if (z <= 0.02) continue;
+                const X = cx + x * R, Y = cy - y * R; if (X < -2 || Y < -2 || X > W + 2 || Y > H + 2) continue;
+                g.fillStyle = `rgba(${c},${b * fadeE * Math.min(1, z * 3)})`; g.fillRect(X - ds / 2, Y - ds / 2, ds, ds); }
+            if (R > M * 2) { g.globalCompositeOperation = 'source-over'; g.font = '11px "JetBrains Mono", monospace'; g.textAlign = 'left'; g.fillStyle = `rgba(247,168,196,${clamp((R / M - 2) / 4, 0, 1)})`; g.fillText('DALLAS', cx + 14, cy - 10); g.globalCompositeOperation = 'lighter'; }
         }
         // me, pressing play: a pink pulse at the center that stays the brightest point all the way out
-        if (t < 8.4) { const pr = clamp(cityR * 0.02, 1.6, 5), pa = clamp((8.4 - t) / 0.8, 0, 1), ph = (t * 0.8) % 1;
+        if (t < 8.4) { const pr = clamp(R / M * 0.25, 1.8, 5), pa = clamp((8.4 - t) / 0.8, 0, 1), ph = (t * 0.8) % 1;
             g.globalAlpha = pa; g.drawImage(sprite([247, 168, 196]), cx - pr * 7, cy - pr * 7, pr * 14, pr * 14); g.globalAlpha = 1;
             g.fillStyle = `rgba(255,235,245,${pa})`; g.beginPath(); g.arc(cx, cy, pr, 0, 7); g.fill();
             if (t < 4) { g.strokeStyle = `rgba(247,168,196,${0.6 * (1 - ph) * pa})`; g.lineWidth = 1.2; g.beginPath(); g.arc(cx, cy, pr + ph * 60, 0, 7); g.stroke(); } }
