@@ -22,7 +22,7 @@
     <div class="label">Heavy Rotation · my listening galaxy · 2022 – 2026</div>
     <h1>Every song I've ever played is <em>a star.</em></h1>
     <p>Four years of my Spotify history mapped as a universe, where every star is a song and every constellation an artist, built on the data warehouse I engineered from my raw listening export.</p>
-    <div class="stats"><div><b data-total="listens">91,210</b>listens</div><div><b data-total="songs">4,648</b>songs</div><div><b data-total="artists">1,231</b>artists</div><div><b data-total="hours">4,397</b>hours</div></div>
+    <div class="stats"><div><b data-total="listens">91,160</b>listens</div><div><b data-total="songs">4,647</b>songs</div><div><b data-total="artists">1,230</b>artists</div><div><b data-total="hours">4,395</b>hours</div></div>
     <div class="ctas"><button class="pill solid" id="tourBtn">▶ Open the case file</button><button class="pill" data-open="how">How I built this</button></div>
 </div>
 
@@ -77,7 +77,7 @@
     <p>Spotify Wrapped sums up a year in a few cards, so I built a data warehouse from my raw listening history and drew all four years as a sky you can move through, to see how artists entered my life, took over, faded and came back.</p>
 
     <section><div class="label">The data</div><h3>Four years, one export</h3>
-        <div class="big"><div><b data-total="records">182,293</b>raw records</div><div><b data-total="listens">91,210</b>real listens</div><div><b data-total="sessions">5,053</b>sessions</div><div><b data-total="songs">4,648</b>songs</div><div><b data-total="artists">1,231</b>artists</div><div><b data-total="links">1,887</b>song links</div></div>
+        <div class="big"><div><b data-total="records">182,293</b>raw records</div><div><b data-total="listens">91,160</b>real listens</div><div><b data-total="sessions">5,053</b>sessions</div><div><b data-total="songs">4,647</b>songs</div><div><b data-total="artists">1,230</b>artists</div><div><b data-total="links">1,887</b>song links</div></div>
         <p>Spotify's extended streaming history is one record per play (timestamp, track, milliseconds listened, why it started and ended), and about half of them last under 30 seconds, so here's how the raw file narrows down to the stars you see:</p>
         <div class="funnel" id="funnel"></div>
     </section>
@@ -100,10 +100,10 @@
             <li><b>Which songs belong together?</b> I count how often two songs play back-to-back inside one session and score each pair by cosine similarity, <code>together ÷ √(listens A × listens B)</code>, so my #1 artist doesn't link to everything and half the links cross artists.</li>
             <li><b>Moods for songs I never tagged.</b> I hand-tagged <span data-total="moods_tagged">389</span> songs, and every other song borrows the mood that wins 60% of its back-to-back links (label propagation), which adds <span data-total="moods_inferred">617</span> more and colors <span data-share>82%</span> of my listening without guessing the rest.</li>
             <li><b>What two songs share.</b> Pick any two stars and a breadth-first search finds the shortest chain of back-to-back plays between them, next to everything else they have in common.</li>
-            <li><b>Thousands of stars in 3D.</b> Glows come from cached sprites, hit-testing reuses the projected positions and constellation lines are computed once as minimum spanning trees, so 4,648 stars spin at 60 fps.</li>
+            <li><b>Thousands of stars in 3D.</b> Glows come from cached sprites, hit-testing reuses the projected positions and constellation lines are computed once as minimum spanning trees, so <span data-total="songs">4,647</span> stars spin at 60 fps.</li>
             <li><b>Time as state.</b> Every star knows when it was born and when it went quiet, so the timeline, the replay and the tour all just move one number.</li>
         </ol>
-        <p class="live">Running on your device right now: <b id="fps">–</b> frames per second, <b data-total="songs">4,648</b> stars, data file <b id="kb">–</b> KB.</p>
+        <p class="live">Running on your device right now: <b id="fps">–</b> frames per second, <b data-total="songs">4,647</b> stars, data file <b id="kb">–</b> KB.</p>
     </section>
 
     <section><div class="label">Data and privacy</div><h3>What I left out on purpose</h3>
