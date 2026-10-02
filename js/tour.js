@@ -11,7 +11,7 @@ window.buildTour = (D, songs, artists) => {
     const hour = h => `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`;
     const NOTES = { 'Chase Atlantic': 'her gym guilty pleasure' };   // things only I know about the data
     const CLOCK_SKIP = ['Bhangra Ta Sajda', 'Run Down The City', 'Si mes vers avaient des ailes', 'Sadqay', 'Until I Found You'];   // hours that don't sound like me
-    const Q = F.quirks, STREAK = F.streak;
+    const Q = F.quirks, STREAK = F.streak, P = F.picky;
     const E = F.eras.stats, top = A(F.top.artist), rival = A(F.rival.artist), AN = F.allnighters, M = F.moods;
     const desi = [...new Set(artists.filter(a => a.desi).flatMap(a => a.songs))].map(s => s.i);
     const sleep = [...F.sleep.hours].sort((a, b) => ((a + 12) % 24) - ((b + 12) % 24));
@@ -68,9 +68,9 @@ window.buildTour = (D, songs, artists) => {
           text: `${A(F.eras.new_2026[0][0]).name} entered her galaxy on ${date(F.eras.new_2026_first)}, the second day of the year, and ${title(F.year_now.songs[0])} became her song of 2026 (${fmt(S(F.year_now.songs[0]).n)} plays). Hindi music is back to ${F.desi_by_year[2026]}%, its highest since high school. A Sephora ad brought back ${title(F.comeback.song)} after ${fmt(F.comeback.gap_days)} days, and ${by(F.comeback.song)} stayed: ${title(F.year_now.songs[1])} is her #2 song of the year. She's skipping less (${E.y2026.skip}%), and all four of her happiest months ever are from the last year.`,
           verdict: 'Remembering who she is while building who she wants to be.', focus: { songs: [...desi, ...F.year_now.songs] }, play: F.year_now.songs[0] },
 
-        { name: 'thank u, next', date: '2026-03-15', q: 'How does she find new music?', title: 'By skipping into it',
-          text: `${F.discover.by_skip}% of the songs she's ever heard, she found by skipping the song before; only ${F.discover.chosen}% she went looking for. She decides in ${F.skip.median_seconds} seconds. And the more she knows herself, the less she chooses: ${F.discover.chose_by_era.high_school}% of plays picked by hand in high school, ${F.discover.chose_by_era.y2026}% now. But give her an album and she plays it in order: ${title(inOrder[0].a)} → ${title(inOrder[0].b)}, ${inOrder[0].pct}% of the time, never on shuffle.`,
-          verdict: 'Not a searcher, a scout: open to anything, ruthless about what stays.', focus: { all: true } },
+        { name: 'thank u, next', date: P.spree.at, q: 'How picky is she?', title: 'Picky, with receipts', long: true,
+          text: `She has rejected ${fmt(P.under_1s)} songs in under one second; on average it takes her ${(P.median_ms / 1000).toFixed(2)} seconds to know it's not the one. ${fmt(P.under_100ms)} songs didn't even last a tenth of a second. At ${clock(P.spree.at)} on ${date(P.spree.at)}, she skipped ${P.spree.count} songs in ${P.spree.seconds} seconds. On ${date(P.session.date)}, she started ${fmt(P.session.started)} songs and threw out ${fmt(P.session.skipped)}. ${P.never.title} by the ${P.never.artist} has auditioned ${P.never.tries} times and never lasted past ${P.never.longest_s} seconds. Add it all up and she's spent ${P.intro_hours} hours, more than three full days, on the first three seconds of songs that didn't make the cut. But once a song makes it? She plays its album front to back, in order, never shuffled.`,
+          verdict: "Not indecisive. Picky. If a song can't win her over in half a second, it doesn't deserve the other three minutes.", focus: { all: true } },
 
         { name: 'intro (end of the world)', date: D.period[1], q: 'What can a Spotify export reveal?', title: 'Austin, Texas',
           text: `This track is named after the song she played every single day for ${STREAK.days} days straight (${date(STREAK.from)} to ${date(STREAK.to)}), her longest streak ever. Her moods, her sleep, the day she left home, her trips to India, the year she wrote her college essays, when she studies, even a Sephora ad: ${fmt(D.totals.listens)} listens and ${fmt(D.totals.hours)} hours later (${fmt(D.totals.hours / 24)} full days of music), the girl who pressed play in Dallas is in Austin.`,
