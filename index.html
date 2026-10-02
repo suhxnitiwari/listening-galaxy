@@ -7,7 +7,7 @@
 <meta name="description" content="Four years of my Spotify listening, mapped as a universe: every song is a star, every artist a constellation. Built on my own data warehouse.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/galaxy.css?v=11">
+<link rel="stylesheet" href="css/galaxy.css?v=12">
 </head>
 <body>
 <canvas id="sky" aria-label="A 3D galaxy of every song I have played: drag to spin, scroll to zoom, click a star"></canvas>
@@ -23,7 +23,7 @@
     <h1>Every song I've ever played is <em>a star.</em></h1>
     <p>Four years of my Spotify history mapped as a universe, where every star is a song and every constellation an artist, built on the data warehouse I engineered from my raw listening export.</p>
     <div class="stats"><div><b data-total="listens">91,210</b>listens</div><div><b data-total="songs">4,648</b>songs</div><div><b data-total="artists">1,231</b>artists</div><div><b data-total="hours">4,397</b>hours</div></div>
-    <div class="ctas"><button class="pill solid" id="tourBtn">▶ Listen through my 4 years</button><button class="pill" data-open="how">How I built this</button></div>
+    <div class="ctas"><button class="pill solid" id="tourBtn">▶ Open the case file</button><button class="pill" data-open="how">How I built this</button></div>
 </div>
 
 <div class="prelude" id="prelude" aria-live="polite"></div>
@@ -47,7 +47,7 @@
 <aside class="hud card" id="card" aria-live="polite"></aside>
 
 <div class="tour" id="tour" role="dialog" aria-label="Tour">
-    <div class="label" id="tourDate"></div><h3 id="tourTitle"></h3><p id="tourText"></p>
+    <div class="label" id="tourDate"></div><div class="q" id="tourQ"></div><h3 id="tourTitle"></h3><div class="count" id="tourCount" hidden></div><p id="tourText"></p><p class="verdict" id="tourVerdict"></p>
     <div class="bar"><i id="tourBar"></i></div>
     <div class="ctl"><span class="label" id="tourStep"></span><button class="pill" id="tourPrev">←</button><button class="pill" id="tourNext">Next →</button><button class="pill" id="tourEnd">Exit</button></div>
 </div>
@@ -117,6 +117,7 @@
 </article>
 
 <audio id="audio" preload="none"></audio>
-<script src="js/galaxy.js?v=11"></script>
+<script src="js/tour.js?v=12"></script>
+<script src="js/galaxy.js?v=12"></script>
 </body>
 </html>

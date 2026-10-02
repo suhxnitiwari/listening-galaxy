@@ -4,13 +4,13 @@
 
 **→ [suhxnitiwari.github.io/listening-galaxy](https://suhxnitiwari.github.io/listening-galaxy/)**
 
-91,210 listens · 4,648 songs · 1,231 artists · 4,397 hours · 5,053 sessions
+91,160 listens · 4,647 songs · 1,230 artists · 4,395 hours · 5,053 sessions
 
 ## What you can do
 
 - **Fly out from Dallas.** It opens over Dallas at night on May 21, 2022, the day my history starts, pulls back to Earth, out to the Milky Way, past it, and dives into a new galaxy: Heavy Rotation.
 - **Watch it grow.** Four years replay in 16 seconds from the center outward, every star igniting on the day I first heard it, with a ticker of who owned each month. Drag the timeline to any month; the bars under it are listens per month, pink when my #1 artist owned it.
-- **Listen through my four years.** A tour of sixteen chapters the data found on its own (big artists arriving, the rival who took the most months from my #1, each year's song, my biggest day, my longest streak), each one playing its song.
+- **Open the case file.** An 18-chapter tour of me, written as a detective's file: who runs the galaxy, the month Taylor took the throne, the day I played one song 119 times, my all-nighters (and why they land on Tuesdays), my college-essay marathon, the morning I left home, how college changed me, and how 2026 is changing me again. Every number in it is computed by the export; only the words are mine.
 - **Touch the sky.** It's a 3D disk: drag to spin it, shift-drag to move, scroll to zoom. Stars lean toward your cursor, constellations draw themselves (with the artist's photo) as you come close, and clicking empty space sends a ripple through the galaxy.
 - **Open any star.** Its card shows first listen, peak month, last listen, lifespan, usual hour, skip rate, biggest day, my mood tag, and the songs I play back-to-back with it, plus a 30-second preview.
 - **Color by emotion.** Switch from year found to mood: rose love, yellow party, orange confident, lavender bittersweet, blue heartbreak, violet dark.

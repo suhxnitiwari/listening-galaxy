@@ -100,9 +100,12 @@ canvas#sky.drag { cursor: grabbing; } canvas#sky.on-star { cursor: pointer; }
 .mood { display: inline-block; font: 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; padding: 3px 8px; border-radius: 999px; border: 1px solid currentColor; }
 
 /* tour */
-.tour { position: fixed; left: 50%; bottom: 196px; transform: translate(-50%, 20px); width: min(480px, calc(100% - 2 * var(--gut))); background: var(--panel); backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s; z-index: 4; }
+.tour { position: fixed; left: 50%; bottom: 196px; transform: translate(-50%, 20px); width: min(560px, calc(100% - 2 * var(--gut))); background: var(--panel); backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s; z-index: 4; }
 .tour.on { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
-.tour h3 { font: 400 26px var(--serif); margin: 4px 0 4px; }
+.tour h3 { font: 400 28px/1.1 var(--serif); margin: 2px 0 6px; }
+.tour .q { font: italic 400 17px var(--serif); color: var(--pink); margin-top: 6px; }
+.tour .count { font: 400 64px/1 var(--serif); color: var(--ink); margin: 2px 0 6px; letter-spacing: -.02em; text-shadow: 0 0 30px #F7A8C466; }
+.tour .verdict { margin-top: 10px !important; color: var(--ink) !important; font-weight: 500; font-size: 14px; }
 .tour p { margin: 0; color: var(--soft); font-size: 14px; line-height: 1.45; }
 .tour .ctl { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
 .tour .ctl .label { margin-right: auto; }

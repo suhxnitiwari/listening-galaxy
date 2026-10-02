@@ -62,6 +62,7 @@
         return edges;
     }
     for (const A of artists) A.edges = tree(A.songs);
+    const TOUR = window.buildTour(D, songs, artists);   // the case file, from js/tour.js
 
     // ---------- color: by the year I found a song, or by how it feels ----------
     let colorMode = 'year';
@@ -270,7 +271,7 @@
     }
 
     // ---------- state ----------
-    let now = t0, hover = null, selected = null, focusArtist = null, pair = null, connectFrom = null, nearArtist = null, playing = null, touched = performance.now();
+    let now = t0, hover = null, selected = null, focusArtist = null, pair = null, connectFrom = null, tourSet = null, tourNight = 0, nightTarget = 0, nearArtist = null, playing = null, touched = performance.now();
     const mouse = { x: -1e4, y: -1e4, on: false }, trail = [], ripples = [], births = [];
     let prevNow = t0, monthOwner = null;
     const lit = s => s.born <= now;
@@ -308,6 +309,9 @@
         g.lineWidth = 1;
         for (const R of rings) { if (reach(R) <= 0) continue; g.strokeStyle = `rgba(200,190,255,${0.05 * reach(R)})`; g.beginPath(); for (let k = 0; k <= 96; k++) { const a = k / 96 * 6.2832, [x, y] = project(Math.cos(a) * R, Math.sin(a) * R, 0); k ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
 
+        // a tour chapter about the night turns the sky a deep midnight blue
+        tourNight += (nightTarget - tourNight) * 0.05;
+        if (tourNight > 0.01) { const ng = g.createRadialGradient(W / 2, H * 0.4, 0, W / 2, H / 2, Math.max(W, H) * 0.8); ng.addColorStop(0, `rgba(20,34,90,${0.45 * tourNight})`); ng.addColorStop(1, `rgba(6,10,40,${0.6 * tourNight})`); g.fillStyle = ng; g.fillRect(0, 0, W, H); }
         g.globalCompositeOperation = 'lighter';
         // nebula clouds and gas: bright while the galaxy is being born, then a faint haze on the disk
         for (const c of clouds) { const [x, y, f] = project(c.x, c.y, 0), R = c.r * view.z * f, rc = reach(Math.hypot(c.x, c.y)); if (!rc || x < -R || y < -R || x > W + R || y > H + R) continue;
@@ -357,7 +361,7 @@
         }
 
         // which stars are in focus: a thread, an artist, or everything
-        const dimOthers = thread ? thread.songs : pair ? new Set(pair.path || [pair.a, pair.b]) : focusArtist ? new Set(focusArtist.songs) : null;
+        const dimOthers = thread ? thread.songs : tourSet ? tourSet : pair ? new Set(pair.path || [pair.a, pair.b]) : focusArtist ? new Set(focusArtist.songs) : null;
 
         // constellation lines: faint everywhere, bright for the artist I'm near or have picked
         g.lineWidth = 0.6; g.strokeStyle = `rgba(200,190,255,${dimOthers ? 0.025 : 0.06})`; g.beginPath();
@@ -460,7 +464,7 @@
         }
     }
     const ticks = $('#ticks');
-    D.story.forEach((c, i) => { const b = document.createElement('button'); b.style.left = (Math.min(1, Math.max(0, kOf(day(c.date)))) * 100) + '%'; b.title = c.title; b.setAttribute('aria-label', `${c.title}, ${longDate(day(c.date))}`); b.onclick = () => startTour(i); ticks.appendChild(b); });
+    TOUR.forEach((c, i) => { const b = document.createElement('button'); b.style.left = (Math.min(1, Math.max(0, kOf(day(c.date)))) * 100) + '%'; b.title = c.title; b.setAttribute('aria-label', `${c.title}, ${longDate(day(c.date))}`); b.onclick = () => startTour(i); ticks.appendChild(b); });
     let lastMonthDrawn = '';
     const monthBy = new Map(D.months.map(m => [m.month, m])), ticker = $('#ticker'), toast = $('#toast'); let toastTimer = null, toldUpTo = -1;
     function setNow(t) {
@@ -472,8 +476,8 @@
             ticker.innerHTML = M ? `<b>${esc(artists[M.owner].name)}</b> owned it · ${fmt(M.listens)} listens · ${fmt(M.new_songs)} new stars` : '';
         }
         // during the replay, the story's moments surface as the sky reaches them
-        if (bang && step < 0 && now > was) D.story.forEach((c, i) => { const d = day(c.date); if (i > toldUpTo && d > was && d <= now) { toldUpTo = i;
-            toast.innerHTML = `<span class="label">${longDate(d)}</span><b>${esc(c.title)}</b>${esc(c.song != null ? songs[c.song].title + ', ' + songs[c.song].A.name + '. ' : '')}${esc(c.text)}`;
+        if (bang && step < 0 && now > was) TOUR.forEach((c, i) => { const d = day(c.date.slice(0, 10)); if (i > toldUpTo && d > was && d <= now) { toldUpTo = i;
+            toast.innerHTML = `<span class="label">${longDate(d)} · ${esc(c.q)}</span><b>${esc(c.title)}</b>${esc(c.verdict)}`;
             toast.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('on'), 2600); } });
     }
     let bang = null;
@@ -680,29 +684,56 @@
     cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
     cv.addEventListener('wheel', e => { e.preventDefault(); fly = null; touched = performance.now(); intro.touched = true; zoomAt(e.clientX, e.clientY, view.z * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015))); quiet(); }, { passive: false });
 
-    // ---------- tour: the story chapters the export found in my data ----------
-    const tour = $('#tour'); let step = -1, tourTimer = null;
-    function startTour(i = 0) {
-        step = i; const c = D.story[i]; closeOverlays(); setThread(null);
-        clearTimeout(tourTimer); sweep(now, day(c.date), Math.min(2600, 600 + Math.abs(day(c.date) - now) / DAY * 3));
-        $('#tourDate').textContent = `${longDate(day(c.date))}`; $('#tourTitle').textContent = c.title;
-        const who = c.song != null ? `${songs[c.song].title}, ${songs[c.song].A.name}. ` : '';
-        $('#tourText').textContent = who + c.text; $('#tourStep').textContent = `${i + 1} / ${D.story.length}`;
-        $('#tourNext').textContent = i === D.story.length - 1 ? 'Finish' : 'Next →';
-        ticks.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
-        // each chapter opens its star and plays it, so the tour is a listening tour
-        back.length = 0; current = null;
-        const small = W < 760;   // on phones the card would cover the tour, so the star is just highlighted
-        if (c.song != null) { if (small) { closeCard(); selected = songs[c.song]; flyToSong(selected); play(selected); } else openSong(songs[c.song], { listen: true, push: false }); }
-        else if (c.artist != null) { if (small) { closeCard(); focusArtist = artists[c.artist]; flyToArtist(focusArtist); } else openArtist(artists[c.artist], { push: false }); play(artists[c.artist].songs[0]); }
-        else { closeCard(); intro.touched = true; flyTo(0, 30, fitZ); }
-        tour.classList.add('on'); $('#hero').classList.add('quiet');
-        const bar = $('#tourBar'); bar.style.transition = 'none'; bar.style.width = '0'; requestAnimationFrame(() => { bar.style.transition = 'width 10s linear'; bar.style.width = '100%'; });
-        tourTimer = setTimeout(() => step >= 0 && (step < D.story.length - 1 ? startTour(step + 1) : endTour()), 10000);
+    // ---------- tour: a case file on me, built by js/tour.js from the export's facts ----------
+    const tour = $('#tour'); let step = -1, tourTimer = null, moodBefore = null, countAnim = null;
+    function focusOf(c) {
+        const f = c.focus || {};
+        if (f.artist != null) return artists[f.artist].songs;
+        if (f.artists) return f.artists.flatMap(a => artists[a].songs);
+        if (f.song != null) return [songs[f.song]];
+        if (f.songs) return f.songs.map(i => songs[i]);
+        if (f.mood) return songs.filter(s => s.feel === f.mood);
+        return null;
     }
-    function endTour() { if (step < 0) return; step = -1; clearTimeout(tourTimer); tour.classList.remove('on'); ticks.querySelectorAll('button').forEach(b => b.classList.remove('on')); audio.pause(); }
+    function frame3(list) {   // fly to fit a set of stars
+        const xs = list.map(s => s.x), ys = list.map(s => s.y), cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+        const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) + 160;
+        flyTo(cx, cy, clamp(Math.min(W, H) * 0.75 / span, minZ(), 3.2));
+    }
+    function startTour(i = 0) {
+        step = i; const c = TOUR[i], d = day(c.date.slice(0, 10)); closeOverlays(); setThread(null); connectFrom = null; hint('');
+        clearTimeout(tourTimer); sweep(now, d, Math.min(2600, 600 + Math.abs(d - now) / DAY * 3));
+        $('#tourDate').textContent = `Case file ${i + 1} · ${longDate(d)}`; $('#tourQ').textContent = c.q; $('#tourTitle').textContent = c.title;
+        $('#tourText').textContent = c.text; $('#tourVerdict').textContent = c.verdict || ''; $('#tourStep').textContent = `${i + 1} / ${TOUR.length}`;
+        $('#tourNext').textContent = i === TOUR.length - 1 ? 'Close the case' : 'Next →';
+        ticks.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
+        // the evidence: light only the stars this chapter is about, and fly to them
+        back.length = 0; current = null; card.classList.remove('on'); selected = null; focusArtist = null; pair = null;
+        const list = focusOf(c); tourSet = list ? new Set(list) : null;
+        if (c.focus && c.focus.song != null) { selected = songs[c.focus.song]; flyToSong(selected); }
+        else if (c.focus && c.focus.artist != null) { focusArtist = artists[c.focus.artist]; flyToArtist(focusArtist); }
+        else if (list && list.length) frame3(list.filter(s => s.born <= d).length ? list.filter(s => s.born <= d) : list);
+        else { intro.touched = true; flyTo(0, 30, fitZ); }
+        if (c.pair) pair = { a: songs[c.pair[0]], b: songs[c.pair[1]], path: [songs[c.pair[0]], songs[c.pair[1]]] };
+        nightTarget = c.night ? 1 : 0;
+        if (c.mood && colorMode !== 'mood') { moodBefore = colorMode; setColor('mood'); } else if (!c.mood && moodBefore) { setColor(moodBefore); moodBefore = null; }
+        // a number worth counting up to
+        const cn = $('#tourCount'); cancelAnimationFrame(countAnim);
+        if (c.counter) { const t0c = performance.now(), go = t => { const k = Math.min(1, (t - t0c) / 2200); cn.textContent = fmt(c.counter * (1 - (1 - k) ** 3)); if (k < 1) countAnim = requestAnimationFrame(go); }; cn.hidden = false; countAnim = requestAnimationFrame(go); }
+        else cn.hidden = true;
+        if (c.play != null) play(songs[c.play]); else audio.pause();
+        tour.classList.add('on'); $('#hero').classList.add('quiet');
+        // long enough to read: about a quarter second a word, between 9 and 18 seconds
+        const words = (c.text + ' ' + (c.verdict || '')).split(/\s+/).length, ms = clamp(3500 + words * 230, 9000, 18000);
+        const bar = $('#tourBar'); bar.style.transition = 'none'; bar.style.width = '0'; requestAnimationFrame(() => { bar.style.transition = `width ${ms}ms linear`; bar.style.width = '100%'; });
+        tourTimer = setTimeout(() => step >= 0 && (step < TOUR.length - 1 ? startTour(step + 1) : endTour()), ms);
+    }
+    function endTour() {
+        if (step < 0) return; step = -1; clearTimeout(tourTimer); tour.classList.remove('on'); ticks.querySelectorAll('button').forEach(b => b.classList.remove('on')); audio.pause();
+        tourSet = null; nightTarget = 0; pair = null; selected = null; focusArtist = null; if (moodBefore) { setColor(moodBefore); moodBefore = null; }
+    }
     $('#tourBtn').onclick = () => startTour(0);
-    $('#tourNext').onclick = () => step < D.story.length - 1 ? startTour(step + 1) : endTour();
+    $('#tourNext').onclick = () => step < TOUR.length - 1 ? startTour(step + 1) : endTour();
     $('#tourPrev').onclick = () => startTour(Math.max(0, step - 1));
     $('#tourEnd').onclick = endTour;
 
@@ -767,7 +798,7 @@
 
     // ---------- go: the big bang replays four years ----------
     // the prelude's words, in the middle of the screen
-    const prelude = $('#prelude'), first = D.story[0] && D.story[0].song != null ? songs[D.story[0].song] : null;
+    const prelude = $('#prelude');
     const NAME = 'Heavy Rotation';
     const lines = [[100, 1900, 'Dallas · May 21, 2022', 'I press play.'],
         [2100, 3400, `${fmt(D.totals.listens)} listens later…`],
