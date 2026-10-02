@@ -143,6 +143,10 @@ canvas#sky.drag { cursor: grabbing; } canvas#sky.on-star { cursor: pointer; }
 .funnel div { display: grid; grid-template-columns: 1fr auto; font-size: 13px; color: var(--soft); position: relative; padding: 6px 10px; }
 .funnel div::before { content: ""; position: absolute; inset: 0; width: var(--w); background: #F7A8C41f; border-radius: 6px; z-index: -1; }
 .funnel b { font: 500 13px var(--mono); color: var(--ink); }
+.reveals { display: grid; gap: 0; margin-top: 12px; }
+.reveals div { display: grid; grid-template-columns: 110px 1fr; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+.reveals b { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--pink); padding-top: 3px; }
+.reveals span { font-size: 14px; line-height: 1.5; color: var(--soft); }
 .hard { counter-reset: hard; padding: 0; list-style: none; }
 .hard li { counter-increment: hard; padding: 14px 0 14px 44px; border-top: 1px solid var(--line); position: relative; }
 .hard li::before { content: counter(hard, decimal-leading-zero); position: absolute; left: 0; top: 14px; font: 500 12px var(--mono); color: var(--pink); }

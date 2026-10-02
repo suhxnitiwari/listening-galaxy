@@ -7,7 +7,7 @@
 <meta name="description" content="Four years of my Spotify listening, mapped as a universe: every song is a star, every artist a constellation. Built on my own data warehouse.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/galaxy.css?v=19">
+<link rel="stylesheet" href="css/galaxy.css?v=20">
 </head>
 <body>
 <canvas id="sky" aria-label="A 3D galaxy of every song I have played: drag to spin, scroll to zoom, click a star"></canvas>
@@ -23,7 +23,7 @@
     <h1>Every song I've ever played is <em>a star.</em></h1>
     <p>Four years of my Spotify history mapped as a universe, where every star is a song and every constellation an artist, built on the data warehouse I engineered from my raw listening export.</p>
     <div class="stats"><div><b data-total="listens">91,160</b>listens</div><div><b data-total="songs">4,647</b>songs</div><div><b data-total="artists">1,230</b>artists</div><div><b data-total="hours">4,395</b>hours</div></div>
-    <div class="ctas"><button class="pill solid" id="tourBtn">▶ Open the case file</button><button class="pill" data-open="how">How I built this</button></div>
+    <div class="ctas"><button class="pill solid" id="tourBtn">▶ Play “Suhani's Version”</button><button class="pill" data-open="how">How I built this</button></div>
 </div>
 
 <div class="prelude" id="prelude" aria-live="polite"></div>
@@ -82,6 +82,12 @@
         <div class="funnel" id="funnel"></div>
     </section>
 
+    <section><div class="label">What the data revealed</div><h3>More than a playlist</h3>
+        <p>A listening history is a diary nobody meant to keep. Timestamps, skips and sessions were enough to find my moods, my sleep, my routines, the big days of my life, my trips home and my cultural identity, none of which Spotify ever asked me about.</p>
+        <div class="reveals" id="reveals"></div>
+        <p>Every one of these is computed by the pipeline and checked against what I remember; the tour, <i>Suhani's Version</i>, tells them as 15 tracks and 5 from the vault.</p>
+    </section>
+
     <section><div class="label">The pipeline</div><h3>From a zip file to a sky</h3>
         <div class="flow">
             <div><b>Extract · Python</b><span>Every <code>Streaming_History_Audio_*.json</code> is read straight out of Spotify's zip, and the raw files never leave my laptop.</span></div><i>↓</i>
@@ -117,7 +123,7 @@
 </article>
 
 <audio id="audio" preload="none"></audio>
-<script src="js/tour.js?v=19"></script>
-<script src="js/galaxy.js?v=19"></script>
+<script src="js/tour.js?v=20"></script>
+<script src="js/galaxy.js?v=20"></script>
 </body>
 </html>

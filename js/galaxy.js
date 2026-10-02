@@ -731,9 +731,9 @@
     function startTour(i = 0) {
         step = i; const c = TOUR[i], d = day(c.date.slice(0, 10)); closeOverlays(); setThread(null); connectFrom = null; hint('');
         clearTimeout(tourTimer); sweep(now, d, Math.min(2600, 600 + Math.abs(d - now) / DAY * 3));
-        $('#tourDate').textContent = `Case file ${i + 1} · ${longDate(d)}`; $('#tourQ').textContent = c.q; $('#tourTitle').textContent = c.title;
+        $('#tourDate').textContent = `${window.ALBUM} · ${c.label} · “${c.name}” · ${longDate(d)}`; $('#tourQ').textContent = c.q; $('#tourTitle').textContent = c.title;
         $('#tourText').textContent = c.text; $('#tourVerdict').textContent = c.verdict || ''; $('#tourStep').textContent = `${i + 1} / ${TOUR.length}`;
-        $('#tourNext').textContent = i === TOUR.length - 1 ? 'Close the case' : 'Next →';
+        $('#tourNext').textContent = i === TOUR.length - 1 ? 'End of album' : 'Next track →';
         ticks.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
         // the evidence: light only the stars this chapter is about, and fly to them
         back.length = 0; current = null; card.classList.remove('on'); selected = null; focusArtist = null; pair = null;
@@ -780,6 +780,16 @@
         ['After de-duplication, loops and accidents', T.plays], ['Real listens: 30 seconds or more', T.listens], ['Songs, after merging duplicate IDs', T.songs]];
     $('#funnel').innerHTML = funnel.map(([k, v]) => `<div style="--w:${Math.max(3, 100 * Math.sqrt(v / T.records))}%">${k}<b>${fmt(v)}</b></div>`).join('');
     document.querySelectorAll('[data-share]').forEach(el => { el.textContent = Math.round(feltShare * 100) + '%'; });
+    // what the data revealed about behavior, each claim backed by a computed number
+    { const f = D.facts, tr = f.trips[1];
+      const rows = [['Mood', `Octobers are my saddest month (${f.moods.sad_calendar[1]}% sad songs vs a typical ${f.moods.typical_sad}%), and my four happiest months are all from the last year.`],
+        ['Sleep', `${f.allnighters.count} all-nighters, found as music in every hour from midnight to 6 AM, mostly ending on ${f.allnighters.top_weekday[0]} mornings before exams.`],
+        ['Routine', `${f.weekday_peak.high_school.three_to_eight}% of high-school weekday listening fell between 3 and 8 PM: homework hours. Only ${f.before_9}% happens before 9 AM.`],
+        ['Life events', `The morning I moved to Austin, a 14-hour college-essay session, a 119-play day, an album I was awake for at 12:50 AM.`],
+        ['Travel', `Flights show up as hours of offline listening; on a trip to India, ${tr.desi}% of what I played was South Asian, against ${f.desi_overall}% normally.`],
+        ['Identity', `South Asian music fell from ${f.desi_by_year[2022]}% to ${f.desi_by_year[2024]}% the year I left home and is back to ${f.desi_by_year[2026]}% now; after midnight it's ${f.desi_by_hour.night}%.`],
+        ['Personality', `${f.discover.by_skip}% of the songs I know, I found by skipping into them, and I decide in ${f.skip.median_seconds} seconds.`]];
+      $('#reveals').innerHTML = rows.map(([k, v]) => `<div><b>${k}</b><span>${v}</span></div>`).join(''); }
     if (location.hash === '#how') openOverlay('how');
 
     addEventListener('keydown', e => {
