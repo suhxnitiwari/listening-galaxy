@@ -7,7 +7,7 @@
 <meta name="description" content="Four years of my Spotify listening, mapped as a universe: every song is a star, every artist a constellation. Built on my own data warehouse.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/galaxy.css?v=85">
+<link rel="stylesheet" href="css/galaxy.css?v=86">
 </head>
 <body>
 <canvas id="sky" aria-label="A 3D galaxy of every song I have played: drag to spin, scroll to zoom, click a star"></canvas>
@@ -42,7 +42,7 @@
     <div class="row"><span>May 2022</span><span>2023</span><span>2024</span><span>2025</span><span>2026</span></div>
     <div class="btns"><button class="pill" id="bang">↺ Replay four years</button></div>
     <div class="player" id="player" aria-label="Album player">
-        <button class="pb" id="tourPrev" aria-label="Previous track">⏮</button><button class="pb main" id="tourPlay" aria-label="Play or pause">▶</button><button class="pb" id="tourNext" aria-label="Next track">⏭</button>
+        <button class="pb" id="tourPrev" aria-label="Previous track">⏮</button><button class="pb main" id="tourPlay" aria-label="Play the album"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></button><button class="pb" id="tourNext" aria-label="Next track">⏭</button>
         <div class="pnow"><div><span class="label" id="tourStep"></span> <b id="pTitle">in my head(phones)</b></div><div class="bar"><i id="tourBar"></i></div></div>
         <button class="pill" id="tourEnd">Exit</button>
     </div>
@@ -164,8 +164,8 @@
 
 <audio id="audio" preload="none"></audio>
 <script>window.ENDING_YOUTUBE = null;   // a YouTube video ID of May the Music Never End (Greg Gilpin); it plays as the last track lands home</script>
-<script src="js/tour.js?v=85"></script>
-<script src="js/months.js?v=85"></script>
-<script src="js/galaxy.js?v=85"></script>
+<script src="js/tour.js?v=86"></script>
+<script src="js/months.js?v=86"></script>
+<script src="js/galaxy.js?v=86"></script>
 </body>
 </html>

@@ -244,7 +244,7 @@ body.outro .hero, body.outro .threads, body.outro .time, body.outro .card { opac
 }
 
 /* the album as a tracklist */
-.album { position: fixed; z-index: 4; left: var(--gut); top: 74px; bottom: 262px; width: min(440px, calc(100% - 2 * var(--gut))); display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; opacity: 0; visibility: hidden; transform: translateX(-12px); transition: opacity .5s, transform .5s, visibility .5s; }
+.album { position: fixed; z-index: 4; left: var(--gut); top: 74px; bottom: 262px; width: min(440px, calc(100% - 2 * var(--gut))); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; opacity: 0; visibility: hidden; transform: translateX(-12px); transition: opacity .5s, transform .5s, visibility .5s; }
 .album.on { opacity: 1; visibility: visible; transform: none; }
 .album .x { position: absolute; right: 10px; top: 8px; background: none; border: 0; color: var(--dim); font-size: 22px; cursor: pointer; }
 .album .x:hover { color: var(--ink); }
@@ -260,7 +260,8 @@ body.outro .hero, body.outro .threads, body.outro .time, body.outro .card { opac
 .album .cols, .album li button { display: grid; grid-template-columns: 26px 1fr 88px 60px; gap: 10px; align-items: center; }
 .album .cols { padding: 0 20px 8px; border-bottom: 1px solid var(--line); font: 10px var(--mono); color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
 .album .cols span:first-child, .album .cols span:nth-child(3), .album .n, .album .s { text-align: right; }
-.album ol { list-style: none; margin: 0; padding: 6px 8px 10px; overflow-y: auto; scrollbar-width: thin; }
+.album ol { list-style: none; margin: 0; padding: 6px 8px 10px; }
+.album .cols { position: sticky; top: 0; z-index: 1; background: var(--panel); padding-top: 8px; }
 .album li.side { font: 500 10px var(--mono); color: var(--pink); text-transform: uppercase; letter-spacing: .1em; padding: 12px 12px 6px; }
 .album li button { width: 100%; background: none; border: 0; border-radius: 8px; padding: 7px 12px; color: var(--ink); text-align: left; cursor: pointer; font: inherit; }
 .album li button:hover { background: #ffffff10; }
@@ -360,4 +361,10 @@ body.listening .track { margin-top: 26px; }
     .album .cols, .album li button { grid-template-columns: 24px 1fr 84px; } .album .s { font-size: 15px; }
     body.listening .tour { top: 58px; bottom: auto; max-height: calc(100vh - 58px - 272px); overflow-y: auto; }
     .player .pill { display: none; }
+}
+
+/* short windows: a compact album header so the tracks get the room */
+@media (max-height: 820px) and (min-width: 761px) {
+    .album .head { grid-template-columns: 60px 1fr; gap: 12px; padding-top: 14px; } .album .head::before { width: 60px; height: 60px; } .album h2 { font-size: 24px; }
+    .album .acts { padding: 10px 20px; } .album .big { width: 40px; height: 40px; }
 }

@@ -831,7 +831,7 @@
         relBox.hidden = true; why.hidden = !rel.length; why.setAttribute('aria-expanded', 'false'); why.textContent = 'Why it matters ↓';
         relBox.innerHTML = rel.length ? `<div class="label">Behind this track</div>` + rel.map(s => `<button data-s="${s.i}"><img alt="" src="${blank}"><span><b>${esc(s.title)}</b><i>${esc(s.A.name)} · ${fmt(s.n)} listens</i></span></button>`).join('') : '';
         relBox.querySelectorAll('[data-s]').forEach(b => { const s = songs[+b.dataset.s]; cover(s).then(u => { b.querySelector('img').src = u; }); b.onclick = () => { pauseTour(); openSong(s); }; });
-        paused = false; $('#tourPlay').textContent = '❚❚';
+        paused = false; playIcons(true);
         tour.classList.add('on'); $('#hero').classList.add('quiet');
         const ms = trackMs(c); markTrack(i);
         const bar = $('#tourBar'); bar.style.transition = 'none'; bar.style.width = '0'; requestAnimationFrame(() => { bar.style.transition = `width ${ms}ms linear`; bar.style.width = '100%'; });
@@ -841,7 +841,7 @@
     function pauseTour() {
         if (step < 0 || paused) return; paused = true; clearTimeout(tourTimer); audio.pause();
         const bar = $('#tourBar'), w = getComputedStyle(bar).width; bar.style.transition = 'none'; bar.style.width = w;
-        $('#tourPlay').textContent = '▶'; $('#albumPlay').textContent = '▶';
+        playIcons(false);
     }
     function pauseOrEnd() { if (step >= 0) pauseTour(); else endTour(); }
     function endTour() {
@@ -850,6 +850,10 @@
         $('#tourVideo').innerHTML = ''; $('#tourVideo').hidden = true;
         if (outro) { outro = null; setHome(DALLAS, 'DALLAS'); document.body.classList.remove('outro'); }
     }
+    // play and pause as drawn icons, so they sit dead center in their circles (text triangles don't)
+    const PLAY = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>';
+    const PAUSE = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>';
+    function playIcons(playing) { for (const id of ['#albumPlay', '#tourPlay']) { $(id).innerHTML = playing ? PAUSE : PLAY; $(id).setAttribute('aria-label', playing ? 'Pause the album' : 'Play the album'); } }
     // the album as a tracklist: Side A, Side B and the vault, the playing track lit, any track a click away
     const album = $('#album'), mmss = ms => `${Math.floor(ms / 60000)}:${String(Math.round(ms / 1000) % 60).padStart(2, '0')}`;
     const monthYear = t => new Date(t).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
@@ -857,7 +861,7 @@
         const total = TOUR.reduce((a, c) => a + trackMs(c), 0);
         let html = `<button class="x" id="albumX" aria-label="Close the album">×</button>
             <div class="head"><div class="label">Album · Suhani Tiwari</div><h2>${esc(window.ALBUM)}</h2><div class="meta">${TOUR.length} tracks · ${Math.round(total / 60000)} min · ${fmt(D.totals.listens)} listens behind it</div></div>
-            <div class="acts"><button class="big" id="albumPlay" aria-label="Play the album">▶</button>
+            <div class="acts"><button class="big" id="albumPlay" aria-label="Play the album">${PLAY}</button>
                 <button class="icon" id="albumSave" title="Download the report" aria-label="Download the report">↓</button></div>
             <div class="cols"><span>#</span><span>Title</span><span>The number</span><span>Date</span></div><ol>`, side = null;
         TOUR.forEach((c, i) => {
@@ -907,7 +911,7 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
         $('#tticks').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.i === i));
         if (i < 0) { $('#pTitle').textContent = window.ALBUM; $('#tourStep').textContent = ''; $('#tourBar').style.transition = 'none'; $('#tourBar').style.width = '0'; }
         const on = album.querySelector('[data-i].on'); if (on) on.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        $('#albumPlay').textContent = $('#tourPlay').textContent = i >= 0 ? '❚❚' : '▶';
+        playIcons(i >= 0);
     }
     $('#tourBtn').onclick = openAlbum;
     $('#tourNext').onclick = () => step < TOUR.length - 1 ? nextTrack(step + 1) : endTour();
