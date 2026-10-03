@@ -453,3 +453,18 @@ body.replay:not(.choosing) .replaycap { opacity: 1; visibility: visible; transfo
 .replaycap .sub { font: 11px var(--mono); color: var(--soft); letter-spacing: .04em; }
 .replaycap .sub b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
 @media (max-width: 760px) { .replaycap { top: 18px; } .replaycap p { font-size: 16px; } }
+
+/* why it matters: the analysis behind each finding */
+.tour .whyp { margin: 10px 0 14px !important; padding-left: 12px; border-left: 2px solid var(--pink); color: var(--ink) !important; font-size: 14px; line-height: 1.55; }
+
+/* the turntable, in 3D: tilted back on its table, the sheen stays put while the record turns */
+.flip svg { transform: perspective(760px) rotateX(30deg); transform-origin: 50% 70%; filter: drop-shadow(0 22px 18px #000a); }
+.flip .vinyl { stroke: #ffffff14; } .flip .groove { stroke: #ffffff10; }
+.flip .rod { stroke-width: 4.5; }
+/* on desktop with the album open, the turntable takes over the right-hand panel */
+@media (min-width: 1101px) {
+    body.listening .flip { left: auto; right: var(--gut); top: 66px; bottom: 18px; width: clamp(300px, 24vw, 360px); transform: translateX(16px); display: flex; flex-direction: column; justify-content: center; padding: 24px 22px; background: #1E1628; }
+    body.listening .flip.on { transform: none; }
+}
+.flip .deck { fill: url(#deckG); } .flip .vinyl { fill: url(#vinylG); } .flip .labelc { fill: url(#labelG); } .flip .rod { stroke: url(#armG); }
+@media (min-width: 1101px) { body.listening:has(.flip.on) .tour { visibility: hidden; } }

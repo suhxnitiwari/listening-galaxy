@@ -901,8 +901,8 @@
             next(); spreeTimer = setInterval(next, 3000);
         }
         const rel = (list || []).filter(s => s !== lead && s.born <= d && !s.A.desi).sort((a, b) => b.n - a.n).slice(0, 4), relBox = $('#tourRel');
-        relBox.hidden = true; why.hidden = !rel.length; why.setAttribute('aria-expanded', 'false'); why.textContent = 'Why it matters ↓';
-        relBox.innerHTML = rel.length ? `<div class="label">Behind this track</div>` + rel.map(s => `<button data-s="${s.i}"><img alt="" src="${blank}"><span><b>${esc(s.title)}</b><i>${esc(s.A.name)} · ${fmt(s.n)} listens</i></span></button>`).join('') : '';
+        relBox.hidden = true; why.hidden = !rel.length && !c.why; why.setAttribute('aria-expanded', 'false'); why.textContent = 'Why it matters ↓';
+        relBox.innerHTML = (c.why ? `<p class="whyp">${esc(c.why)}</p>` : '') + (rel.length ? `<div class="label">Behind this track</div>` : '') + rel.map(s => `<button data-s="${s.i}"><img alt="" src="${blank}"><span><b>${esc(s.title)}</b><i>${esc(s.A.name)} · ${fmt(s.n)} listens</i></span></button>`).join('');
         relBox.querySelectorAll('[data-s]').forEach(b => { const s = songs[+b.dataset.s]; cover(s).then(u => { b.querySelector('img').src = u; }); b.onclick = () => { pauseTour(); openSong(s); }; });
         paused = false; playIcons(true);
         tour.classList.add('on'); $('#hero').classList.add('quiet');
@@ -1030,7 +1030,7 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
         setTimeout(() => { flipSay.textContent = 'Now drop the needle on Side B.'; }, 950);
     }
     function dropped() { const i = flipTo; disc.classList.add('spin'); flipSay.textContent = 'Side B.'; setTimeout(() => { closeFlip(); startTour(i); }, 700); }
-    const armAngle = e => { const b = flip.querySelector('svg').getBoundingClientRect(), k = b.width / 260, px = b.left + 232 * k, py = b.top + 28 * k;
+    const armAngle = e => { const b = flip.querySelector('svg').getBoundingClientRect(), px = b.left + 232 * b.width / 260, py = b.top + 28 * b.height / 220;   // the svg is tilted, so x and y scale separately
         return Math.atan2(e.clientY - py, e.clientX - px) * 180 / Math.PI; };
     arm.addEventListener('pointerdown', e => { e.preventDefault(); arm.setPointerCapture(e.pointerId); armDrag = { from: armAngle(e), at: armAt, moved: 0 }; });
     arm.addEventListener('pointermove', e => { if (!armDrag) return; const d = armAngle(e) - armDrag.from; armDrag.moved = Math.max(armDrag.moved, Math.abs(d));

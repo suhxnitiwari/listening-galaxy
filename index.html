@@ -7,7 +7,7 @@
 <meta name="description" content="Four years of my Spotify listening, mapped as a universe: every song is a star, every artist a constellation. Built on my own data warehouse.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/galaxy.css?v=1790997399">
+<link rel="stylesheet" href="css/galaxy.css?v=1790998340">
 </head>
 <body>
 <canvas id="sky" aria-label="A 3D galaxy of every song I have played: drag to spin, scroll to zoom, click a star"></canvas>
@@ -64,12 +64,21 @@
 <div class="flip" id="flip" role="dialog" aria-label="Turn the record over">
     <div class="label">in my head(phones) · end of Side A</div>
     <svg viewBox="0 0 260 220" aria-hidden="true">
-        <rect x="6" y="6" width="248" height="208" rx="14" class="deck"/>
-        <g id="flipDisc" class="disc"><circle cx="112" cy="112" r="96" class="vinyl"/>
-            <circle cx="112" cy="112" r="84" class="groove"/><circle cx="112" cy="112" r="72" class="groove"/><circle cx="112" cy="112" r="60" class="groove"/><circle cx="112" cy="112" r="48" class="groove"/>
-            <path d="M60 60 A74 74 0 0 1 112 38" class="shine"/>
-            <circle cx="112" cy="112" r="32" class="labelc"/><text id="flipLabel" x="112" y="121" text-anchor="middle">A</text><circle cx="112" cy="112" r="3" class="hole"/></g>
-        <g id="flipArm" class="arm"><circle cx="232" cy="28" r="12" class="pivot"/><path d="M232 28 L214 120 L176 160" class="rod"/><rect x="164" y="152" width="22" height="12" rx="3" transform="rotate(40 175 158)" class="head"/>
+        <defs>
+            <radialGradient id="vinylG" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#241d2e"/><stop offset=".38" stop-color="#0d0a12"/><stop offset=".9" stop-color="#16111d"/><stop offset="1" stop-color="#050307"/></radialGradient>
+            <radialGradient id="labelG" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#F6D8E7"/><stop offset=".6" stop-color="#E8BAD6"/><stop offset="1" stop-color="#B98AA8"/></radialGradient>
+            <linearGradient id="deckG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E2440"/><stop offset="1" stop-color="#160F20"/></linearGradient>
+            <linearGradient id="sheenG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".45" stop-color="#fff" stop-opacity=".16"/><stop offset=".55" stop-color="#fff" stop-opacity=".02"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+            <linearGradient id="armG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#F3ECF4"/><stop offset="1" stop-color="#9D91AE"/></linearGradient>
+        </defs>
+        <rect x="6" y="6" width="248" height="208" rx="14" fill="url(#deckG)" class="deck"/>
+        <ellipse cx="114" cy="122" rx="100" ry="98" fill="#000" opacity=".45"/>
+        <circle cx="112" cy="112" r="101" fill="#3a3048"/><circle cx="112" cy="112" r="99" fill="#1b1524"/>
+        <g id="flipDisc" class="disc"><circle cx="112" cy="112" r="96" fill="url(#vinylG)" class="vinyl"/>
+            <circle cx="112" cy="112" r="88" class="groove"/><circle cx="112" cy="112" r="80" class="groove"/><circle cx="112" cy="112" r="72" class="groove"/><circle cx="112" cy="112" r="64" class="groove"/><circle cx="112" cy="112" r="56" class="groove"/><circle cx="112" cy="112" r="46" class="groove"/>
+            <circle cx="112" cy="112" r="32" fill="url(#labelG)" class="labelc"/><circle cx="112" cy="112" r="26" fill="none" stroke="#1a0d16" stroke-opacity=".18"/><text id="flipLabel" x="112" y="121" text-anchor="middle">A</text><circle cx="112" cy="112" r="3" class="hole"/></g>
+        <path d="M30 70 A96 96 0 0 1 112 16 L112 112 Z" fill="url(#sheenG)" pointer-events="none"/><path d="M194 154 A96 96 0 0 1 112 208 L112 112 Z" fill="url(#sheenG)" opacity=".6" pointer-events="none"/>
+        <g id="flipArm" class="arm"><circle cx="232" cy="28" r="13" fill="#3a304d" stroke="#ffffff30"/><circle cx="232" cy="28" r="6" fill="#9D91AE"/><path d="M234 31 L216 123 L178 163" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M232 28 L214 120 L176 160" stroke="url(#armG)" class="rod"/><rect x="164" y="152" width="22" height="12" rx="3" transform="rotate(40 175 158)" class="head"/>
             <path d="M232 28 L214 120 L176 160" class="grab"/></g>
     </svg>
     <p id="flipSay">Side A is over. Lift the needle.</p>
@@ -179,8 +188,8 @@
 
 <audio id="audio" preload="none"></audio>
 <script>window.ENDING_YOUTUBE = null;   // a YouTube video ID of May the Music Never End (Greg Gilpin); it plays as the last track lands home</script>
-<script src="js/tour.js?v=1790997399"></script>
-<script src="js/months.js?v=1790997399"></script>
-<script src="js/galaxy.js?v=1790997399"></script>
+<script src="js/tour.js?v=1790998340"></script>
+<script src="js/months.js?v=1790998340"></script>
+<script src="js/galaxy.js?v=1790998340"></script>
 </body>
 </html>
