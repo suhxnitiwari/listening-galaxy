@@ -80,23 +80,26 @@
         threads.push({ key, name: key[0].toUpperCase() + key.slice(1), c, edges: tree(list), songs: new Set(list),
             note: `${list.length} ${key} songs: ${hand} tagged by me, ${list.length - hand} inferred from the songs I play them with.` });
     }
+    // the panel in two parts: how the stars are colored, and which lines are drawn between them
     const threadBox = $('#threads');
-    threadBox.insertAdjacentHTML('beforeend', '<div class="seg" role="group" aria-label="Color stars by"><button data-mode="year" class="on">Year found</button><button data-mode="mood">Emotion</button></div>');
+    threadBox.innerHTML = `<div class="label">Color the stars by</div><div class="seg" role="group" aria-label="Color stars by"><button data-mode="year" class="on">Year found</button><button data-mode="mood">Emotion</button></div>
+        <div class="years" id="legend"></div><div class="label lines">Draw the lines</div>`;
     threadBox.querySelectorAll('.seg button').forEach(b => b.onclick = () => setColor(b.dataset.mode));
+    const moodMax = Math.max(...threads.slice(1).map(T => T.songs.size));
     for (const T of threads) {
-        const b = document.createElement('button'); b.className = 'thread'; b.style.setProperty('--c', `rgb(${T.c})`);
-        b.innerHTML = `<i></i>${T.name}<span>${fmt(T.key === 'together' ? T.edges.length : T.songs.size)}</span>`;
+        const b = document.createElement('button'), n = T.key === 'together' ? T.edges.length : T.songs.size;
+        b.className = 'thread' + (T.key === 'together' ? ' pairs' : ''); b.style.setProperty('--c', `rgb(${T.c})`); b.style.setProperty('--w', T.key === 'together' ? 1 : (n / moodMax).toFixed(3));   // each mood's bar is its share of the biggest mood
+        b.innerHTML = `<i></i><em>${T.name}</em><span>${fmt(n)}</span>`;
+        b.setAttribute('aria-pressed', 'false');
         b.onclick = () => setThread(thread === T ? null : T); T.btn = b; threadBox.appendChild(b);
     }
     const felt = songs.filter(s => s.feel), feltShare = felt.reduce((t, s) => t + s.n, 0) / songs.reduce((t, s) => t + s.n, 0);
-    const defaultNote = () => colorMode === 'mood'
-        ? `Emotion: ${D.totals.moods_tagged} songs I tagged by hand, ${D.totals.moods_inferred} more inferred from the songs I play them with, ${Math.round(feltShare * 100)}% of my listening. Grey: not enough to tell.`
-        : 'Pick a thread to connect songs that belong together.';
-    threadBox.insertAdjacentHTML('beforeend', '<p class="note" id="threadNote"></p><div class="years" id="legend"></div>');
+    const defaultNote = () => 'Pick one to draw its lines across the sky.';
+    threadBox.insertAdjacentHTML('beforeend', '<p class="note" id="threadNote"></p>');
     let thread = null, threadAt = 0;
     function setThread(T) {
         thread = T; threadAt = performance.now();
-        threads.forEach(x => x.btn.classList.toggle('on', x === T));
+        threads.forEach(x => { x.btn.classList.toggle('on', x === T); x.btn.setAttribute('aria-pressed', String(x === T)); });
         $('#threadNote').textContent = T ? T.note : defaultNote();
         quiet();
     }
@@ -105,7 +108,7 @@
         threadBox.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
         $('#legend').innerHTML = mode === 'year'
             ? Object.entries(yearColor).map(([y, c]) => `<span><i style="background:rgb(${c})"></i>${y}</span>`).join('')
-            : [...moods, ['no mood yet', noMood]].map(([m, c]) => `<span><i style="background:rgb(${c})"></i>${m}</span>`).join('');
+            : `<p>${Math.round(feltShare * 100)}% of my listening has a mood: ${D.totals.moods_tagged} songs tagged by me, ${D.totals.moods_inferred} inferred. <span><i style="background:rgb(${noMood})"></i>not enough to tell</span></p>`;
         if (!thread) $('#threadNote').textContent = defaultNote();
         if (selected) openSong(selected, { fly: false, push: false });
     }
@@ -537,7 +540,7 @@
         if (m !== lastMonthDrawn) {
             lastMonthDrawn = m; drawMonths();
             const M = monthBy.get(m); monthOwner = M ? artists[M.owner] : null;
-            ticker.innerHTML = M ? `${LINES[m] ? `<span class="line">${esc(LINES[m])}</span>` : ''}<span class="nums"><b>${esc(artists[M.owner].name)}</b> #1 · ${fmt(M.listens)} listens · ${fmt(M.new_songs)} new stars</span>` : '';
+            ticker.innerHTML = M && LINES[m] ? `<span class="line">${esc(LINES[m])}</span>` : '';   // one line under the month, nothing more
         }
     }
     let bang = null;
