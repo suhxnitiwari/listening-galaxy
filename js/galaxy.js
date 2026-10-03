@@ -28,7 +28,7 @@
 
     const yearColor = { 2022: [150, 176, 246], 2023: [186, 160, 246], 2024: [238, 168, 214], 2025: [248, 188, 176], 2026: [246, 226, 186] };   // lavender haze: periwinkle, lilac, mauve, dusty rose, champagne
     // emotion colors: warm for happy, blue for sad, violet for gloomy
-    const moods = [['love', [255, 128, 196]], ['party', [255, 226, 80]], ['confident', [255, 150, 60]], ['bittersweet', [146, 120, 186]], ['heartbreak', [184, 36, 70]], ['dark', [104, 46, 164]]];
+    const moods = [['love', [255, 128, 196]], ['party', [255, 226, 80]], ['confident', [255, 150, 60]], ['bittersweet', [178, 128, 255]], ['heartbreak', [184, 36, 70]], ['dark', [104, 46, 164]]];
     const moodColor = Object.fromEntries(moods), noMood = [105, 100, 125];
 
     // ---------- layout: a 3D disk that grows outward in time. Artists sit on a golden-angle spiral in the order they

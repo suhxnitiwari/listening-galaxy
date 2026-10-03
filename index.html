@@ -7,7 +7,7 @@
 <meta name="description" content="Four years of my Spotify listening, mapped as a universe: every song is a star, every artist a constellation. Built on my own data warehouse.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/galaxy.css?v=84">
+<link rel="stylesheet" href="css/galaxy.css?v=85">
 </head>
 <body>
 <canvas id="sky" aria-label="A 3D galaxy of every song I have played: drag to spin, scroll to zoom, click a star"></canvas>
@@ -91,7 +91,7 @@
         <div><svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="4" fill="#F3ECF4"/></svg><p><b>A star</b>One song I've listened to for at least 30 seconds, Spotify's own threshold for a stream.</p></div>
         <div><svg viewBox="0 0 54 54"><circle cx="15" cy="27" r="2" fill="#F3ECF4"/><circle cx="35" cy="27" r="8" fill="#F3ECF4"/></svg><p><b>Size</b>How many times I've listened, with the radius growing by the square root so area tracks listens.</p></div>
         <div><svg viewBox="0 0 54 54"><circle cx="12" cy="27" r="4" fill="rgb(150,176,246)"/><circle cx="27" cy="18" r="4" fill="rgb(186,160,246)"/><circle cx="27" cy="36" r="4" fill="rgb(238,168,214)"/><circle cx="42" cy="27" r="4" fill="rgb(246,226,186)"/></svg><p><b>Color: year found</b>Periwinkle 2022, lilac 2023, mauve 2024, dusty rose 2025, champagne 2026.</p></div>
-        <div><svg viewBox="0 0 54 54"><circle cx="12" cy="20" r="4" fill="rgb(255,128,196)"/><circle cx="27" cy="20" r="4" fill="rgb(255,226,80)"/><circle cx="42" cy="20" r="4" fill="rgb(255,150,60)"/><circle cx="12" cy="36" r="4" fill="rgb(146,120,186)"/><circle cx="27" cy="36" r="4" fill="rgb(184,36,70)"/><circle cx="42" cy="36" r="4" fill="rgb(104,46,164)"/></svg><p><b>Color: emotion</b>Happy pink love, yellow party, orange confident, muted purple bittersweet, burgundy heartbreak and deep purple dark, tagged by me or inferred from what I play a song with.</p></div>
+        <div><svg viewBox="0 0 54 54"><circle cx="12" cy="20" r="4" fill="rgb(255,128,196)"/><circle cx="27" cy="20" r="4" fill="rgb(255,226,80)"/><circle cx="42" cy="20" r="4" fill="rgb(255,150,60)"/><circle cx="12" cy="36" r="4" fill="rgb(178,128,255)"/><circle cx="27" cy="36" r="4" fill="rgb(184,36,70)"/><circle cx="42" cy="36" r="4" fill="rgb(104,46,164)"/></svg><p><b>Color: emotion</b>Happy pink love, yellow party, orange confident, sour lilac bittersweet, burgundy heartbreak and deep purple dark, tagged by me or inferred from what I play a song with.</p></div>
         <div><svg viewBox="0 0 54 54"><circle cx="17" cy="27" r="5" fill="#F3ECF4"/><circle cx="37" cy="27" r="5" fill="#F3ECF4" opacity=".3"/></svg><p><b>Brightness</b>Whether I still play it, since a star fades in the year after its last listen.</p></div>
         <div><svg viewBox="0 0 54 54"><g stroke="#C8BEFF" stroke-opacity=".6"><line x1="12" y1="34" x2="24" y2="20"/><line x1="24" y1="20" x2="40" y2="24"/><line x1="24" y1="20" x2="30" y2="40"/></g><circle cx="12" cy="34" r="2.5" fill="#F3ECF4"/><circle cx="24" cy="20" r="4" fill="#F3ECF4"/><circle cx="40" cy="24" r="2.5" fill="#F3ECF4"/><circle cx="30" cy="40" r="2" fill="#F3ECF4"/></svg><p><b>Constellation</b>One artist, whose lines are the shortest path through their songs (a minimum spanning tree).</p></div>
         <div><svg viewBox="0 0 54 54"><ellipse cx="27" cy="29" rx="22" ry="9" fill="none" stroke="#ffffff30"/><ellipse cx="27" cy="29" rx="12" ry="5" fill="none" stroke="#ffffff20"/><circle cx="27" cy="29" r="3" fill="#E8BAD6"/></svg><p><b>Position</b>Distance from the center is when an artist entered my life, so the galaxy grows outward over four years, and inside each constellation the most-played songs sit closest to the middle.</p></div>
@@ -164,8 +164,8 @@
 
 <audio id="audio" preload="none"></audio>
 <script>window.ENDING_YOUTUBE = null;   // a YouTube video ID of May the Music Never End (Greg Gilpin); it plays as the last track lands home</script>
-<script src="js/tour.js?v=84"></script>
-<script src="js/months.js?v=84"></script>
-<script src="js/galaxy.js?v=84"></script>
+<script src="js/tour.js?v=85"></script>
+<script src="js/months.js?v=85"></script>
+<script src="js/galaxy.js?v=85"></script>
 </body>
 </html>
