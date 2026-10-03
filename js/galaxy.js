@@ -247,7 +247,7 @@
     }
     function drawPre(time) { drawScene(scene((time - pre.start) / 1000)); }
     function drawScene(t) {   // the opening's world at scene-second t: Earth (0-5), the Milky Way (4.4-9.4), the void and the spark (9.8-12)
-        const cx = W / 2, cy = H / 2 - (outro ? H * 0.2 : 0), M = Math.min(W, H);   // on the way home, the planet sits above the track card
+        const cx = W / 2 - (outro && W > 1100 ? Math.min(380, W * 0.26) / 2 : 0), cy = H / 2 - (outro ? H * 0.1 : 0), M = Math.min(W, H);   // on the way home, the planet sits up and left of the last card
         g.setTransform(dpr, 0, 0, dpr, 0, 0); g.globalCompositeOperation = 'source-over'; g.fillStyle = '#03030a'; g.fillRect(0, 0, W, H);
         g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
 
@@ -342,7 +342,8 @@
         if (pre.done && !document.hidden) { perf.ema += (dt - perf.ema) * 0.05; if (!perf.since) perf.since = time;
             if (dprCap > 1 && perf.ema > 26 && time - perf.since > 4000) { dprCap = 1; size(); hazeFor = ''; } }
         if (time < pre.end) { drawPre(freeze != null ? pre.start + freeze * 1000 : time); requestAnimationFrame(frame); return; }
-        if (outro) { const k = clamp((time - outro.start) / 6500, 0, 1); drawScene(9.2 - 9.0 * (1 - (1 - k) ** 2.2)); requestAnimationFrame(frame); return; }
+        // the ending flies home and stops on the whole planet at night, Austin glowing, not down in the map
+        if (outro) { const k = clamp((time - outro.start) / 6500, 0, 1); drawScene(9.2 - (9.2 - 2.4) * (1 - (1 - k) ** 2.2)); requestAnimationFrame(frame); return; }
         if (!pre.done) beginGalaxy(time);
         frontier += (grown() - frontier) * 0.08;
         const ik = clamp((time - intro.start) / intro.ms, 0, 1), ie = 1 - (1 - ik) ** 3, sw = (1 - ie) * 2.6;
@@ -478,7 +479,7 @@
         // a playing song sends out rings
         if (playing && lit(playing)) for (let k = 0; k < 3; k++) { const ph = ((time / 1800) + k / 3) % 1; g.strokeStyle = `rgba(232,186,214,${0.5 * (1 - ph)})`; g.lineWidth = 1; g.beginPath(); g.arc(playing.sx, playing.sy, 6 + ph * 40, 0, 7); g.stroke(); }
         if (selected && lit(selected)) { g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 1; g.beginPath(); g.arc(selected.sx, selected.sy, selected.r * view.z * selected.f * 2.2 + 7, 0, 7); g.stroke(); }
-        for (const R of ripples) { const age = (time - R.t) / 1600; g.strokeStyle = `rgba(232,186,214,${0.25 * (1 - age)})`; g.lineWidth = 1.5; g.beginPath(); g.arc(R.x, R.y, age * 900, 0, 7); g.stroke(); }
+        for (const R of ripples) { const age = Math.max(0, (time - R.t) / 1600); /* a ripple stamped between frames can be a hair ahead of the frame clock */ g.strokeStyle = `rgba(232,186,214,${0.25 * (1 - age)})`; g.lineWidth = 1.5; g.beginPath(); g.arc(R.x, R.y, age * 900, 0, 7); g.stroke(); }
         // the cursor's comet trail
         for (let i = trail.length - 1; i >= 0; i--) { const p = trail[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.022; if (p.life <= 0) { trail.splice(i, 1); continue; }
             g.fillStyle = `rgba(${p.c},${p.life * 0.8})`; g.beginPath(); g.arc(p.x, p.y, p.life * 2.2, 0, 7); g.fill(); }
@@ -761,7 +762,7 @@
         pts.delete(e.pointerId); if (pts.size < 2) pinch = null;
         if (wasTap) {
             const s = pick(e.clientX, e.clientY);
-            if (s) { pauseOrEnd(); openSong(s, { fly: false, listen: true }); }
+            if (s) { if (albumOwnsAudio()) openSong(s, { fly: false }); else { pauseOrEnd(); openSong(s, { fly: false, listen: true }); } }   // mid-album, a star opens its card but doesn't play
             else { ripples.push({ x: e.clientX, y: e.clientY, t: performance.now() }); if (card.classList.contains('on')) closeCard(); }
         }
         if (!pts.size) { drag = null; cv.classList.remove('drag'); }
@@ -770,7 +771,11 @@
     cv.addEventListener('wheel', e => { e.preventDefault(); fly = null; touched = performance.now(); intro.touched = true; zoomAt(e.clientX, e.clientY, view.z * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015))); quiet(); }, { passive: false });
 
     // ---------- tour: a case file on me, built by js/tour.js from the export's facts ----------
-    let endingTimer = null;
+    let endingTimer = null, spreeTimer = null;
+    // my two most-repeated switches from a happy song (confident, party) straight into a sad one (dark, heartbreak)
+    const happy = new Set(['confident', 'party', 'love']), sad = new Set(['dark', 'heartbreak', 'bittersweet']);
+    const F_swings = () => D.facts.mood_swings.down.filter(([a, b]) => happy.has(songs[a].feel) && sad.has(songs[b].feel) && !songs[a].A.desi && !songs[b].A.desi).slice(0, 2);
+    const topArtist = [...artists].sort((a, b) => b.listens - a.listens)[0];
     const topSongs = songs.filter(x => !x.A.desi).sort((a, b) => b.n - a.n);
     const tour = $('#tour'); let step = -1, tourTimer = null, moodBefore = null, countAnim = null, paused = false;
     function focusOf(c) {
@@ -803,6 +808,7 @@
     function startTour(i = 0) {
         openAlbum();
         leaveReplay();
+        endChoice.classList.remove('on'); if (!TOUR[i].side) vaultPlayed = true;
         step = i; const c = TOUR[i], d = day(c.date.slice(0, 10)); closeOverlays(); setThread(null); connectFrom = null; hint('');
         clearTimeout(tourTimer); sweep(now, d, Math.min(5000, 1400 + Math.abs(d - now) / DAY * 6));
         $('#tourDate').textContent = `${window.ALBUM} · ${c.label} · “${c.name}” · ${longDate(d)}`; $('#tourQ').textContent = c.q; $('#tourTitle').textContent = c.title;
@@ -824,17 +830,28 @@
         if (c.mood && colorMode !== 'mood') { moodBefore = colorMode; setColor('mood'); } else if (!c.mood && moodBefore) { setColor(moodBefore); moodBefore = null; }
         // a number worth counting up to
         const cn = $('#tourCount'); cancelAnimationFrame(countAnim);
-        if (c.counter) { const t0c = performance.now(), go = t => { const k = Math.min(1, (t - t0c) / 2200); cn.textContent = fmt(c.counter * (1 - (1 - k) ** 3)); if (k < 1) countAnim = requestAnimationFrame(go); }; cn.hidden = false; countAnim = requestAnimationFrame(go); }
+        // the reveal: the story waits while the number climbs (slow, then rushing, then braking), lands with a glow, and sends shockwaves through its star
+        cn.classList.remove('land'); tour.classList.remove('counting');
+        if (c.counter && !reduced) { const t0c = performance.now(), MS = 3200; tour.classList.add('counting');
+            const go = t => { const k = Math.min(1, (t - t0c) / MS), e = k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2; cn.textContent = fmt(c.counter * e);
+                if (k < 1) { countAnim = requestAnimationFrame(go); return; }
+                cn.classList.add('land'); tour.classList.remove('counting');
+                const star = sound || selected; if (star && lit(star)) [0, 220, 440].forEach(ms => setTimeout(() => { if (step === i) ripples.push({ x: star.sx, y: star.sy, t: performance.now() }); }, ms)); };
+            cn.textContent = '0'; cn.hidden = false; countAnim = requestAnimationFrame(go);
+            setTimeout(() => { if (step === i && tour.classList.contains('counting')) { cancelAnimationFrame(countAnim); cn.textContent = fmt(c.counter); cn.classList.add('land'); tour.classList.remove('counting'); } }, MS + 800); }   // a background tab gets no frames: land anyway
+        else if (c.counter) { cn.textContent = fmt(c.counter); cn.hidden = false; }
         else cn.hidden = true;
-        const fits = x => x && !x.A.desi ? x : null;   // Hindi music shows up in the story only as a share, never as a named song or cover
-        const namesake = songs.filter(x => !x.A.desi && x.title.toLowerCase() === c.name.toLowerCase()).sort((a, b) => b.n - a.n)[0];
-        const sound = fits(c.play != null ? songs[c.play] : null) || namesake;
-        if (sound && !(c.outro && window.ENDING_YOUTUBE)) play(sound); else audio.pause();
+        const fits = x => x && (!x.A.desi || c.keep) ? x : null;   // Hindi music shows up in the story only as a share, never as a named song or cover
+        // a track named after a song plays that song and shows its cover (unless tour.js pins its own art or song)
+        const bare = t => t.toLowerCase().replace(/ [(\[-].*$/, '').trim();
+        const namesake = songs.filter(x => !x.A.desi && bare(x.title) === bare(c.name)).sort((a, b) => b.n - a.n)[0];
+        const pinned = fits(c.play != null ? songs[c.play] : null), sound = c.art || c.keep ? pinned || namesake : namesake || pinned;
+        if (sound && !c.spree && !c.swings && !c.seq && !(c.outro && window.ENDING_YOUTUBE)) play(sound, true); else audio.pause();
         // the last track flies the viewer home: out of the galaxy and down to Austin
         // and once it lands on Austin, the last word is a question
         clearTimeout(endingTimer); hush();
         if (c.outro) { setHome(AUSTIN, 'AUSTIN'); outro = { start: performance.now() }; document.body.classList.add('outro');
-            endingTimer = setTimeout(() => { if (step === i) say('Where will she go next?', 'Austin, Texas'); }, 6000); }
+            endingTimer = setTimeout(() => { if (step === i) { say('Where will she go next?', 'Austin, Texas'); showEnd(); } }, 6000); }
         else if (outro) { outro = null; setHome(DALLAS, 'DALLAS'); document.body.classList.remove('outro'); }
         // now playing: the song's cover, and the songs behind this finding, each one a click away
         // the cover: the track's own image if tour.js names one, else the first of these songs that Apple has artwork for, in HD
@@ -842,7 +859,45 @@
         const lead = picks[0], art = $('#tourArt'), token = `${i}:${performance.now()}`;
         art.dataset.t = token; art.hidden = false; art.src = blank;
         if (c.art) art.src = c.art;
-        else (async () => { for (const p of picks) { const u = await cover(p, 1200); if (art.dataset.t !== token) return; if (u !== blank) { art.src = u; return; } } art.hidden = true; })();
+        else (async () => { for (const p of picks) { const u = await cover(p, 1200); if (art.dataset.t !== token) return; if (u !== blank) { art.src = u; return; } }
+            const ph = lead && await photo(lead.A); if (art.dataset.t !== token) return; if (ph) art.src = ph; else art.hidden = true; })();   // no artwork anywhere: the artist's photo
+        // a skip spree, acted out: ten of my most-played Ari songs, a second each, then the track's own song
+        clearInterval(spreeTimer); $('#tour .np').textContent = 'Now playing';
+        if (c.spree) {
+            const ten = topArtist.songs.filter(x => x !== namesake).sort((a, b) => b.n - a.n).slice(0, 10); let k = 0;
+            const show = x => cover(x, 600).then(u => { if (art.dataset.t === token && u !== blank) art.src = u; });
+            const next = () => {
+                if (step !== i || paused) return clearInterval(spreeTimer);
+                if (k >= ten.length) { clearInterval(spreeTimer); $('#tour .np').textContent = 'Now playing'; if (namesake) { play(namesake, true); show(namesake); } return; }
+                const x = ten[k++]; $('#tour .np').textContent = `Skip ${k} of ${ten.length} · ${x.title.replace(/ \(.*$/, '')}`; play(x, true); show(x);
+            };
+            next(); spreeTimer = setInterval(next, 1100);
+        }
+        // mood swings, acted out: happy, sad, happy, sad, from the switches I've made most, with the sky washed in each mood's color
+        const wash = $('#moodwash'); wash.classList.remove('on');
+        if (c.swings) {
+            const seq = F_swings().flatMap(([a, b]) => [songs[a], songs[b]]).filter(x => !x.A.desi).slice(0, 4); let k = 0;
+            const next = () => {
+                if (step !== i || paused) { wash.classList.remove('on'); return clearInterval(spreeTimer); }
+                if (k >= seq.length) { clearInterval(spreeTimer); $('#tour .np').textContent = 'Now playing'; wash.classList.remove('on'); return; }
+                const x = seq[k++], m = x.feel || 'party', col = moodColor[m] || [255, 255, 255];
+                $('#tour .np').textContent = `${m[0].toUpperCase() + m.slice(1)} · ${x.title.replace(/ \(.*$/, '')}`;
+                wash.style.setProperty('--wash', `rgba(${col},.30)`); wash.classList.add('on'); play(x, true);
+                cover(x, 600).then(u => { if (art.dataset.t === token && u !== blank) art.src = u; });
+            };
+            next(); spreeTimer = setInterval(next, 2500);
+        }
+        // a playlist, played: a few seconds of each song in it, in order
+        if (c.seq) {
+            const list = c.seq.map(x => songs[x]).filter(x => x && !x.A.desi); let k = 0;
+            const next = () => {
+                if (step !== i || paused) return clearInterval(spreeTimer);
+                if (k >= list.length) { clearInterval(spreeTimer); $('#tour .np').textContent = 'Now playing'; return; }
+                const x = list[k++]; $('#tour .np').textContent = `${c.seqLabel} · ${k} of ${list.length} · ${x.title.replace(/ \(.*$/, '')}`; play(x, true);
+                cover(x, 600).then(u => { if (art.dataset.t === token && u !== blank) art.src = u; });
+            };
+            next(); spreeTimer = setInterval(next, 3000);
+        }
         const rel = (list || []).filter(s => s !== lead && s.born <= d && !s.A.desi).sort((a, b) => b.n - a.n).slice(0, 4), relBox = $('#tourRel');
         relBox.hidden = true; why.hidden = !rel.length; why.setAttribute('aria-expanded', 'false'); why.textContent = 'Why it matters ↓';
         relBox.innerHTML = rel.length ? `<div class="label">Behind this track</div>` + rel.map(s => `<button data-s="${s.i}"><img alt="" src="${blank}"><span><b>${esc(s.title)}</b><i>${esc(s.A.name)} · ${fmt(s.n)} listens</i></span></button>`).join('') : '';
@@ -851,7 +906,7 @@
         tour.classList.add('on'); $('#hero').classList.add('quiet');
         const ms = trackMs(c); markTrack(i);
         const bar = $('#tourBar'); bar.style.transition = 'none'; bar.style.width = '0'; requestAnimationFrame(() => { bar.style.transition = `width ${ms}ms linear`; bar.style.width = '100%'; });
-        if (!c.outro) tourTimer = setTimeout(() => step >= 0 && (step < TOUR.length - 1 ? nextTrack(step + 1) : endTour()), ms);   // the ending stays on Austin until you leave
+        if (!c.outro) tourTimer = setTimeout(() => step >= 0 && (step < TOUR.length - 1 ? nextTrack(step + 1) : showEnd()), ms);   // the ending stays on Austin until you leave
     }
     // pausing holds the track where it is, so you can wander the sky; play picks the track back up from its start
     function pauseTour() {
@@ -860,16 +915,31 @@
         playIcons(false);
     }
     function pauseOrEnd() { if (step >= 0) pauseTour(); else endTour(); }
+    // the end of the album: play the deluxe (the vault) or stay home in Austin
+    // the ends of the journey are choices, never automatic: after Austin, the deluxe (until it's been played) or stay;
+    // after the deluxe, back to Austin or keep exploring the galaxy
+    const endChoice = $('#endChoice'), vaultAt = TOUR.findIndex(t => !t.side), homeAt = TOUR.findIndex(t => t.outro);
+    let vaultPlayed = false;
+    function showEnd() {
+        const inAustin = TOUR[step] && TOUR[step].outro, opts = inAustin
+            ? [vaultPlayed ? ['Keep exploring the galaxy', true, () => { hush(); endTour(); }] : ['Play the deluxe: From the Vault →', true, () => { hush(); startTour(vaultAt); }], ['Stay in Austin', false, () => {}]]
+            : [['Back to Austin', true, () => startTour(homeAt)], ['Keep exploring the galaxy', false, () => endTour()]];
+        endChoice.classList.toggle('mid', !inAustin);
+        endChoice.innerHTML = (inAustin ? '' : '<div class="label">That was the deluxe. Where to?</div>') + opts.map(([t, main], k) => `<button class="pill${main ? ' solid' : ''}" data-k="${k}">${esc(t)}</button>`).join('');
+        endChoice.querySelectorAll('button').forEach(b => b.onclick = () => { endChoice.classList.remove('on'); opts[+b.dataset.k][2](); });
+        if (!inAustin) pauseTour();
+        endChoice.classList.add('on');
+    }
     function endTour() {
-        clearTimeout(endingTimer); if (outro) hush();
+        $('#moodwash').classList.remove('on'); endChoice.classList.remove('on'); clearTimeout(endingTimer); clearInterval(spreeTimer); if (outro) hush();
         closeFlip(); closeAlbum(); if (step < 0) return; step = -1; paused = false; clearTimeout(tourTimer); tour.classList.remove('on'); ticks.querySelectorAll('button').forEach(b => b.classList.remove('on')); audio.pause();
         tourSet = null; nightTarget = 0; pair = null; selected = null; focusArtist = null; if (moodBefore) { setColor(moodBefore); moodBefore = null; }
         $('#tourVideo').innerHTML = ''; $('#tourVideo').hidden = true;
         if (outro) { outro = null; setHome(DALLAS, 'DALLAS'); document.body.classList.remove('outro'); }
     }
     // play and pause as drawn icons, so they sit dead center in their circles (text triangles don't)
-    const PLAY = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>';
-    const PAUSE = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>';
+    const PLAY = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>';
+    const PAUSE = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>';
     function playIcons(playing) { album.classList.toggle('paused', !playing); for (const id of ['#albumPlay', '#tourPlay']) { $(id).innerHTML = playing ? PAUSE : PLAY; $(id).setAttribute('aria-label', playing ? 'Pause the album' : 'Play the album'); } }
     // the album as a tracklist: Side A, Side B and the vault, the playing track lit, any track a click away
     const album = $('#album'), mmss = ms => `${Math.floor(ms / 60000)}:${String(Math.round(ms / 1000) % 60).padStart(2, '0')}`;
@@ -879,12 +949,12 @@
         let html = `<button class="x" id="albumX" aria-label="Close the album">×</button>
             <div class="head"><div class="label">Album · Suhani Tiwari</div><h2>${esc(window.ALBUM)}</h2><div class="meta">${TOUR.length} tracks · ${Math.round(total / 60000)} min · ${fmt(D.totals.listens)} listens behind it</div></div>
             <div class="acts"><button class="big" id="albumPlay" aria-label="Play the album">${PLAY}</button>
-                <button class="icon" id="albumSave" title="Download the report" aria-label="Download the report">↓</button></div>
+                <button class="icon" id="albumSave" title="Download the report" aria-label="Download the report"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 4v12M6.5 10.5 12 16l5.5-5.5M5 20h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
             <ol>`, side = null;
         // each side gets a little record, labelled A or B, that spins while that side is playing; the vault folds away
         const disc = l => `<svg class="disc" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9.5" class="v"/><circle cx="10" cy="10" r="7" class="g"/><circle cx="10" cy="10" r="4" class="l"/><text x="10" y="11.9" text-anchor="middle">${l}</text></svg>`;
         TOUR.forEach((c, i) => {
-            const sd = c.side || 'From the Vault';
+            const sd = c.side || 'Deluxe · From the Vault';
             if (sd !== side) { side = sd;
                 html += c.side ? `<li class="side ${c.side === 'Side A' ? 'a' : 'b'}">${disc(c.side.slice(-1))}<span>${esc(sd)}</span><i>${c.side === 'Side A' ? 'Dallas' : 'Austin'}</i></li>`
                     : `<li class="side vault"><button id="vaultBtn" aria-expanded="false">${esc(sd)} <i>${TOUR.length - i}</i> <em>▸</em></button></li>`; }
@@ -902,7 +972,7 @@
     function saveReport() {
         const T = D.totals; let side = null, rows = '';
         TOUR.forEach((c, i) => {
-            const sd = c.side || 'From the Vault';
+            const sd = c.side || 'Deluxe · From the Vault';
             if (sd !== side) { side = sd; rows += `<h2>${esc(sd)}</h2>`; }
             rows += `<section><div class="k">${i + 1} · “${esc(c.name)}” · ${longDate(day(c.date.slice(0, 10)))}</div><p class="q">${esc(c.q)}</p><h3>${esc(c.title)}</h3><p>${esc(c.text)}</p>${c.verdict ? `<p class="v">${esc(c.verdict)}</p>` : ''}</section>`;
         });
@@ -938,12 +1008,13 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
         playIcons(i >= 0);
     }
     $('#tourBtn').onclick = openAlbum;
-    $('#tourNext').onclick = () => step < TOUR.length - 1 ? nextTrack(step + 1) : endTour();
+    $('#tourNext').onclick = () => step < TOUR.length - 1 ? nextTrack(step + 1) : showEnd();
     // ---------- the flip: Side A ends, and you lift the needle, turn the record over and drop it on Side B ----------
     const flip = $('#flip'), arm = $('#flipArm'), disc = $('#flipDisc'), flipLabel = $('#flipLabel'), flipSay = $('#flipSay');
     const ON = 0, OFF = -30;   // the arm's angle on the record, and lifted clear of it
     let flipTo = null, armAt = ON, flipped = false, armDrag = null;
-    function nextTrack(i) { if (TOUR[i - 1] && TOUR[i - 1].side === 'Side A' && TOUR[i].side === 'Side B') openFlip(i); else startTour(i); }
+    function nextTrack(i) { if (TOUR[i - 1] && TOUR[i - 1].outro) return showEnd();   // after Austin, the listener chooses: the deluxe, or stay
+         if (TOUR[i - 1] && TOUR[i - 1].side === 'Side A' && TOUR[i].side === 'Side B') openFlip(i); else startTour(i); }
     function setArm(a, ease) { armAt = clamp(a, OFF - 6, ON); arm.style.transition = ease ? 'transform .6s cubic-bezier(.3,.7,.2,1)' : 'none'; arm.style.transform = `rotate(${armAt}deg)`; }
     function openFlip(i) {
         pauseTour(); flipTo = i; flipped = false; flipLabel.textContent = 'A'; disc.classList.remove('turn', 'spin'); disc.classList.add('spin');
@@ -985,7 +1056,7 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
     document.querySelectorAll('[data-share]').forEach(el => { el.textContent = Math.round(feltShare * 100) + '%'; });
     // what the data revealed about behavior, each claim backed by a computed number
     { const f = D.facts, tr = f.trips[1];
-      const rows = [['Mood', `Octobers are my saddest month (${f.moods.sad_calendar[1]}% sad songs vs a typical ${f.moods.typical_sad}%), and my four happiest months are all from the last year.`],
+      const rows = [['Mood', `Octobers are my saddest month (${f.moods.sad_calendar[1]}% sad songs vs a typical ${f.moods.typical_sad}%), and my happiest-sounding months are recent, though the music tracks the mood I reach for, not the one I'm in.`],
         ['Sleep', `${f.allnighters.count} all-nighters, found as music in every hour from midnight to 6 AM, mostly ending on ${f.allnighters.top_weekday[0]} mornings before exams.`],
         ['Routine', `${f.weekday_peak.high_school.three_to_eight}% of high-school weekday listening fell between 3 and 8 PM: homework hours. Only ${f.before_9}% happens before 9 AM.`],
         ['Life events', `The morning I moved to Austin, a 14-hour college-essay session, a 119-play day, an album I was awake for at 12:50 AM.`],
@@ -1001,27 +1072,51 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
       const asleep = f.hours.map((v, h) => [h, v]).filter(([, v]) => v < 1).map(([h]) => h), hr = h => `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`;
       const vals = [...f.quirks.valentines_by_year].sort((a, b) => b.times - a.times)[0];
       const bars = (vs, hi, lab) => `<svg viewBox="0 0 ${vs.length * 10} 40" preserveAspectRatio="none" class="mini" aria-hidden="true">${vs.map((v, i) => `<rect x="${i * 10 + 1}" y="${36 - v / Math.max(...vs) * 32}" width="8" height="${v / Math.max(...vs) * 32 + 0.5}" class="${hi(i) ? 'h' : ''}"/>`).join('')}</svg><div class="minilab">${lab}</div>`;
-      const cards = [
-        ['Age', 'A teenager becoming a college student', 'When I listen, not what',
-          `${f.weekday_peak.high_school.three_to_eight}% of high-school weekday listening fell between 3 and 8 PM, a school-day shape. ${f.allnighters.by_era.high_school} all-nighters cluster before exams, listening falls by almost half the month I graduated, and the artists (${['Olivia Rodrigo', 'Sabrina Carpenter', 'Tate McRae'].join(', ')}) skew Gen Z.`, 'Right', 'y'],
-        ['Gender', 'A woman', 'Who I listen to',
-          `${womenShare}% of my listening to my top 15 artists is women artists, with Ariana Grande and Taylor Swift alone at ${Math.round(100 * (top[0].listens + top[1].listens) / D.totals.listens)}% of everything. This is how ad platforms guess gender.`, 'Right, for crude reasons: music has no gender', 'm'],
-        ['Home and movement', 'Dallas, then Austin, with family in India', 'Time zone, gaps and language',
-          `In Central time my quiet hours land overnight, so that's home. On ${longDate(day(f.eras.moved))} the history moves, and the first morning in Austin starts at ${(([h, m]) => `${h % 12 || 12}:${m} ${h < 12 ? 'AM' : 'PM'}`)(f.eras.austin_first.at.slice(-5).split(':').map((x, k) => k ? x : +x))}. Two long gaps of ${Math.round(march.flight_hours[1])} and ${Math.round(dec.flight_hours[1])} hours look like flights to India, and on the other side, Hindi music jumps to ${Math.round(dec.desi)}%.`, 'Right', 'y'],
-        ['Sleep', `Asleep roughly ${hr(asleep[0])} to ${hr(asleep[asleep.length - 1] + 1)}`, 'Listening by hour of day',
-          bars(f.hours, h => asleep.includes(h), 'midnight → 11 PM, the quiet hours lit') + `<p>Every hour from ${hr(asleep[0])} to ${hr(asleep[asleep.length - 1])} holds under 1% of my listening, and only ${f.before_9}% happens before 9 AM. ${f.allnighters.count} times, the music never stopped all night.</p>`, 'Right: a night owl', 'y'],
-        ['Routine', 'A student, not a 9-to-5', 'The weekday peak',
-          `My listening peaks at ${hr(f.peak_hour)} on weekdays and ${hr(f.weekend_peak)} on weekends: after class, through homework. A commuter would peak at 8 AM and 6 PM.`, 'Right', 'y'],
-        ['Cultural background', 'North Indian', 'The language of the music',
-          bars(Object.values(f.desi_by_year), () => true, 'Hindi share by year: ' + Object.entries(f.desi_by_year).map(([y, v]) => `${y} ${Math.round(v)}%`).join(' · ')) + `<p>${f.desi_overall}% of my listening is Hindi, rising to ${f.desi_by_hour.night}% after midnight and ${Math.round(dec.desi)}% on trips home. It fell to ${f.desi_by_year[2024]}% the year I left home, and it's back to ${f.desi_by_year[2026]}%.</p>`, 'Right', 'y'],
-        ['Mood', 'Seasonal lows every October', 'The mood of what I play',
-          `Octobers average ${f.moods.sad_calendar[1]}% sad songs against a typical ${f.moods.typical_sad}%. October ${f.heartbreak.month.slice(0, 4)}, my first in college, reached ${f.moods.octobers.find(o => o[0] === f.heartbreak.month)[1]}%. My four happiest months are all from the last year.`, 'Right', 'y'],
-        ['Relationship status', 'Single', 'Valentine\'s Day',
-          `The busiest Valentine's Day in the data, ${vals.year}: ${songName(vals.song)}, ${vals.times} times.`, 'Right', 'y'],
-        ['Personality', 'Picky, but loyal', 'Skips and returns',
-          `${Math.round(100 * D.totals.skipped / D.totals.plays)}% of what I start, I skip, deciding in a median ${f.skip.median_seconds} seconds. Yet ${f.loyal.count} songs survived every single year.`, 'Right', 'y'],
+      const ap = t => { const [h, m] = t.split(':').map(Number); return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
+      const lateDrops = f.album_days.filter(a => +a.first_at.slice(0, 2) < 4).sort((a, b) => a.first_at.localeCompare(b.first_at));
+      const KPOP = new Set(['JENNIE', 'KATSEYE', 'BLACKPINK', 'LISA', 'ROSÉ', 'BTS', 'TWICE', 'NewJeans']);
+      const kpop = artists.filter(a => KPOP.has(a.name)).reduce((x, a) => x + a.listens, 0);
+      const screen = songs.filter(x => !x.A.desi && /\(From (?!The Vault)|Soundtrack|Motion Picture|The Movie|– Season| - From /i.test(x.title)).length;
+      const dsc = f.discovery, yrs = Object.keys(dsc), y0 = '2023', y1 = yrs[yrs.length - 1];
+      const groups = [
+        ['Who I am', [
+          ['Age', 'A teenager becoming a college student', 'When I listen, not what',
+          `${f.weekday_peak.high_school.three_to_eight}% of high-school weekday listening fell between 3 and 8 PM, a school-day shape. ${f.allnighters.by_era.high_school} all-nighters cluster before exams, listening falls by almost half the month I graduated, and the artists (${['Olivia Rodrigo', 'Sabrina Carpenter', 'Tate McRae'].join(', ')}) skew Gen Z.`], ['Gender', 'A woman', 'Who I listen to',
+          `${womenShare}% of my listening to my top 15 artists is women artists, with Ariana Grande and Taylor Swift alone at ${Math.round(100 * (top[0].listens + top[1].listens) / D.totals.listens)}% of everything. This is how ad platforms guess gender: crudely, because music has no gender.`], ['Cultural background', 'North Indian', 'The language of the music',
+          bars(Object.values(f.desi_by_year), () => true, 'Hindi share by year: ' + Object.entries(f.desi_by_year).map(([y, v]) => `${y} ${Math.round(v)}%`).join(' · ')) + `<p>${f.desi_overall}% of my listening is Hindi, rising to ${f.desi_by_hour.night}% after midnight and ${Math.round(dec.desi)}% on trips home. It fell to ${f.desi_by_year[2024]}% the year I left home, and it's back to ${f.desi_by_year[2026]}%.</p>`], ['Home and movement', 'Dallas, then Austin, with family in India', 'Time zone, gaps and language',
+          `In Central time my quiet hours land overnight, so that's home. On ${longDate(day(f.eras.moved))} the history moves, and the first morning in Austin starts at ${(([h, m]) => `${h % 12 || 12}:${m} ${h < 12 ? 'AM' : 'PM'}`)(f.eras.austin_first.at.slice(-5).split(':').map((x, k) => k ? x : +x))}. Two long gaps of ${Math.round(march.flight_hours[1])} and ${Math.round(dec.flight_hours[1])} hours look like flights to India, and on the other side, Hindi music jumps to ${Math.round(dec.desi)}%.`]]],
+        ['How I live', [
+          ['Sleep', `Asleep roughly ${hr(asleep[0])} to ${hr(asleep[asleep.length - 1] + 1)}`, 'Listening by hour of day',
+          bars(f.hours, h => asleep.includes(h), 'midnight → 11 PM, the quiet hours lit') + `<p>Every hour from ${hr(asleep[0])} to ${hr(asleep[asleep.length - 1])} holds under 1% of my listening, and only ${f.before_9}% happens before 9 AM. ${f.allnighters.count} times, the music never stopped all night.</p>`], ['Routine', 'A student, not a 9-to-5', 'The weekday peak',
+          `My listening peaks at ${hr(f.peak_hour)} on weekdays and ${hr(f.weekend_peak)} on weekends: after class, through homework. A commuter would peak at 8 AM and 6 PM.`],
+          ['Exam weeks', 'Exams land midweek', 'Which nights never end',
+            `Of my ${f.allnighters.count} all-nighters, ${f.allnighters.top_weekday[1]} end on a ${f.allnighters.top_weekday[0]} morning, more than any other day: ${f.allnighters.by_era.high_school} in high school, ${f.allnighters.by_era.austin} in my first stretch in Austin, ${f.allnighters.by_era.y2026} this year.`],
+          ['Ambition', 'Applied to college in the summer of 2023', 'The longest session',
+            `On ${longDate(day(f.longest_session.start))}, in college-essay season, the music ran ${Math.round(f.longest_session.hours)} hours and ${f.longest_session.listens} songs without a break. A year later the history moves to Austin.`]]],
+        ['How I feel', [
+          ['Mood', 'Seasonal lows every October', 'The mood of what I play',
+          `Octobers average ${f.moods.sad_calendar[1]}% sad songs against a typical ${f.moods.typical_sad}%. October ${f.heartbreak.month.slice(0, 4)}, my first in college, reached ${f.moods.octobers.find(o => o[0] === f.heartbreak.month)[1]}%. My four happiest-sounding months are all from the last year, yet one of them, September 2025, was only the start of settling in, and a hard month: music measures the mood I reach for, not the one I'm in.`],
+          ['Mornings', 'Mornings are the hardest part of the day', 'Heartbreak songs by hour',
+            `Heartbreak songs are ${f.morning_heartbreak.morning}% of what I play in the morning and ${f.morning_heartbreak.rest}% the rest of the day.`],
+          ['Home', 'Homesick at night', 'Hindi by hour',
+            `Hindi music is ${f.desi_by_hour.night}% of what I play after midnight and ${f.desi_by_hour.day}% by day.`],
+          ['Coping', 'Music is how I change my mood', 'Heartbreak to party, and back',
+            `${fmt(f.mood_swings.total)} times I went straight from a heartbreak song into a party song or back: ${f.mood_swings.per_day} mood swings a day.`],
+          ['Relationship status', 'Single', 'Valentine\'s Day',
+          `The busiest Valentine's Day in the data, ${vals.year}: ${songName(vals.song)}, ${vals.times} times.`]]],
+        ['What I\'m like', [
+          ['Personality', 'Picky, but loyal', 'Skips and returns',
+          `${Math.round(100 * D.totals.skipped / D.totals.plays)}% of what I start, I skip, deciding in a median ${f.skip.median_seconds} seconds. Yet ${f.loyal.count} songs survived every single year.`],
+          ['Fandom', 'A superfan who stays up for release night', 'Who owns each month, and album drops',
+            `Ariana Grande was my #1 artist in ${f.top.owned} of ${f.top.months} months. On ${lateDrops.length} album release nights I was already listening at ${lateDrops.map(a => ap(a.first_at)).join(', ')}.`],
+          ['Settling in', 'Exploring less, coming home to favorites', 'New artists, and songs from earlier years',
+            `I found ${dsc[y0].new_artists} new artists in ${y0} and ${dsc[y1].new_artists} in ${y1}. Songs I found in earlier years went from ${Math.round(dsc[y0].comfort)}% of my listening to ${Math.round(dsc[y1].comfort)}%.`],
+          ['Screens', 'Watches the shows, follows K-pop', 'Soundtracks and K-pop',
+            `${fmt(kpop)} plays of K-pop (JENNIE, KATSEYE, BLACKPINK, LISA) and ${screen} songs from film and TV soundtracks, from 13 Reasons Why to F1.`],
+          ['Holidays', 'Christmas is a mood, not a date', 'Christmas songs off season',
+            `${f.quirks.summer_xmas} Christmas-song plays in summer, and ${f.off_season.times} plays of ${songName(f.off_season.song)} in ${new Date(f.off_season.month + '-15').toLocaleDateString('en-US', { month: 'long' })}.`]]],
       ];
-      $('#infer').innerHTML = cards.map(([k, guess, sig, ev, verdict, cls]) => `<div class="inf"><div class="label">${k}</div><h4>${esc(guess)}</h4><div class="sig">Signal: ${esc(sig)}</div>${ev.startsWith('<') ? ev : `<p>${ev}</p>`}<div class="verdict ${cls}">${cls === 'y' ? '✓' : '≈'} ${esc(verdict)}</div></div>`).join(''); }
+      $('#infer').innerHTML = groups.map(([g, cs]) => `<h3 class="ig">${esc(g)}</h3>` + cs.map(([k, guess, sig, ev]) => `<div class="inf"><div class="label">${k}</div><h4>${esc(guess)}</h4><div class="sig">Signal: ${esc(sig)}</div>${ev.startsWith('<') ? ev : `<p>${ev}</p>`}</div>`).join('')).join(''); }
     if (location.hash === '#how') openOverlay('how');
 
     addEventListener('keydown', e => {
@@ -1065,7 +1160,9 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
         A.img = null; photo(A).then(u => { if (!u) return; const im = new Image(); im.onload = () => { A.img = im; }; im.src = u; });
         return null;
     }
-    async function play(s) { const it = await itunes(s); if (!it || !it.previewUrl) { syncPlay('No preview available'); return; } audio.src = it.previewUrl; audio.volume = .8; playing = s; audio.play().catch(() => {}); }
+    // while the album plays, it owns the speaker: only its own tracks can play (pause the album to listen to anything else)
+    const albumOwnsAudio = () => step >= 0 && !paused;
+    async function play(s, fromAlbum = false) { if (!fromAlbum && albumOwnsAudio()) { syncPlay('Pause the album to listen'); return; } const it = await itunes(s); if (!it || !it.previewUrl) { syncPlay('No preview available'); return; } audio.src = it.previewUrl; audio.volume = .8; playing = s; audio.play().catch(() => {}); }
     function toggle(s) { if (playing === s && !audio.paused) audio.pause(); else play(s); }
     function syncPlay(msg) { const b = card.querySelector('.play'); if (!b) return; b.textContent = msg || (playing === selected && !audio.paused ? '❚❚ Pause' : '▶ Listen to 30 seconds'); }
     audio.addEventListener('play', () => syncPlay()); audio.addEventListener('pause', () => syncPlay());

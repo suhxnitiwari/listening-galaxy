@@ -24,12 +24,13 @@ window.buildTour = (D, songs, artists) => {
           text: `${F.top.share}% of everything Suhani has ever played is ${top.name}. She was #1 in ${F.top.owned} of ${F.top.months} months, through high school, the move to Austin, and 2026.`,
           verdict: "Not her favorite artist. Her gravitational center.", focus: { artist: F.top.artist }, play: top.songs[0].i },
 
-        { name: 'just like magic', art: 'https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/e0/71/6a/e0716a8a-b806-d313-4ed6-93bb485a65c5/22UMGIM38869.rgb.jpg/1200x1200bb.jpg',   // the duet cover: a guy and a girl, in lavender
-          stat: `${F.day.count}×`, date: F.day.date, q: `What happened on ${date(F.day.date)}?`, title: title(F.day.song), counter: F.day.count,
+        { name: 'until i found you', art: 'https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/e0/71/6a/e0716a8a-b806-d313-4ed6-93bb485a65c5/22UMGIM38869.rgb.jpg/1200x1200bb.jpg',   // the duet cover: a guy and a girl, in lavender
+          stat: `${F.day.count}×`, date: F.day.date, q: `What happened on ${date(F.day.date)}?`, title: 'One song, one night', counter: F.day.count,
           text: `${F.day.count} plays of ${title(F.day.song)} in ${F.day.hours} hours, ${F.day.else ? 'barely anything else' : 'nothing else'} all day. She never pressed repeat; she just never let it stop.`,
           verdict: 'She believed in manifesting. Hold that thought.', focus: { song: F.day.song }, play: F.day.song },
 
-        { name: 'goodnight n go?', date: AN.first.date, q: 'How hard did she work for it?', title: `${AN.by_era.high_school} all-nighters`, night: true, counter: AN.by_era.high_school,
+        { name: 'with you', keep: true,   // keep: this track's own song and cover stay, even though it isn't English
+          date: AN.first.date, q: 'How hard did she work for it?', title: `${AN.by_era.high_school} all-nighters`, night: true, counter: AN.by_era.high_school,
           text: `${AN.by_era.high_school} times in high school alone, the music played every hour from midnight to 6 AM, mostly before exams. After midnight she's ${F.night[0][1]}× likelier to play ${A(F.night[0][0]).name}, her study partner.`,
           verdict: 'Asleep at 5 AM? Not with a dream to chase.', focus: { artists: [F.night[0][0]] }, play: F.night_artist.song },
 
@@ -51,25 +52,26 @@ window.buildTour = (D, songs, artists) => {
           verdict: 'Dream achieved. One last time (again), then goodbye, suburbs.', focus: { songs: [F.eras.austin_first.song, F.loyal.song] }, pair: [F.loyal.song, F.eras.austin_first.song], play: F.eras.austin_first.song },
     ];
     const sideB = [
-        { name: 'the version i auditioned for', stat: `${E.austin.upbeat}% party`, date: '2024-10-01', q: 'Was college the dream?', title: 'Not magic',
+        { name: 'gameboy', stat: `${E.austin.upbeat}% party`, date: '2024-10-01', q: 'Was college the dream?', title: 'Not magic',
           text: `No people yet, and huge imposter syndrome. Party songs jumped from ${E.high_school.upbeat}% to ${E.austin.upbeat}%, and Hindi music, the sound of home, fell to ${F.desi_by_year[2024]}%.`,
           verdict: "Auditioning for a version of herself she wasn't.", focus: { songs: [...F.fall2024.party, ...F.fall2024.newcomers.map(n => n[1])] }, play: F.fall2024.newcomers[0][1] },
 
-        { name: "we can't be friends (every october)", stat: `${sad(F.heartbreak.month)}% sad`, date: F.heartbreak.month + '-15', q: 'How bad did it get?', title: month(F.heartbreak.month), mood: true,
+        { name: "now that we don't talk", stat: `${sad(F.heartbreak.month)}% sad`, date: F.heartbreak.month + '-15', q: 'How bad did it get?', title: month(F.heartbreak.month), mood: true,
           text: `Bad grades, no people, lonelier than ever. In ${month(F.heartbreak.month)}, ${sad(F.heartbreak.month)}% of what she played was sad, against a typical ${M.typical_sad}%, and 1 in 4 songs was a heartbreak song.`,
           verdict: 'Nothing about it was magic.', focus: { mood: 'heartbreak' }, play: F.heartbreak.songs[0] },
 
-        { name: 'the flight is coming', stat: `${Math.round(december.desi)}% Hindi`, date: december.from, q: 'What happens when she goes home?', title: 'India',
+        { name: 'subah subah', keep: true, stat: `${Math.round(december.desi)}% Hindi`, date: december.from, q: 'What happens when she goes home?', title: 'India',
           text: `December 2024 in India: ${december.desi}% of what she played was Hindi, against ${F.desi_overall}% normally.`,
-          verdict: 'Two weeks home and it all came back. Then the flight back.', focus: { songs: december.all }, play: march.songs[0] },
+          verdict: 'Two weeks home and it all came back. Then the flight back.', focus: { songs: december.all }, play: (songs.find(x => /^subah subah/i.test(x.title)) || S(march.songs[0])).i },
 
-        { name: 'thank u, next', stat: `${P.spree.count} skips`, date: P.spree.at, q: 'How lost did she get?', title: 'Nothing sounded right',
+        { name: 'thank u, next', spree: true,   // spree: the track flips through ten Ari songs, skipping each, then lands on its own
+          stat: `${P.spree.count} skips`, date: P.spree.at, q: 'How lost did she get?', title: 'Nothing sounded right',
           text: `In Austin she skipped ${E.austin.skip}% of the songs she started (${E.high_school.skip}% in high school), and even Ari fell to ${E.austin.top_share}% of her listening. ${clock(P.spree.at)}, ${date(P.spree.at)}: ${P.spree.count} skips in ${P.spree.seconds} seconds.`,
           verdict: 'She called it picky. She was looking for herself.', focus: { all: true } },
 
-        { name: 'the light is coming', stat: `${sad('2025-10')}% sad`, date: '2025-09-15', q: 'And then?', title: 'The light', mood: true,
-          text: `September 2025, a year after the move, was her happiest month yet. And October, the month that broke her, fell from ${sad(F.heartbreak.month)}% sad to ${sad('2025-10')}%.`,
-          verdict: 'Everything October took, given back.', focus: { mood: 'confident' },
+        { name: 'the light is coming', stat: `${sad('2025-10')}% sad`, date: '2025-09-15', q: 'And then?', title: 'Settling in', mood: true,
+          text: `By the music, September 2025 was her happiest month yet. It wasn't the peak; it was the start: settling into Austin and figuring out who she is, through a hard month. Happy songs aren't a happy month; sometimes they're how you get through one. October, the month that broke her a year before, fell from ${sad(F.heartbreak.month)}% sad to ${sad('2025-10')}%.`,
+          verdict: 'The data can count the songs. It can\'t count why.', focus: { mood: 'confident' },
           play: (songs.find(x => x.title.startsWith('the light is coming') && x.A === top) || top.songs[0]).i },
 
         { name: 'yes, and?', stat: `${F.desi_by_year[2026]}% Hindi`, date: '2026-09-15', q: 'And now?', title: 'September 2026', mood: true,
@@ -95,16 +97,18 @@ window.buildTour = (D, songs, artists) => {
           verdict: 'May the odds be ever in her favor.',
           focus: { songs: [...new Set(Q.valentines_by_year.flatMap(x => x.songs))] }, play: (Q.valentines_by_year.find(x => x.year === 2024) || {}).song },
 
-        { name: 'positions', stat: `${F.mood_swings.per_day}/day`, date: '2024-04-23', q: 'How fast do her moods change?', title: `${F.mood_swings.per_day} mood swings a day`,
+        { name: 'positions', swings: true,   // swings: plays my two most-repeated happy-to-sad switches, washing the sky in each mood
+          stat: `${F.mood_swings.per_day}/day`, date: '2024-04-23', q: 'How fast do her moods change?', title: `${F.mood_swings.per_day} mood swings a day`,
           text: `${fmt(F.mood_swings.total)} times she went straight from a heartbreak song into a party song, or back.`,
           verdict: 'Heartbroken, healed, petty, all before the song ends.', focus: { mood: 'heartbreak' }, mood: true,
           play: (songs.find(x => x.title === 'Dangerous Woman' && x.A === top) || top.songs[0]).i },
 
-        { name: 'bad idea (again)', stat: `${F.opener[1]}×`, date: '2025-08-15', q: 'Which songs can she not let end?', title: title(F.opener[0]),
+        { name: 'everytime', stat: `${F.opener[1]}×`, date: '2025-08-15', q: 'Which songs can she not let end?', title: 'The opener',
           text: `${title(F.opener[0])} opens more of her listening sessions than any other song: ${F.opener[1]} times.`,
           verdict: 'Some songs end too soon.', focus: { songs: [F.opener[0], ...F.rewound.map(r => r[0])] }, play: F.opener[0] },
 
-        { name: 'no tears left to cry', stat: `${wolves.links[0].c}×`, date: '2025-03-15', q: 'Which songs travel together?', title: 'The middle-school playlist',
+        { name: 'wolves', seq: cluster.map(x => x.i), seqLabel: 'Middle-school playlist',   // seq: plays the playlist itself, a few seconds of each
+          stat: `${wolves.links[0].c}×`, date: '2025-03-15', q: 'Which songs travel together?', title: 'The middle-school playlist',
           text: `${wolves.title} into ${cluster[1].title}, back to back ${wolves.links[0].c} times, always in that order.`,
           verdict: 'A middle-school playlist that never ended.', focus: { songs: cluster.map(s => s.i) }, pair: [wolves.i, cluster[1].i], play: wolves.i },
     ];

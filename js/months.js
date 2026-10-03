@@ -57,7 +57,7 @@ window.buildMonths = (D, songs, artists) => {
         '2025-06': () => `${best(find('Ring'))}. Summer, finally.`,
         '2025-07': () => `Old Ari peaks again: ${q(find('Dangerous Woman', 'Ariana Grande'))}, ${q(find('Into You', 'Ariana Grande'))}.`,
         '2025-08': () => `${q(find("It's ok I'm ok"))} peaks at ${fmt(find("It's ok I'm ok").n)} plays. Mostly true.`,
-        '2025-09': () => `A year after the move: the happiest month yet.`,
+        '2025-09': () => `Settling in. Happier-sounding than it felt.`,
         '2025-10': () => `October, fixed: ${pct(M.octobers, '2025-10')}% sad, down from ${pct(M.octobers, '2024-10')}%.`,
         '2025-11': () => `Tate McRae owns the new finds.`,
         '2025-12': () => `A quiet December: ${fmt(row['2025-12'].listens)} plays.`,

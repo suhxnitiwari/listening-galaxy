@@ -7,7 +7,7 @@
 <meta name="description" content="Four years of my Spotify listening, mapped as a universe: every song is a star, every artist a constellation. Built on my own data warehouse.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/galaxy.css?v=107">
+<link rel="stylesheet" href="css/galaxy.css?v=110">
 </head>
 <body>
 <canvas id="sky" aria-label="A 3D galaxy of every song I have played: drag to spin, scroll to zoom, click a star"></canvas>
@@ -75,6 +75,8 @@
     <button class="skipflip" id="flipSkip">Just play Side B →</button>
 </div>
 
+<div class="endchoice" id="endChoice" role="group" aria-label="What next"></div>
+
 <div class="choose" id="choose" role="dialog" aria-label="What next">
     <div class="label">May 2022 – now · four years in one sky</div>
     <h3>Now, slowly, track by track.</h3>
@@ -82,6 +84,7 @@
     <div class="ctl"><button class="pill solid" id="chooseTour">▶ See it track by track</button><button class="pill" id="chooseSlow">↺ Replay it slowly</button><button class="pill" id="chooseFree">Explore the sky</button></div>
 </div>
 
+<div class="moodwash" id="moodwash" aria-hidden="true"></div>
 <div class="scrim" id="scrim"></div>
 
 <div class="modal" id="decoder" role="dialog" aria-label="How to read the sky">
@@ -104,7 +107,7 @@
     <button class="x" data-close aria-label="Close">×</button>
     <div class="label">The profile</div>
     <h2>What four years of listening says about me</h2>
-    <p>Spotify never asked my age, my gender, where I live, when I sleep or where my family is from. It didn't need to. Every guess below uses only timestamps and song choices, the same signals any platform holds, with the method, the evidence from my data, and whether the guess is right.</p>
+    <p>Spotify never asked my age, my gender, where I live, when I sleep or where my family is from. It didn't need to. Every guess below uses only timestamps and song choices, the same signals any platform holds, with the signal it reads and the evidence from my data.</p>
     <div class="infer" id="infer"></div>
     <section><div class="label">The point</div><h3>A playlist is a diary nobody meant to keep</h3>
         <p>None of this came from anything I typed. That's why the pipeline drops IP addresses, countries and devices in its first step, leaves out private sessions, and why this site publishes summaries per song and never the time of a single play.</p>
@@ -175,8 +178,8 @@
 
 <audio id="audio" preload="none"></audio>
 <script>window.ENDING_YOUTUBE = null;   // a YouTube video ID of May the Music Never End (Greg Gilpin); it plays as the last track lands home</script>
-<script src="js/tour.js?v=107"></script>
-<script src="js/months.js?v=107"></script>
-<script src="js/galaxy.js?v=107"></script>
+<script src="js/tour.js?v=110"></script>
+<script src="js/months.js?v=110"></script>
+<script src="js/galaxy.js?v=110"></script>
 </body>
 </html>
