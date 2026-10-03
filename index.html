@@ -7,7 +7,7 @@
 <meta name="description" content="Four years of my Spotify listening, mapped as a universe: every song is a star, every artist a constellation. Built on my own data warehouse.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/galaxy.css?v=86">
+<link rel="stylesheet" href="css/galaxy.css?v=98">
 </head>
 <body>
 <canvas id="sky" aria-label="A 3D galaxy of every song I have played: drag to spin, scroll to zoom, click a star"></canvas>
@@ -23,7 +23,7 @@
     <h1>Every song I've ever played is <em>a star.</em></h1>
     <p>Four years of my Spotify history mapped as a universe, where every star is a song and every constellation an artist, built on the data warehouse I engineered from my raw listening export.</p>
     <div class="stats"><div><b data-total="listens">91,160</b>listens</div><div><b data-total="songs">4,647</b>songs</div><div><b data-total="artists">1,230</b>artists</div><div><b data-total="hours">4,395</b>hours</div></div>
-    <div class="ctas"><button class="pill solid" id="tourBtn">▶ Play “in my head(phones)”</button><button class="pill" data-open="how">How I built this</button></div>
+    <div class="ctas"><button class="pill solid" id="tourBtn">▶ Play “in my head(phones)”</button><button class="pill" data-open="me">What does this say about me?</button></div>
 </div>
 
 <div class="prelude" id="prelude" aria-live="polite"></div>
@@ -100,6 +100,17 @@
     </div>
 </div>
 
+<article class="drawer" id="me" role="dialog" aria-label="What does this say about me">
+    <button class="x" data-close aria-label="Close">×</button>
+    <div class="label">The profile</div>
+    <h2>What four years of listening says about me</h2>
+    <p>Spotify never asked my age, my gender, where I live, when I sleep or where my family is from. It didn't need to. Every guess below uses only timestamps and song choices, the same signals any platform holds, with the method, the evidence from my data, and whether the guess is right.</p>
+    <div class="infer" id="infer"></div>
+    <section><div class="label">The point</div><h3>A playlist is a diary nobody meant to keep</h3>
+        <p>None of this came from anything I typed. That's why the pipeline drops IP addresses, countries and devices in its first step, leaves out private sessions, and why this site publishes summaries per song and never the time of a single play.</p>
+    </section>
+</article>
+
 <article class="drawer" id="how" role="dialog" aria-label="How I built this">
     <button class="x" data-close aria-label="Close">×</button>
     <div class="label">Case study</div>
@@ -164,8 +175,8 @@
 
 <audio id="audio" preload="none"></audio>
 <script>window.ENDING_YOUTUBE = null;   // a YouTube video ID of May the Music Never End (Greg Gilpin); it plays as the last track lands home</script>
-<script src="js/tour.js?v=86"></script>
-<script src="js/months.js?v=86"></script>
-<script src="js/galaxy.js?v=86"></script>
+<script src="js/tour.js?v=98"></script>
+<script src="js/months.js?v=98"></script>
+<script src="js/galaxy.js?v=98"></script>
 </body>
 </html>

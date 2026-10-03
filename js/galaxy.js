@@ -767,6 +767,7 @@
     cv.addEventListener('wheel', e => { e.preventDefault(); fly = null; touched = performance.now(); intro.touched = true; zoomAt(e.clientX, e.clientY, view.z * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015))); quiet(); }, { passive: false });
 
     // ---------- tour: a case file on me, built by js/tour.js from the export's facts ----------
+    let endingTimer = null;
     const tour = $('#tour'); let step = -1, tourTimer = null, moodBefore = null, countAnim = null, paused = false;
     function focusOf(c) {
         const f = c.focus || {};
@@ -792,6 +793,8 @@
         const m = (c.title + ' · ' + c.text).match(/(\d[\d,]*(?:\.\d+)?)(%|×|\s?(?:AM|PM))?/);
         return m ? m[1] + (m[2] || '') : '';
     }
+    // the number and its unit in two columns, so the digits line up down the list: "31% party" -> 31 | % party
+    function statCells(v) { const m = String(v).match(/^([\d.,:]+)\s*(.*)$/); return `<span class="s">${esc(m ? m[1] : v)}</span><span class="u">${esc(m ? m[2] : '')}</span>`; }
     function trackMs(c) { const words = (c.text + ' ' + (c.verdict || '')).split(/\s+/).length; return clamp(5000 + words * 350, 12000, 24000); }
     function startTour(i = 0) {
         openAlbum();
@@ -821,7 +824,10 @@
         else cn.hidden = true;
         if (c.play != null && !(c.outro && window.ENDING_YOUTUBE)) play(songs[c.play]); else audio.pause();
         // the last track flies the viewer home: out of the galaxy and down to Austin
-        if (c.outro) { setHome(AUSTIN, 'AUSTIN'); outro = { start: performance.now() }; document.body.classList.add('outro'); }
+        // and once it lands on Austin, the last word is a question
+        clearTimeout(endingTimer); hush();
+        if (c.outro) { setHome(AUSTIN, 'AUSTIN'); outro = { start: performance.now() }; document.body.classList.add('outro');
+            endingTimer = setTimeout(() => { if (step === i) say('Where will she go next?', 'Austin, Texas'); }, 6000); }
         else if (outro) { outro = null; setHome(DALLAS, 'DALLAS'); document.body.classList.remove('outro'); }
         // now playing: the song's cover, and the songs behind this finding, each one a click away
         const lead = c.play != null ? songs[c.play] : selected || (list && [...list].sort((a, b) => b.n - a.n)[0]);
@@ -835,7 +841,7 @@
         tour.classList.add('on'); $('#hero').classList.add('quiet');
         const ms = trackMs(c); markTrack(i);
         const bar = $('#tourBar'); bar.style.transition = 'none'; bar.style.width = '0'; requestAnimationFrame(() => { bar.style.transition = `width ${ms}ms linear`; bar.style.width = '100%'; });
-        tourTimer = setTimeout(() => step >= 0 && (step < TOUR.length - 1 ? nextTrack(step + 1) : endTour()), ms);
+        if (!c.outro) tourTimer = setTimeout(() => step >= 0 && (step < TOUR.length - 1 ? nextTrack(step + 1) : endTour()), ms);   // the ending stays on Austin until you leave
     }
     // pausing holds the track where it is, so you can wander the sky; play picks the track back up from its start
     function pauseTour() {
@@ -845,6 +851,7 @@
     }
     function pauseOrEnd() { if (step >= 0) pauseTour(); else endTour(); }
     function endTour() {
+        clearTimeout(endingTimer); if (outro) hush();
         closeFlip(); closeAlbum(); if (step < 0) return; step = -1; paused = false; clearTimeout(tourTimer); tour.classList.remove('on'); ticks.querySelectorAll('button').forEach(b => b.classList.remove('on')); audio.pause();
         tourSet = null; nightTarget = 0; pair = null; selected = null; focusArtist = null; if (moodBefore) { setColor(moodBefore); moodBefore = null; }
         $('#tourVideo').innerHTML = ''; $('#tourVideo').hidden = true;
@@ -853,7 +860,7 @@
     // play and pause as drawn icons, so they sit dead center in their circles (text triangles don't)
     const PLAY = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>';
     const PAUSE = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>';
-    function playIcons(playing) { for (const id of ['#albumPlay', '#tourPlay']) { $(id).innerHTML = playing ? PAUSE : PLAY; $(id).setAttribute('aria-label', playing ? 'Pause the album' : 'Play the album'); } }
+    function playIcons(playing) { album.classList.toggle('paused', !playing); for (const id of ['#albumPlay', '#tourPlay']) { $(id).innerHTML = playing ? PAUSE : PLAY; $(id).setAttribute('aria-label', playing ? 'Pause the album' : 'Play the album'); } }
     // the album as a tracklist: Side A, Side B and the vault, the playing track lit, any track a click away
     const album = $('#album'), mmss = ms => `${Math.floor(ms / 60000)}:${String(Math.round(ms / 1000) % 60).padStart(2, '0')}`;
     const monthYear = t => new Date(t).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
@@ -863,18 +870,24 @@
             <div class="head"><div class="label">Album · Suhani Tiwari</div><h2>${esc(window.ALBUM)}</h2><div class="meta">${TOUR.length} tracks · ${Math.round(total / 60000)} min · ${fmt(D.totals.listens)} listens behind it</div></div>
             <div class="acts"><button class="big" id="albumPlay" aria-label="Play the album">${PLAY}</button>
                 <button class="icon" id="albumSave" title="Download the report" aria-label="Download the report">↓</button></div>
-            <div class="cols"><span>#</span><span>Title</span><span>The number</span><span>Date</span></div><ol>`, side = null;
+            <ol>`, side = null;
+        // each side gets a little record, labelled A or B, that spins while that side is playing; the vault folds away
+        const disc = l => `<svg class="disc" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9.5" class="v"/><circle cx="10" cy="10" r="7" class="g"/><circle cx="10" cy="10" r="4" class="l"/><text x="10" y="11.9" text-anchor="middle">${l}</text></svg>`;
         TOUR.forEach((c, i) => {
             const sd = c.side || 'From the Vault';
-            if (sd !== side) { side = sd; html += `<li class="side">${esc(sd)}</li>`; }
-            html += `<li><button data-i="${i}"><span class="n"><i>${i + 1}</i><b>▶</b></span><span class="t"><b>${esc(c.name)}</b><span>${esc(c.title)}</span></span><span class="s">${esc(trackStat(c))}</span><span class="d">${monthYear(day(c.date.slice(0, 10)))}</span></button></li>`;
+            if (sd !== side) { side = sd;
+                html += c.side ? `<li class="side ${c.side === 'Side A' ? 'a' : 'b'}">${disc(c.side.slice(-1))}<span>${esc(sd)}</span><i>${c.side === 'Side A' ? 'Dallas' : 'Austin'}</i></li>`
+                    : `<li class="side vault"><button id="vaultBtn" aria-expanded="false">${esc(sd)} <i>${TOUR.length - i}</i> <em>▸</em></button></li>`; }
+            html += `<li${c.side ? '' : ' class="vt"'}><button data-i="${i}"><span class="n"><i>${i + 1}</i><b>▶</b></span><span class="t"><b>${esc(c.name)}</b><span>${esc(c.title)}</span></span>${statCells(trackStat(c))}<span class="d">${monthYear(day(c.date.slice(0, 10)))}</span></button></li>`;
         });
         album.innerHTML = html + '</ol>';
         album.querySelectorAll('[data-i]').forEach(b => b.onclick = () => startTour(+b.dataset.i));
         $('#albumPlay').onclick = () => step < 0 ? startTour(0) : paused ? startTour(step) : pauseTour();
         $('#albumX').onclick = endTour;
         $('#albumSave').onclick = saveReport;
+        $('#vaultBtn').onclick = () => openVault(!album.classList.contains('vault'));
     })();
+    function openVault(on) { album.classList.toggle('vault', on); $('#vaultBtn').setAttribute('aria-expanded', String(on)); }
     // the report: the whole album as one page to keep, every track's question, finding and verdict
     function saveReport() {
         const T = D.totals; let side = null, rows = '';
@@ -908,6 +921,7 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
     function closeAlbum() { album.classList.remove('on'); document.body.classList.remove('listening'); markTrack(-1); }
     function markTrack(i) {
         album.querySelectorAll('[data-i]').forEach(b => b.classList.toggle('on', +b.dataset.i === i));
+        album.dataset.side = i >= 0 && TOUR[i].side ? (TOUR[i].side === 'Side A' ? 'a' : 'b') : ''; if (i >= 0 && !TOUR[i].side) openVault(true);
         $('#tticks').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.i === i));
         if (i < 0) { $('#pTitle').textContent = window.ALBUM; $('#tourStep').textContent = ''; $('#tourBar').style.transition = 'none'; $('#tourBar').style.width = '0'; }
         const on = album.querySelector('[data-i].on'); if (on) on.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -969,6 +983,35 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
         ['Identity', `Hindi music fell from ${f.desi_by_year[2022]}% to ${f.desi_by_year[2024]}% the year I left home and is back to ${f.desi_by_year[2026]}% now; after midnight it's ${f.desi_by_hour.night}%.`],
         ['Personality', `${f.discover.by_skip}% of the songs I know, I found by skipping into them, and I decide in ${f.skip.median_seconds} seconds.`]];
       $('#reveals').innerHTML = rows.map(([k, v]) => `<div><b>${k}</b><span>${v}</span></div>`).join(''); }
+    // the profile: what someone could infer about me from listening alone, how, the evidence, and whether they'd be right
+    { const f = D.facts, E = f.eras.stats, [march, dec] = f.trips, songName = i => songs[i].title.replace(/ (\(|- [Ff]rom).*$/, '');
+      // hand-labelled: which of my top artists are women (Spotify's export has no artist gender, which is itself the point)
+      const WOMEN = new Set(['Ariana Grande', 'Taylor Swift', 'Selena Gomez', 'Olivia Rodrigo', 'Tate McRae', 'Sabrina Carpenter', 'Rihanna', 'Doja Cat', 'Katy Perry', 'Zara Larsson', 'Dua Lipa', 'Billie Eilish', 'Gracie Abrams', 'JENNIE', 'BLACKPINK', 'Lana Del Rey', 'Addison Rae', 'Charli xcx']);
+      const top = [...artists].sort((a, b) => b.listens - a.listens).slice(0, 15), womenShare = Math.round(100 * top.filter(a => WOMEN.has(a.name)).reduce((x, a) => x + a.listens, 0) / top.reduce((x, a) => x + a.listens, 0));
+      const asleep = f.hours.map((v, h) => [h, v]).filter(([, v]) => v < 1).map(([h]) => h), hr = h => `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`;
+      const vals = [...f.quirks.valentines_by_year].sort((a, b) => b.times - a.times)[0];
+      const bars = (vs, hi, lab) => `<svg viewBox="0 0 ${vs.length * 10} 40" preserveAspectRatio="none" class="mini" aria-hidden="true">${vs.map((v, i) => `<rect x="${i * 10 + 1}" y="${36 - v / Math.max(...vs) * 32}" width="8" height="${v / Math.max(...vs) * 32 + 0.5}" class="${hi(i) ? 'h' : ''}"/>`).join('')}</svg><div class="minilab">${lab}</div>`;
+      const cards = [
+        ['Age', 'A teenager becoming a college student', 'When I listen, not what',
+          `${f.weekday_peak.high_school.three_to_eight}% of high-school weekday listening fell between 3 and 8 PM, a school-day shape. ${f.allnighters.by_era.high_school} all-nighters cluster before exams, listening falls by almost half the month I graduated, and the artists (${['Olivia Rodrigo', 'Sabrina Carpenter', 'Tate McRae'].join(', ')}) skew Gen Z.`, 'Right', 'y'],
+        ['Gender', 'A woman', 'Who I listen to',
+          `${womenShare}% of my listening to my top 15 artists is women artists, with Ariana Grande and Taylor Swift alone at ${Math.round(100 * (top[0].listens + top[1].listens) / D.totals.listens)}% of everything. This is how ad platforms guess gender.`, 'Right, for crude reasons: music has no gender', 'm'],
+        ['Home and movement', 'Dallas, then Austin, with family in India', 'Time zone, gaps and language',
+          `In Central time my quiet hours land overnight, so that's home. On ${longDate(day(f.eras.moved))} the history moves, and the first morning in Austin starts at ${(([h, m]) => `${h % 12 || 12}:${m} ${h < 12 ? 'AM' : 'PM'}`)(f.eras.austin_first.at.slice(-5).split(':').map((x, k) => k ? x : +x))}. Two long gaps of ${Math.round(march.flight_hours[1])} and ${Math.round(dec.flight_hours[1])} hours look like flights to India, and on the other side, Hindi music jumps to ${Math.round(dec.desi)}%.`, 'Right', 'y'],
+        ['Sleep', `Asleep roughly ${hr(asleep[0])} to ${hr(asleep[asleep.length - 1] + 1)}`, 'Listening by hour of day',
+          bars(f.hours, h => asleep.includes(h), 'midnight → 11 PM, the quiet hours lit') + `<p>Every hour from ${hr(asleep[0])} to ${hr(asleep[asleep.length - 1])} holds under 1% of my listening, and only ${f.before_9}% happens before 9 AM. ${f.allnighters.count} times, the music never stopped all night.</p>`, 'Right: a night owl', 'y'],
+        ['Routine', 'A student, not a 9-to-5', 'The weekday peak',
+          `My listening peaks at ${hr(f.peak_hour)} on weekdays and ${hr(f.weekend_peak)} on weekends: after class, through homework. A commuter would peak at 8 AM and 6 PM.`, 'Right', 'y'],
+        ['Cultural background', 'South Asian, likely Indian American', 'The language of the music',
+          bars(Object.values(f.desi_by_year), () => false, Object.keys(f.desi_by_year).join(' · ') + ': Hindi share by year') + `<p>${f.desi_overall}% of my listening is Hindi, rising to ${f.desi_by_hour.night}% after midnight and ${Math.round(dec.desi)}% on trips home. It fell to ${f.desi_by_year[2024]}% the year I left home, and it's back to ${f.desi_by_year[2026]}%.</p>`, 'Right', 'y'],
+        ['Mood', 'Seasonal lows every October', 'The mood of what I play',
+          `Octobers average ${f.moods.sad_calendar[1]}% sad songs against a typical ${f.moods.typical_sad}%. October ${f.heartbreak.month.slice(0, 4)}, my first in college, reached ${f.moods.octobers.find(o => o[0] === f.heartbreak.month)[1]}%. My four happiest months are all from the last year.`, 'Right', 'y'],
+        ['Relationship status', 'Single', 'Valentine\'s Day',
+          `The busiest Valentine's Day in the data, ${vals.year}: ${songName(vals.song)}, ${vals.times} times.`, 'Right', 'y'],
+        ['Personality', 'Picky, but loyal', 'Skips and returns',
+          `${Math.round(100 * D.totals.skipped / D.totals.plays)}% of what I start, I skip, deciding in a median ${f.skip.median_seconds} seconds. Yet ${f.loyal.count} songs survived every single year.`, 'Right', 'y'],
+      ];
+      $('#infer').innerHTML = cards.map(([k, guess, sig, ev, verdict, cls]) => `<div class="inf"><div class="label">${k}</div><h4>${esc(guess)}</h4><div class="sig">Signal: ${esc(sig)}</div>${ev.startsWith('<') ? ev : `<p>${ev}</p>`}<div class="verdict ${cls}">${cls === 'y' ? '✓' : '≈'} ${esc(verdict)}</div></div>`).join(''); }
     if (location.hash === '#how') openOverlay('how');
 
     addEventListener('keydown', e => {
