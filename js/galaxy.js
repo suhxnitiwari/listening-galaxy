@@ -500,7 +500,7 @@
             if (close) { g.font = '10px "JetBrains Mono", monospace'; g.fillStyle = 'rgba(207,198,218,.75)'; g.fillText(`#${A.i + 1} · ${A.songs.length} SONGS · ${fmt(A.hours)} H`, A.sx, top + 16); }
         }
 
-        $('#lit').textContent = fmt(count);
+        $('#lit').textContent = fmt(count); if (replaying) $('#capLit').textContent = fmt(count);
         $('#date').textContent = new Date(now).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
         frames++; if (time - fpsAt > 1000) { $('#fps').textContent = Math.round(frames * 1000 / (time - fpsAt)); frames = 0; fpsAt = time; }
         requestAnimationFrame(frame);
@@ -1145,13 +1145,14 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
     // a song's preview and cover: Apple first, Deezer when Apple has nothing or is rate-limiting (about 20 lookups a minute),
     // and every answer kept in this browser so a returning visitor never asks twice
     const MEDIA = 'hr-media-v1'; let mem = {}, appleMisses = 0;
+    try { if (sessionStorage.getItem('hr-apple-down')) appleMisses = 3; } catch (e) {}   // Apple refused earlier this visit: go straight to Deezer
     try { mem = JSON.parse(localStorage.getItem(MEDIA) || '{}'); } catch (e) { mem = {}; }
     const keepMedia = () => { try { localStorage.setItem(MEDIA, JSON.stringify(mem)); } catch (e) {} };
     function itunes(s) {
         if (found.has(s.i)) return found.get(s.i);
         const key = s.A.name + '|' + s.title, term = s.A.name + ' ' + s.title.replace(/\(.*?\)|- From.*$/g, '');
         const apple = () => appleMisses >= 3 ? Promise.resolve(null) : jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`)
-            .then(d => { const r = d && d.results && d.results[0]; appleMisses = r ? 0 : appleMisses + 1; return r ? { previewUrl: r.previewUrl, artworkUrl100: r.artworkUrl100 } : null; });
+            .then(d => { const r = d && d.results && d.results[0]; appleMisses = r ? 0 : appleMisses + 1; if (appleMisses >= 3) { try { sessionStorage.setItem('hr-apple-down', '1'); } catch (e) {} } return r ? { previewUrl: r.previewUrl, artworkUrl100: r.artworkUrl100 } : null; });
         const deezer = () => jsonp(`https://api.deezer.com/search?q=${encodeURIComponent(term)}&limit=1&output=jsonp`)
             .then(d => { const t = d && d.data && d.data[0]; return t ? { previewUrl: t.preview, artworkUrl100: t.album && (t.album.cover_xl || t.album.cover_big) } : null; });
         found.set(s.i, (mem[key] ? Promise.resolve(mem[key]) : apple().then(r => r || deezer()).then(r => { if (r) { mem[key] = r; keepMedia(); } return r; })));
