@@ -806,11 +806,13 @@
     function statCells(v) { const m = String(v).match(/^([\d.,:]+)\s*(.*)$/); return `<span class="s">${esc(m ? m[1] : v)}</span><span class="u">${esc(m ? m[2] : '')}</span>`; }
     function trackMs(c) { const words = (c.text + ' ' + (c.verdict || '')).split(/\s+/).length; return clamp(5000 + words * 350, 12000, 24000); }
     function startTour(i = 0) {
+        const startingFresh = step < 0;
         openAlbum();
         leaveReplay();
         endChoice.classList.remove('on'); if (!TOUR[i].side) vaultPlayed = true;
         step = i; const c = TOUR[i], d = day(c.date.slice(0, 10)); closeOverlays(); setThread(null); connectFrom = null; hint('');
-        clearTimeout(tourTimer); sweep(now, d, Math.min(5000, 1400 + Math.abs(d - now) / DAY * 6));
+        // starting the album lands on the track's day at once; moving between tracks sweeps through the time in between
+        clearTimeout(tourTimer); if (!album.classList.contains('on') || startingFresh) { cancelAnimationFrame(bang); setNow(d); } else sweep(now, d, Math.min(5000, 1400 + Math.abs(d - now) / DAY * 6));
         $('#tourDate').textContent = `${window.ALBUM} · ${c.label} · “${c.name}” · ${longDate(d)}`; $('#tourQ').textContent = c.q; $('#tourTitle').textContent = c.title;
         $('#tourText').textContent = c.text; $('#tourVerdict').textContent = c.verdict || '';
         // the closing song: a YouTube embed (YouTube licenses what it hosts), shown small in the card and started by the tour's own click
@@ -997,7 +999,8 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
             b.style.left = (clamp(kOf(day(c.date.slice(0, 10))), 0, 1) * 100) + '%'; b.title = `${i + 1} · ${c.name}`; b.setAttribute('aria-label', `Track ${i + 1}, ${c.name}`);
             b.onclick = () => startTour(i); tt.appendChild(b); });
     })();
-    function openAlbum() { album.classList.add('on'); document.body.classList.add('listening'); }
+    // opening the album rewinds the sky to the first track's day before anything plays
+    function openAlbum() { if (!album.classList.contains('on') && step < 0) { leaveReplay(); setNow(day(TOUR[0].date.slice(0, 10))); } album.classList.add('on'); document.body.classList.add('listening'); }
     function closeAlbum() { album.classList.remove('on'); document.body.classList.remove('listening'); markTrack(-1); }
     function markTrack(i) {
         album.querySelectorAll('[data-i]').forEach(b => b.classList.toggle('on', +b.dataset.i === i));
@@ -1139,8 +1142,19 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
         });
     }
     const found = new Map();
+    // a song's preview and cover: Apple first, Deezer when Apple has nothing or is rate-limiting (about 20 lookups a minute),
+    // and every answer kept in this browser so a returning visitor never asks twice
+    const MEDIA = 'hr-media-v1'; let mem = {}, appleMisses = 0;
+    try { mem = JSON.parse(localStorage.getItem(MEDIA) || '{}'); } catch (e) { mem = {}; }
+    const keepMedia = () => { try { localStorage.setItem(MEDIA, JSON.stringify(mem)); } catch (e) {} };
     function itunes(s) {
-        if (!found.has(s.i)) found.set(s.i, jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(s.A.name + ' ' + s.title.replace(/\(.*?\)|- From.*$/g, ''))}&entity=song&limit=1`).then(d => d && d.results && d.results[0]));
+        if (found.has(s.i)) return found.get(s.i);
+        const key = s.A.name + '|' + s.title, term = s.A.name + ' ' + s.title.replace(/\(.*?\)|- From.*$/g, '');
+        const apple = () => appleMisses >= 3 ? Promise.resolve(null) : jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`)
+            .then(d => { const r = d && d.results && d.results[0]; appleMisses = r ? 0 : appleMisses + 1; return r ? { previewUrl: r.previewUrl, artworkUrl100: r.artworkUrl100 } : null; });
+        const deezer = () => jsonp(`https://api.deezer.com/search?q=${encodeURIComponent(term)}&limit=1&output=jsonp`)
+            .then(d => { const t = d && d.data && d.data[0]; return t ? { previewUrl: t.preview, artworkUrl100: t.album && (t.album.cover_xl || t.album.cover_big) } : null; });
+        found.set(s.i, (mem[key] ? Promise.resolve(mem[key]) : apple().then(r => r || deezer()).then(r => { if (r) { mem[key] = r; keepMedia(); } return r; })));
         return found.get(s.i);
     }
     // Apple serves the same artwork at any size by its URL: 300px for the small thumbnails, 1200px for the big now-playing cover

@@ -24,12 +24,12 @@ window.buildTour = (D, songs, artists) => {
           text: `${F.top.share}% of everything Suhani has ever played is ${top.name}. She was #1 in ${F.top.owned} of ${F.top.months} months, through high school, the move to Austin, and 2026.`,
           verdict: "Not her favorite artist. Her gravitational center.", focus: { artist: F.top.artist }, play: top.songs[0].i },
 
-        { name: 'until i found you', art: 'https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/e0/71/6a/e0716a8a-b806-d313-4ed6-93bb485a65c5/22UMGIM38869.rgb.jpg/1200x1200bb.jpg',   // the duet cover: a guy and a girl, in lavender
+        { name: 'until i found you', art: 'https://i.ytimg.com/vi/GxldQ9eX2wo/maxresdefault.jpg',   // a still from the official video: the two of them at the microphones
           stat: `${F.day.count}×`, date: F.day.date, q: `What happened on ${date(F.day.date)}?`, title: 'One song, one night', counter: F.day.count,
           text: `${F.day.count} plays of ${title(F.day.song)} in ${F.day.hours} hours, ${F.day.else ? 'barely anything else' : 'nothing else'} all day. She never pressed repeat; she just never let it stop.`,
           verdict: 'She believed in manifesting. Hold that thought.', focus: { song: F.day.song }, play: F.day.song },
 
-        { name: 'with you', keep: true,   // keep: this track's own song and cover stay, even though it isn't English
+        { name: 'with you', keep: true, art: 'https://cdn-images.dzcdn.net/images/cover/ff7878c3ecade62c69ea2e10d4ec1ce8/1000x1000-000000-80-0-0.jpg',   // keep: this track's own song and cover stay, even though it isn't English
           date: AN.first.date, q: 'How hard did she work for it?', title: `${AN.by_era.high_school} all-nighters`, night: true, counter: AN.by_era.high_school,
           text: `${AN.by_era.high_school} times in high school alone, the music played every hour from midnight to 6 AM, mostly before exams. After midnight she's ${F.night[0][1]}× likelier to play ${A(F.night[0][0]).name}, her study partner.`,
           verdict: 'Asleep at 5 AM? Not with a dream to chase.', focus: { artists: [F.night[0][0]] }, play: F.night_artist.song },
@@ -38,7 +38,8 @@ window.buildTour = (D, songs, artists) => {
           text: `Her whole history peaks at ${hour(busiest)}: after school, through homework. Before 9 AM? Just ${F.before_9}% of everything.`,
           verdict: 'Not a morning person. A 5 PM-with-a-problem-set person.', focus: { songs: F.homework }, play: F.homework.find(i => title(i) === 'Problem') ?? F.homework[0] },
 
-        { name: 'cruel summer', stat: `${Math.round(F.longest_session.hours)} hrs`, date: F.rival.first + '-01', q: 'What did the dream cost?', title: 'Essay season',
+        { name: 'cruel summer', art: 'https://cdn-images.dzcdn.net/images/cover/6111c5ab9729c8eac47883e4e50e9cf8/1000x1000-000000-80-0-0.jpg',   // the Lover cover: pastel sky, heart on her cheek
+          stat: `${Math.round(F.longest_session.hours)} hrs`, date: F.rival.first + '-01', q: 'What did the dream cost?', title: 'Essay season',
           text: `After ${F.rival.reign_before} straight months of Ari, ${rival.name} took over Summer 2023, college essay season. Her biggest day: ${date(F.longest_session.start)}, ${F.longest_session.hours} hours, ${F.longest_session.listens} songs, the essays written in one sitting.`,
           verdict: 'Writing her way to Austin.',
           focus: { artists: [F.top.artist, F.rival.artist] }, play: F.taylor_song },
@@ -47,7 +48,8 @@ window.buildTour = (D, songs, artists) => {
           text: `${F.loyal.count} songs survived every year of the data. The one she's never gone a year without: ${title(F.loyal.song)}, ${fmt(S(F.loyal.song).n)} plays since her first week.`,
           verdict: 'Senior spring, on repeat. She did not mean the title literally.', focus: { songs: F.loyal.songs }, play: F.loyal.song },
 
-        { name: 'suburban legends', stat: clock(F.eras.austin_first.at), date: F.eras.austin_first.at, q: 'Did the dream come true?', title: 'UT Austin',
+        { name: 'suburban legends', art: 'https://cdn-images.dzcdn.net/images/cover/5aad85c12f4c5370d3bbb2e3549d07d9/1000x1000-000000-80-0-0.jpg',   // 1989 (Taylor's Version): blue sky, gulls, the smile
+          stat: clock(F.eras.austin_first.at), date: F.eras.austin_first.at, q: 'Did the dream come true?', title: 'UT Austin',
           text: `Her first morning in Austin, ${clock(F.eras.austin_first.at)} on ${date(F.eras.austin_first.at)}, she pressed play on ${title(F.eras.austin_first.song)}: a song about the suburbs you grow up in.`,
           verdict: 'Dream achieved. One last time (again), then goodbye, suburbs.', focus: { songs: [F.eras.austin_first.song, F.loyal.song] }, pair: [F.loyal.song, F.eras.austin_first.song], play: F.eras.austin_first.song },
     ];
