@@ -24,7 +24,8 @@ window.buildTour = (D, songs, artists) => {
           text: `${F.top.share}% of everything Suhani has ever played is ${top.name}. She was #1 in ${F.top.owned} of ${F.top.months} months, through high school, the move to Austin, and 2026.`,
           verdict: "Not her favorite artist. Her gravitational center.", focus: { artist: F.top.artist }, play: top.songs[0].i },
 
-        { name: 'just like magic', stat: `${F.day.count}×`, date: F.day.date, q: `What happened on ${date(F.day.date)}?`, title: title(F.day.song), counter: F.day.count,
+        { name: 'just like magic', art: 'https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/e0/71/6a/e0716a8a-b806-d313-4ed6-93bb485a65c5/22UMGIM38869.rgb.jpg/1200x1200bb.jpg',   // the duet cover: a guy and a girl, in lavender
+          stat: `${F.day.count}×`, date: F.day.date, q: `What happened on ${date(F.day.date)}?`, title: title(F.day.song), counter: F.day.count,
           text: `${F.day.count} plays of ${title(F.day.song)} in ${F.day.hours} hours, ${F.day.else ? 'barely anything else' : 'nothing else'} all day. She never pressed repeat; she just never let it stop.`,
           verdict: 'She believed in manifesting. Hold that thought.', focus: { song: F.day.song }, play: F.day.song },
 

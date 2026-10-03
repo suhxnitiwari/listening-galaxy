@@ -309,7 +309,7 @@ body.listening .hero, body.listening:has(.tour.on) .threads { opacity: 0 !import
     body.listening .tour { left: auto; right: var(--gut); top: 74px; bottom: 262px; width: 340px; transform: translateX(24px); overflow-y: auto; scrollbar-width: thin; }
     body.listening .tour.on { transform: none; }
     body.listening .tour .np { display: block; margin-bottom: 10px; }
-    body.listening .tour .art:not([hidden]) { display: block; width: 100%; height: min(260px, 28vh); object-fit: cover; border-radius: 10px; background: #2B2138; margin-bottom: 14px; box-shadow: 0 10px 40px #0008; }
+    body.listening .tour .art:not([hidden]) { display: block; width: min(100%, 42vh); aspect-ratio: 1; height: auto; margin-left: auto; margin-right: auto; object-fit: cover; border-radius: 10px; background: #2B2138; margin-bottom: 14px; box-shadow: 0 10px 40px #0008; }
 }
 @media (max-width: 1100px) { body.listening:has(.tour.on) .album { display: none; } body.listening .tour { bottom: 272px; } }
 

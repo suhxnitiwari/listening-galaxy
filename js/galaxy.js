@@ -552,7 +552,7 @@
     }
     // the replay is four years with nothing else on screen: just the sky growing, the date and the timeline.
     // When it's done, the viewer chooses: the album track by track, the four years again but slower, or the sky to themselves.
-    const REPLAY_MS = 30000, SLOW_MS = 90000, choose = $('#choose'), skipBtn = $('#skip');
+    const REPLAY_MS = 15000, SLOW_MS = 90000, choose = $('#choose'), skipBtn = $('#skip');
     function replay(ms = REPLAY_MS) {
         replaying = true; document.body.classList.add('replay'); choose.classList.remove('on'); toast.classList.remove('on'); skipBtn.textContent = 'Skip to the end →';
         cancelAnimationFrame(bang); setNow(t0); const start = performance.now();
@@ -771,6 +771,7 @@
 
     // ---------- tour: a case file on me, built by js/tour.js from the export's facts ----------
     let endingTimer = null;
+    const topSongs = songs.filter(x => !x.A.desi).sort((a, b) => b.n - a.n);
     const tour = $('#tour'); let step = -1, tourTimer = null, moodBefore = null, countAnim = null, paused = false;
     function focusOf(c) {
         const f = c.focus || {};
@@ -825,7 +826,10 @@
         const cn = $('#tourCount'); cancelAnimationFrame(countAnim);
         if (c.counter) { const t0c = performance.now(), go = t => { const k = Math.min(1, (t - t0c) / 2200); cn.textContent = fmt(c.counter * (1 - (1 - k) ** 3)); if (k < 1) countAnim = requestAnimationFrame(go); }; cn.hidden = false; countAnim = requestAnimationFrame(go); }
         else cn.hidden = true;
-        if (c.play != null && !(c.outro && window.ENDING_YOUTUBE)) play(songs[c.play]); else audio.pause();
+        const fits = x => x && !x.A.desi ? x : null;   // Hindi music shows up in the story only as a share, never as a named song or cover
+        const namesake = songs.filter(x => !x.A.desi && x.title.toLowerCase() === c.name.toLowerCase()).sort((a, b) => b.n - a.n)[0];
+        const sound = fits(c.play != null ? songs[c.play] : null) || namesake;
+        if (sound && !(c.outro && window.ENDING_YOUTUBE)) play(sound); else audio.pause();
         // the last track flies the viewer home: out of the galaxy and down to Austin
         // and once it lands on Austin, the last word is a question
         clearTimeout(endingTimer); hush();
@@ -833,10 +837,13 @@
             endingTimer = setTimeout(() => { if (step === i) say('Where will she go next?', 'Austin, Texas'); }, 6000); }
         else if (outro) { outro = null; setHome(DALLAS, 'DALLAS'); document.body.classList.remove('outro'); }
         // now playing: the song's cover, and the songs behind this finding, each one a click away
-        const lead = c.play != null ? songs[c.play] : selected || (list && [...list].sort((a, b) => b.n - a.n)[0]);
-        const art = $('#tourArt'); art.hidden = !lead; art.src = blank; art.dataset.i = lead ? lead.i : '';
-        if (lead) cover(lead).then(u => { if (art.dataset.i === String(lead.i)) { art.src = u; art.hidden = u === blank; } });
-        const rel = (list || []).filter(s => s !== lead && s.born <= d).sort((a, b) => b.n - a.n).slice(0, 4), relBox = $('#tourRel');
+        // the cover: the track's own image if tour.js names one, else the first of these songs that Apple has artwork for, in HD
+        const picks = [...new Set([sound, fits(selected), list && list.filter(x => !x.A.desi).sort((a, b) => b.n - a.n)[0], namesake, ...topSongs.slice(0, 3)].filter(Boolean))];
+        const lead = picks[0], art = $('#tourArt'), token = `${i}:${performance.now()}`;
+        art.dataset.t = token; art.hidden = false; art.src = blank;
+        if (c.art) art.src = c.art;
+        else (async () => { for (const p of picks) { const u = await cover(p, 1200); if (art.dataset.t !== token) return; if (u !== blank) { art.src = u; return; } } art.hidden = true; })();
+        const rel = (list || []).filter(s => s !== lead && s.born <= d && !s.A.desi).sort((a, b) => b.n - a.n).slice(0, 4), relBox = $('#tourRel');
         relBox.hidden = true; why.hidden = !rel.length; why.setAttribute('aria-expanded', 'false'); why.textContent = 'Why it matters ↓';
         relBox.innerHTML = rel.length ? `<div class="label">Behind this track</div>` + rel.map(s => `<button data-s="${s.i}"><img alt="" src="${blank}"><span><b>${esc(s.title)}</b><i>${esc(s.A.name)} · ${fmt(s.n)} listens</i></span></button>`).join('') : '';
         relBox.querySelectorAll('[data-s]').forEach(b => { const s = songs[+b.dataset.s]; cover(s).then(u => { b.querySelector('img').src = u; }); b.onclick = () => { pauseTour(); openSong(s); }; });
@@ -1005,8 +1012,8 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
           bars(f.hours, h => asleep.includes(h), 'midnight → 11 PM, the quiet hours lit') + `<p>Every hour from ${hr(asleep[0])} to ${hr(asleep[asleep.length - 1])} holds under 1% of my listening, and only ${f.before_9}% happens before 9 AM. ${f.allnighters.count} times, the music never stopped all night.</p>`, 'Right: a night owl', 'y'],
         ['Routine', 'A student, not a 9-to-5', 'The weekday peak',
           `My listening peaks at ${hr(f.peak_hour)} on weekdays and ${hr(f.weekend_peak)} on weekends: after class, through homework. A commuter would peak at 8 AM and 6 PM.`, 'Right', 'y'],
-        ['Cultural background', 'South Asian, likely Indian American', 'The language of the music',
-          bars(Object.values(f.desi_by_year), () => false, Object.keys(f.desi_by_year).join(' · ') + ': Hindi share by year') + `<p>${f.desi_overall}% of my listening is Hindi, rising to ${f.desi_by_hour.night}% after midnight and ${Math.round(dec.desi)}% on trips home. It fell to ${f.desi_by_year[2024]}% the year I left home, and it's back to ${f.desi_by_year[2026]}%.</p>`, 'Right', 'y'],
+        ['Cultural background', 'North Indian', 'The language of the music',
+          bars(Object.values(f.desi_by_year), () => true, 'Hindi share by year: ' + Object.entries(f.desi_by_year).map(([y, v]) => `${y} ${Math.round(v)}%`).join(' · ')) + `<p>${f.desi_overall}% of my listening is Hindi, rising to ${f.desi_by_hour.night}% after midnight and ${Math.round(dec.desi)}% on trips home. It fell to ${f.desi_by_year[2024]}% the year I left home, and it's back to ${f.desi_by_year[2026]}%.</p>`, 'Right', 'y'],
         ['Mood', 'Seasonal lows every October', 'The mood of what I play',
           `Octobers average ${f.moods.sad_calendar[1]}% sad songs against a typical ${f.moods.typical_sad}%. October ${f.heartbreak.month.slice(0, 4)}, my first in college, reached ${f.moods.octobers.find(o => o[0] === f.heartbreak.month)[1]}%. My four happiest months are all from the last year.`, 'Right', 'y'],
         ['Relationship status', 'Single', 'Valentine\'s Day',
@@ -1041,7 +1048,8 @@ ${rows}<footer>Every number computed from my Spotify history by my own data ware
         if (!found.has(s.i)) found.set(s.i, jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(s.A.name + ' ' + s.title.replace(/\(.*?\)|- From.*$/g, ''))}&entity=song&limit=1`).then(d => d && d.results && d.results[0]));
         return found.get(s.i);
     }
-    const cover = s => itunes(s).then(it => it && it.artworkUrl100 ? it.artworkUrl100.replace('100x100bb', '300x300bb') : blank);
+    // Apple serves the same artwork at any size by its URL: 300px for the small thumbnails, 1200px for the big now-playing cover
+    const cover = (s, px = 300) => itunes(s).then(it => it && it.artworkUrl100 ? it.artworkUrl100.replace('100x100bb', `${px}x${px}bb`) : blank);
     // an artist's photo; if Deezer doesn't know them, the cover of their most-played song stands in
     const photos = new Map(), norm = t => t.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]/g, '');
     function photo(A) {

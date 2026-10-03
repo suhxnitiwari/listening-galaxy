@@ -1,5 +1,6 @@
 // Every month gets a line: a life event when the data knows one, otherwise the strangest true thing about that month.
 // Same rule as the tour: every number is looked up from data/galaxy.json, only the words are written by hand.
+// Hindi music shows up only as a share of my listening, never as a named song.
 // If a song a line depends on is missing, that month falls back to a line computed from the month itself.
 window.buildMonths = (D, songs, artists) => {
     const F = D.facts, M = F.moods, fmt = n => Math.round(n).toLocaleString('en-US');
@@ -26,7 +27,7 @@ window.buildMonths = (D, songs, artists) => {
         '2023-01': () => `${day(F.day.date)}: ${q(S(F.day.song))}, ${F.day.count} times in a night.`,
         '2023-02': () => `${day(F.allnighters.first.date)}: the first all-nighter, on a school night.`,
         '2023-03': () => { const a = F.album_days.find(x => x.date.startsWith('2023-03')); return `${day(a.date)}: the first whole Taylor album, ${a.album}.`; },
-        '2023-04': () => `${best(find('Pehla Pyaar'))}.`,
+        '2023-04': () => { const a = F.album_days.find(x => x.date.startsWith('2023-04')); return `${day(a.date)}: all of ${a.album}.`; },
         '2023-05': () => `${q(S(F.off_season.song))}, ${F.off_season.times} times. In May.`,
         '2023-06': () => `Essay season: ${fmt(row['2023-06'].listens)} plays, the busiest month ever.`,
         '2023-07': () => `${day(F.longest_session.start)}: ${Math.round(F.longest_session.hours)} hours, ${F.longest_session.listens} songs, one sitting.`,
@@ -41,7 +42,7 @@ window.buildMonths = (D, songs, artists) => {
         '2024-04': () => `${F.streak.days} days straight of ${q(S(F.streak.song))}.`,
         '2024-05': () => `High school's last month. ${best(find('Moonlight', 'Ariana Grande'))}.`,
         '2024-06': () => `Graduated. Listening falls ${Math.round(100 - row['2024-06'].listens / row['2024-05'].listens * 100)}%.`,
-        '2024-07': () => `The last summer at home. ${q(find('Kinni Kinni'))} is the song of it.`,
+        '2024-07': () => `The last summer at home: ${fmt(row['2024-07'].listens)} plays.`,
         '2024-08': () => `Moved to Austin: ${q(S(F.eras.austin_first.song))} at ${clock(F.eras.austin_first.at)}.`,
         '2024-09': () => `Month one of college: ${q(find('New Romantics'))}, ${find('New Romantics').bestN} times.`,
         '2024-10': () => `The October that broke her: ${pct(M.octobers, '2024-10')}% sad.`,
@@ -59,10 +60,10 @@ window.buildMonths = (D, songs, artists) => {
         '2025-09': () => `A year after the move: the happiest month yet.`,
         '2025-10': () => `October, fixed: ${pct(M.octobers, '2025-10')}% sad, down from ${pct(M.octobers, '2024-10')}%.`,
         '2025-11': () => `Tate McRae owns the new finds.`,
-        '2025-12': () => `${q(find('Sahiba', 'Aditya Rikhari'))}, the one new obsession of the month.`,
-        '2026-01': () => `Bollywood takes over: ‘Run Down The City’.`,
-        '2026-02': () => { const s = find('Run Down The City'); return `‘Run Down The City’, ${s.bestN} times on ${day(s.best)}.`; },
-        '2026-03': () => { const a = find('Dil Nu'), b = find('Summer High'); return `${day(a.best)}: ${q(a)} ${a.bestN} times, ${q(b)} ${b.bestN}.`; },
+        '2025-12': () => `A quiet December: ${fmt(row['2025-12'].listens)} plays.`,
+        '2026-01': () => `Hindi music climbs back: ${F.desi_by_year[2026]}% this year.`,
+        '2026-02': () => `${q(find('Leave Me Lonely', 'Ariana Grande'))} peaks at ${fmt(find('Leave Me Lonely', 'Ariana Grande').n)} plays.`,
+        '2026-03': () => { const a = find('Sometimes', 'Ariana Grande'); return `${day(a.best)}: an Ari day. ${q(a)}, ${a.bestN} times.`; },
         '2026-04': () => `Rihanna's month: the first not Ari or Taylor since 2022.`,
         '2026-05': () => `${q(find('hate that i made you love me', 'Ariana Grande'))}: new Ari.`,
         '2026-06': () => `New Olivia Rodrigo. Three songs move straight in.`,
