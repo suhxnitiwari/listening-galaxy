@@ -136,7 +136,7 @@
     }
     // The camera orbits the point it looks at: yaw spins the disk, pitch tilts it toward me, and perspective
     // makes near stars bigger and far ones smaller. The cursor adds a little extra tilt.
-    const cam = { yaw: -0.35, pitch: 0.95, ty: 0, tp: 0 }, FOV = 3200;
+    const cam = { yaw: -0.35, pitch: 1.18, ty: 0, tp: 0 }, FOV = 3200;
     let cY = 1, sY = 0, cP = 1, sP = 0;
     let bangE = 1, bC = 1, bS = 0, outro = null;
     function project(x, y, z) {
@@ -390,11 +390,11 @@
         frontier += (grown() - frontier) * 0.08;
         const ik = clamp((time - intro.start) / intro.ms, 0, 1), ie = 1 - (1 - ik) ** 3, sw = (1 - ie) * 2.6;
         bangE = 0.015 + 0.985 * ie; bC = Math.cos(sw); bS = Math.sin(sw);
-        if (ik < 1 && !intro.touched) { cam.pitch = 0.1 + 0.85 * ie; view.z = fitZ * (2.6 - 1.6 * ie); }
+        if (ik < 1 && !intro.touched) { cam.pitch = 0.1 + 1.08 * ie;   /* settles at a low, side-on angle so the spiral and its arms read */ view.z = fitZ * (2.6 - 1.6 * ie); }
         if (fly) { const k = Math.min(1, (time - fly.start) / fly.ms), e = k < .5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2, lz = Math.log(fly.from.z) + (Math.log(fly.to.z) - Math.log(fly.from.z)) * e;
             view.z = Math.exp(lz); view.x = fly.from.x + (fly.to.x - fly.from.x) * e; view.y = fly.from.y + (fly.to.y - fly.from.y) * e; if (k >= 1) fly = null; }
         // the galaxy turns slowly on its own while nobody is touching it
-        if (!drag && step < 0 && !selected && !focusArtist && time - touched > 2500) cam.yaw += dt * 0.00004;
+        if (!drag && step < 0 && !selected && !focusArtist && time - touched > 1500) cam.yaw += dt * 0.00011;   // the galaxy orbits on its own (about one turn a minute) until you take the wheel
         cam.ty += ((mouse.on ? (mouse.x / W - 0.5) * 0.22 : 0) - cam.ty) * 0.05; cam.tp += ((mouse.on ? (mouse.y / H - 0.5) * 0.14 : 0) - cam.tp) * 0.05;
         const yaw = cam.yaw + cam.ty, pitch = clamp(cam.pitch + cam.tp, 0, 1.45);
         cY = Math.cos(yaw); sY = Math.sin(yaw); cP = Math.cos(pitch); sP = Math.sin(pitch);
@@ -871,7 +871,7 @@
             if (drag.moved > 5) {
                 cv.classList.add('drag'); quiet();
                 if (drag.pan) { const x1 = dx / view.z, y1 = dy / view.z / Math.max(0.2, cP); view.x = drag.vx - (x1 * cY + y1 * sY); view.y = drag.vy - (-x1 * sY + y1 * cY); }
-                else { cam.yaw = drag.yaw + dx * 0.006; cam.pitch = clamp(drag.pitch - dy * 0.005, 0, 1.4); }
+                else { cam.yaw = drag.yaw - dx * 0.006; /* grab-and-pull: the near side follows your hand */ cam.pitch = clamp(drag.pitch - dy * 0.005, 0, 1.4); }
             }
         }
         if (e.pointerType !== 'mouse') return;
@@ -1288,7 +1288,7 @@
     // what the data revealed about behavior, each claim backed by a computed number
     { const f = D.facts, tr = f.trips[1];
       const rows = [['Mood', `Octobers are my saddest month (${f.moods.sad_calendar[1]}% sad songs vs a typical ${f.moods.typical_sad}%), and my happiest-sounding months are recent, though the music tracks the mood I reach for, not the one I'm in.`],
-        ['Sleep', `${f.allnighters.count} all-nighters, found as music in every hour from midnight to 6 AM, mostly ending on ${f.allnighters.top_weekday[0]} mornings before exams.`],
+        ['Sleep', `${f.allnighters.count} all-nighters, found as music in at least five of the six hours from midnight to 6 AM, mostly ending on ${f.allnighters.top_weekday[0]} mornings before exams.`],
         ['Routine', `${f.weekday_peak.high_school.three_to_eight}% of high-school weekday listening fell between 3 and 8 PM: homework hours. Only ${f.before_9}% happens before 9 AM.`],
         ['Life events', `The morning I moved to Austin, a 14-hour college-essay session, a 119-play day, an album I was awake for at 12:50 AM.`],
         ['Travel', `Flights show up as hours of offline listening; on a trip to India, ${tr.desi}% of what I played was Hindi, against ${f.desi_overall}% normally.`],
@@ -1315,7 +1315,7 @@
           `Spotify's raw export stamps every play with an IP address and a country: enough to put each of my ${fmt(D.totals.listens)} listens on a map, city by city. My pipeline deletes both in its first step, and the data still gives me away. In Central time my quiet hours land overnight, so that's home. On ${longDate(day(f.eras.moved))} the history moves, and the first morning in Austin starts at ${(([h, m]) => `${h % 12 || 12}:${m} ${h < 12 ? 'AM' : 'PM'}`)(f.eras.austin_first.at.slice(-5).split(':').map((x, k) => k ? x : +x))}. Two long gaps of ${Math.round(march.flight_hours[1])} and ${Math.round(dec.flight_hours[1])} hours look like flights to India, and on the other side, Hindi music jumps to ${Math.round(dec.desi)}%.`]]],
         ['How I live', [
           ['Sleep', `Asleep ${f.sleep_nights.from_4}% of nights from 4 AM to 9 AM`, 'Listening by hour of day, night by night',
-          bars(f.hours, h => asleep.includes(h), 'midnight → 11 PM, the quiet hours lit') + `<div class="conf">${[[f.sleep_nights.from_4, '4 AM'], [f.sleep_nights.from_2, '2 AM'], [f.sleep_nights.from_0, 'midnight']].map(([v, t]) => `<div><b>${v}%</b><span>asleep after ${t}</span><i style="--w:${v}%"></i></div>`).join('')}</div><p>Across ${fmt(f.sleep_nights.nights)} nights, the music went quiet and stayed quiet until 9 AM: <b>${f.sleep_nights.from_4}%</b> of nights from 4 AM, so that's a high-confidence call that I'm asleep; ${f.sleep_nights.from_2}% from 2 AM; and ${f.sleep_nights.from_0}% from midnight, close to a coin flip. On a typical night my last song plays at ${ap(f.sleep_nights.last_song)}. Silence isn't proof of sleep, so these are confidence levels, not a diary. ${f.allnighters.count} times, the music never stopped all night.</p>`], ['Routine', 'A student, not a 9-to-5', 'The weekday peak',
+          bars(f.hours, h => asleep.includes(h), 'midnight → 11 PM, the quiet hours lit') + `<div class="conf">${[[f.sleep_nights.from_4, '4 AM'], [f.sleep_nights.from_2, '2 AM'], [f.sleep_nights.from_0, 'midnight']].map(([v, t]) => `<div><b>${v}%</b><span>asleep after ${t}</span><i style="--w:${v}%"></i></div>`).join('')}</div><p>Across ${fmt(f.sleep_nights.nights)} nights, the music went quiet and stayed quiet until 9 AM: <b>${f.sleep_nights.from_4}%</b> of nights from 4 AM, so that's a high-confidence call that I'm asleep; ${f.sleep_nights.from_2}% from 2 AM; and ${f.sleep_nights.from_0}% from midnight, close to a coin flip. On a typical night my last song plays at ${ap(f.sleep_nights.last_song)}. Silence isn't proof of sleep, so these are confidence levels, not a diary. ${f.allnighters.count} times, I was up all night with the music on.</p>`], ['Routine', 'A student, not a 9-to-5', 'The weekday peak',
           `My listening peaks at ${hr(f.peak_hour)} on weekdays and ${hr(f.weekend_peak)} on weekends: after class, through homework. A commuter would peak at 8 AM and 6 PM.`],
           ['Exam weeks', 'Exams land midweek', 'Which nights never end',
             `Of my ${f.allnighters.count} all-nighters, ${f.allnighters.top_weekday[1]} end on a ${f.allnighters.top_weekday[0]} morning, more than any other day: ${f.allnighters.by_era.high_school} in high school, ${f.allnighters.by_era.austin} in my first stretch in Austin, ${f.allnighters.by_era.y2026} this year.`],

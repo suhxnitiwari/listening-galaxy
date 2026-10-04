@@ -677,5 +677,7 @@ body[data-nudge="search"] .search input { border-color: var(--pink); box-shadow:
 .gate.typing .typed::after { content: none; }
 .gate .typed.caret::after { content: ""; }
 /* the 7 rings player: appears in the card only while it plays */
-#tourTitle { white-space: nowrap; overflow: hidden; text-overflow: clip; }   /* one line, always */
+#tourTitle { white-space: nowrap; overflow: visible; }   /* one line, always (the fit happens in fitTitle, so descenders like g and y keep their tails) */
 .gate .brief .typed { margin: 0; min-height: 2.5em; max-width: 26ch; font: italic 400 clamp(26px, 2.9vw, 38px)/1.25 var(--serif); color: var(--ink); text-wrap: balance; }
+/* dragging the sky should never select the panel text */
+.hud, .replaycap, .replaybar, .threads, .time { -webkit-user-select: none; user-select: none; }

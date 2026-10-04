@@ -25,7 +25,7 @@ window.buildMonths = (D, songs, artists) => {
         '2022-11': () => `Found ${['bad idea', 'goodnight n go', 'Moonlight'].map(x => q(find(x, 'Ariana Grande'))).join(', ').replace(/, ([^,]*)$/, ' and $1')}.`,
         '2022-12': () => `Winter break: ${Math.round(row['2022-12'].listens / row['2022-11'].listens)}× November's listening.`,
         '2023-01': () => `${day(F.day.date)}: ${q(S(F.day.song))}, ${F.day.count} times in a night.`,
-        '2023-02': () => `${day(F.allnighters.first.date)}: the first all-nighter, on a school night.`,
+        '2023-02': () => { if (!F.allnighters.first.date.startsWith('2023-02')) throw 0; return `${day(F.allnighters.first.date)}: the first all-nighter, on a school night.`; },   // falls back if the first one moves
         '2023-03': () => { const a = F.album_days.find(x => x.date.startsWith('2023-03')); return `${day(a.date)}: the first whole Taylor album, ${a.album}.`; },
         '2023-04': () => { const a = F.album_days.find(x => x.date.startsWith('2023-04')); return `${day(a.date)}: all of ${a.album}.`; },
         '2023-05': () => `${q(S(F.off_season.song))}, ${F.off_season.times} times. In May.`,
