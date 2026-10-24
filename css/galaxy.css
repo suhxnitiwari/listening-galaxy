@@ -18,6 +18,7 @@ canvas#sky.drag { cursor: grabbing; } canvas#sky.on-star { cursor: pointer; }
 .top > * { pointer-events: auto; }
 .top .me { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); text-decoration: none; margin-right: auto; }
 .top nav { display: flex; align-items: center; gap: 2px; height: 36px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: #1a1224b3; }
+.top nav button.earth { background: var(--pink); color: #1a1222; } .top nav button.earth:hover { background: #f3d2e4; color: #1a1222; }
 .top nav a, .top nav button { display: flex; align-items: center; gap: 5px; height: 100%; padding: 0 14px; border: 0; border-radius: 999px; background: none; cursor: pointer; font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; color: var(--soft); text-decoration: none; transition: background .15s, color .15s; }
 .top nav a:hover, .top nav button:hover { color: var(--ink); background: #ffffff12; }
 .top nav .on { color: #2B1A30; background: var(--pink); }
@@ -123,6 +124,7 @@ canvas#sky.drag { cursor: grabbing; } canvas#sky.on-star { cursor: pointer; }
 .tourvideo[hidden] { display: none; }
 .tourvideo iframe { width: 160px; height: 90px; border: 0; border-radius: 8px; }
 .tourvideo span { font: italic 15px var(--serif); color: var(--pink); }
+.tour .tourhome { margin-top: 14px; } .tour .tourhome[hidden] { display: none; }
 .tour .verdict { margin-top: 10px !important; color: var(--ink) !important; font-weight: 500; font-size: 14px; }
 .tour p { margin: 0; color: var(--soft); font-size: 14px; line-height: 1.45; }
 .tour .ctl { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
@@ -259,7 +261,7 @@ body.outro .hero, body.outro .threads, body.outro .time > :not(.player), body.ou
 
 @media (max-width: 1100px) { .threads { top: auto; bottom: 200px; transform: none; width: 190px; } .threads .note, .years { display: none; } }
 @media (max-width: 760px) {
-    .top { padding-top: 14px; gap: 10px; } .top nav > :not([data-open="how"]) { display: none; } .top nav { height: 34px; } .top nav button { font-size: 10px; padding: 0 12px; } .search input, .search input:focus { width: 124px; height: 34px; padding-right: 12px; } .search kbd { display: none; }
+    .top { padding-top: 14px; gap: 10px; } .top nav > :not([data-open="how"]):not(.earth) { display: none; } .top nav { height: 34px; } .top nav button { font-size: 10px; padding: 0 12px; } .search input, .search input:focus { width: 124px; height: 34px; padding-right: 12px; } .search kbd { display: none; }
     .hero { top: 58px; right: var(--gut); } .hero p, .stats div:nth-child(n+3) { display: none; } .hero h1 { font-size: 34px; } .ctas { margin-top: 12px; }
     .threads { left: 0; right: 0; bottom: 172px; width: auto; flex-direction: row; overflow-x: auto; padding: 0 var(--gut); scrollbar-width: none; } .threads .label { display: none; }
     .thread { flex: none; grid-template-columns: 9px auto; background: #1B1425cc; } .thread span { display: none; }
@@ -483,7 +485,8 @@ body.gated .gate { opacity: 1; visibility: visible; }
 .gate .gatequiet { background: none; border: 0; color: var(--dim); font: 11px var(--mono); letter-spacing: .06em; cursor: pointer; }
 .gate .gatequiet:hover { color: var(--ink); }
 .gate p.why { margin: 2px 0 0; max-width: 40ch; font: 14px/1.55 var(--sans); color: var(--soft); }
-body.gated .skip { display: none !important; }
+/* the skip stays up through the whole opening: the typed page, the soundcheck, the flight and the formation */
+body.gated .skip, body.replay:not(.choosing) .skip { display: block; }
 
 /* until the album has been played once, its play button pulses and says what to do */
 .album .playhint { order: 1; margin-left: auto; display: grid; grid-template-columns: 1fr auto; column-gap: 10px; align-items: center; text-align: right; transition: opacity .5s; }
@@ -681,3 +684,98 @@ body[data-nudge="search"] .search input { border-color: var(--pink); box-shadow:
 .gate .brief .typed { margin: 0; min-height: 2.5em; max-width: 26ch; font: italic 400 clamp(26px, 2.9vw, 38px)/1.25 var(--serif); color: var(--ink); text-wrap: balance; }
 /* dragging the sky should never select the panel text */
 .hud, .replaycap, .replaybar, .threads, .time { -webkit-user-select: none; user-select: none; }
+
+/* one caption at a time: the month line steps aside while the formation card, the end choice or the guide is up */
+body.replay .time .date, body.replay .ticker, body.guiding .time .date, body.guiding .ticker { opacity: 0; transition: opacity .4s; }
+/* panels read as solid glass, so the sky never shows through their text */
+.replaycap { background: rgba(28, 20, 38, .9); }
+.replaycap, .threads, .card, .guide, .tour, .album, .choose, .toast, .results { -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2); }
+/* the hint line gets its own row above the milestone dots */
+.time .lit { margin-bottom: 14px; }
+/* the brief: heading and cue fade up, the numbers spin and lock */
+.gate .brief .reveal { opacity: 0; transform: translateY(6px); transition: opacity .6s ease, transform .6s ease; }
+.gate .brief .reveal.in { opacity: 1; transform: none; }
+.gate .brief #b2 { font-variant-numeric: tabular-nums; }
+.gate .brief #b2.locked { animation: lockin .6s ease-out; }
+@keyframes lockin { 0% { text-shadow: 0 0 24px var(--pink); } 100% { text-shadow: none; } }
+
+/* one panel on the right at a time: the spectrum steps away while a star's card is open */
+body:has(.card.on) .threads { opacity: 0 !important; visibility: hidden; pointer-events: none; }
+
+/* the comparison card, to the point */
+.pverdict { margin: 14px 0 0; font: 400 19px/1.3 var(--serif); color: var(--ink); }
+.pverdict b { font-weight: 400; color: var(--pink); }
+.points { list-style: none; margin: 14px 0 0; padding: 0; }
+.points li { display: grid; grid-template-columns: 14px 1fr; gap: 10px; align-items: start; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.4; color: var(--dim); }
+.points i { width: 9px; height: 9px; margin-top: 4px; border-radius: 50%; border: 1.5px solid var(--dim); box-sizing: border-box; }
+.points li.on { color: var(--soft); } .points li.on i { background: var(--pink); border-color: var(--pink); box-shadow: 0 0 8px var(--pink); }
+.points em { display: block; font: normal 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--dim); margin-bottom: 2px; }
+.points li.on em { color: var(--pink); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.card .shared .label + .path { margin-top: 8px; }
+.card .vsgrid { margin-top: 16px; }
+
+/* the now-playing bar: takes the month's place while a song plays outside the album */
+.nowbar { display: none; grid-template-columns: 52px 1fr auto; grid-template-rows: auto auto; gap: 8px 12px; align-items: center; width: min(440px, 100%); margin: 0 auto 4px; padding: 10px 14px 10px 10px; text-align: left; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+body.nowplaying:not(.listening):not(.replay) .nowbar { display: grid; }
+body.nowplaying:not(.listening):not(.replay) .time .date, body.nowplaying:not(.listening):not(.replay) .ticker { display: none; }
+.nowbar .nart { grid-row: 1; width: 52px; height: 52px; border-radius: 9px; object-fit: cover; background: #2B2138; box-shadow: 0 6px 18px #0007; }
+.nowbar .nmeta { min-width: 0; }
+.nowbar .nmeta b { display: block; font: 600 15px/1.25 var(--sans); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nowbar .nmeta span { display: block; font-size: 13px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nowbar .nctl { display: flex; align-items: center; gap: 4px; }
+.nowbar .nctl button { width: 34px; height: 34px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ink); cursor: pointer; }
+.nowbar .nctl button:hover:not(:disabled) { background: #ffffff14; }
+.nowbar .nctl button:disabled { opacity: .35; cursor: default; }
+.nowbar .nctl button.main { width: 40px; height: 40px; background: var(--pink); color: var(--bg); }
+.nowbar .nctl svg { width: 18px; height: 18px; }
+.nowbar .nprog { grid-column: 1 / -1; display: grid; grid-template-columns: 34px 1fr 38px; gap: 10px; align-items: center; font: 10.5px var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+.nowbar .nprog span:last-child { text-align: right; }
+.nowbar .nbar { height: 4px; border-radius: 2px; background: #ffffff1f; overflow: hidden; }
+.nowbar .nbar i { display: block; height: 100%; width: 0; background: var(--pink); border-radius: 2px; }
+
+/* fold the side panels away, to just explore */
+.fold { position: fixed; z-index: 6; top: 50%; width: 22px; height: 56px; margin-top: -28px; display: grid; place-items: center; padding: 0; border: 1px solid var(--line); background: var(--panel); color: var(--soft); cursor: pointer; transition: opacity .4s, color .2s; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.fold:hover { color: var(--ink); }
+.fold svg { width: 14px; height: 14px; transition: transform .3s; }
+.fold.l { left: 0; border-left: 0; border-radius: 0 10px 10px 0; }
+.fold.r { right: 0; border-right: 0; border-radius: 10px 0 0 10px; }
+body.fold-l .fold.l svg, body.fold-r .fold.r svg { transform: scaleX(-1); }
+body.fold-l .hero { opacity: 0 !important; visibility: hidden; pointer-events: none; transform: translateX(-24px); transition: opacity .4s, transform .4s, visibility .4s; }
+body.fold-r .threads { opacity: 0 !important; visibility: hidden; pointer-events: none; }
+body.replay .fold, body.intro .fold, body.gated .fold, body.listening .fold, body.outro .fold { opacity: 0; pointer-events: none; }
+@media (max-width: 760px) { .fold { display: none; } }
+.gate .brief #b2 { max-width: 36ch; }
+/* during the guide, only the panel a step points at stays up */
+body.guiding .time .lit { opacity: 0; }
+@media (max-width: 1100px) { body.guiding .threads:not(.guided) { opacity: 0 !important; visibility: hidden; pointer-events: none; } }
+.top .brand .bt b, .top .brand .bt em { white-space: nowrap; }
+/* the stop-spin switch sits beside the replay */
+#still { display: inline-flex; align-items: center; gap: 7px; } #still svg { width: 11px; height: 11px; }
+#still.on { border-color: var(--pink); color: var(--pink); }
+/* the artist profile: who they are, then what I play most by them */
+.card .bdesc { font: 11px/1.4 var(--mono); letter-spacing: .04em; color: var(--dim); }
+.card .bio { margin-top: 14px; } .card .bio[hidden] { display: none; }
+.card .bio p { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--soft); }
+.card .bio a { display: inline-block; margin-top: 6px; font: 500 10.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--pink); text-decoration: none; } .card .bio a:hover { color: var(--ink); }
+.tops { margin-top: 18px; }
+.tops button { display: grid; grid-template-columns: 16px 34px 1fr auto; gap: 10px; align-items: center; width: 100%; padding: 7px 0; border: 0; border-top: 1px solid var(--line); background: none; color: var(--ink); text-align: left; cursor: pointer; }
+.tops .n { font: 11px var(--mono); color: var(--dim); text-align: right; }
+.tops img { width: 34px; height: 34px; border-radius: 6px; object-fit: cover; background: #2B2138; }
+.tops .t { min-width: 0; } .tops b { display: block; font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tops .t i { display: block; height: 3px; margin-top: 6px; border-radius: 2px; background: linear-gradient(90deg, var(--pink) var(--w), #ffffff14 var(--w)); }
+.tops small { font: 11px var(--mono); color: var(--dim); white-space: nowrap; }
+.tops button:hover b { color: var(--pink); }
+/* skip: always the same corner, easy to find */
+.skip { z-index: 25; background: #1a1224cc; border-color: #ffffff45; color: var(--ink); padding: 10px 16px; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.skip:hover { border-color: var(--pink); color: var(--pink); }
+@media (max-width: 760px) { .skip { right: 16px; bottom: 16px; } }
+/* the way out of a mood's lines */
+.unweb { position: fixed; z-index: 11; top: 74px; right: var(--gut); display: none; align-items: center; gap: 10px; padding: 7px 7px 7px 14px; border: 1px solid var(--line); border-radius: 999px; background: #1a1224e6; color: var(--soft); font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; cursor: pointer; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.unweb.on { display: flex; }
+.unweb i { width: 8px; height: 8px; border-radius: 50%; }
+.unweb b { font-weight: 500; padding: 6px 12px; border-radius: 999px; background: var(--pink); color: #2B1A30; }
+.unweb:hover b { background: #F4D6E6; }
+body.replay .unweb, body.listening .unweb, body:has(.card.on) .unweb { display: none; }
+@media (max-width: 760px) { .unweb { top: 60px; right: 16px; font-size: 10px; } }
+@media (max-width: 760px) { .threads { bottom: 206px; } }   /* clear of the month and its line on a phone */

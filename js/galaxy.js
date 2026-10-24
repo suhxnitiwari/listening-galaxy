@@ -26,7 +26,7 @@
     document.querySelectorAll('[data-total]').forEach(el => { el.textContent = fmt(D.totals[el.dataset.total]); });
     $('#kb').textContent = fmt((bytes || JSON.stringify(D).length) / 1024);
 
-    const yearColor = { 2022: [150, 176, 246], 2023: [186, 160, 246], 2024: [238, 168, 214], 2025: [248, 188, 176], 2026: [246, 226, 186] };   // lavender haze: periwinkle, lilac, mauve, dusty rose, champagne
+    const yearColor = { 2022: [64, 104, 230], 2023: [92, 146, 255], 2024: [132, 188, 255], 2025: [186, 222, 255], 2026: [240, 248, 255] };   // a cool ramp, deep blue to starlight, so it never looks like the warm emotion colors
     // emotion colors: warm for happy, blue for sad, violet for gloomy
     const moods = [['love', [255, 128, 196]], ['party', [255, 226, 80]], ['confident', [255, 150, 60]], ['bittersweet', [178, 128, 255]], ['heartbreak', [184, 36, 70]], ['dark', [104, 46, 164]]];
     const moodColor = Object.fromEntries(moods), noMood = [105, 100, 125];
@@ -73,8 +73,7 @@
 
     // ---------- connections: back-to-back links and moods ----------
     const pairs = D.links.map(([a, b]) => [songs[a], songs[b]]);
-    const threads = [{ key: 'together', name: 'Gravity pairs', c: [255, 214, 150], edges: pairs, songs: new Set(pairs.flat()),
-        note: `${fmt(pairs.length)} pairs of songs I play back-to-back in the same session. Hover any star to see its own.` }];
+    const threads = [];
     for (const [key, c] of moods) {
         const list = songs.filter(s => s.feel === key), hand = list.filter(s => s.mood === key).length;
         threads.push({ key, name: key[0].toUpperCase() + key.slice(1), c, edges: tree(list), songs: new Set(list),
@@ -85,10 +84,10 @@
     threadBox.innerHTML = `<div class="label">Spectrum</div><div class="seg" role="group" aria-label="Color stars by"><button data-mode="year" class="on">Era formed</button><button data-mode="mood">Emotion</button></div>
         <div class="years" id="legend"></div><div class="label lines">Map the gravity</div>`;
     threadBox.querySelectorAll('.seg button').forEach(b => b.onclick = () => setColor(b.dataset.mode));
-    const moodMax = Math.max(...threads.slice(1).map(T => T.songs.size));
+    const moodMax = Math.max(...threads.map(T => T.songs.size));
     for (const T of threads) {
-        const b = document.createElement('button'), n = T.key === 'together' ? T.edges.length : T.songs.size;
-        b.className = 'thread' + (T.key === 'together' ? ' pairs' : ''); b.style.setProperty('--c', `rgb(${T.c})`); b.style.setProperty('--w', T.key === 'together' ? 1 : (n / moodMax).toFixed(3));   // each mood's bar is its share of the biggest mood
+        const b = document.createElement('button'), n = T.songs.size;
+        b.className = 'thread'; b.style.setProperty('--c', `rgb(${T.c})`); b.style.setProperty('--w', (n / moodMax).toFixed(3));   // each mood's bar is its share of the biggest mood
         b.innerHTML = `<i></i><em>${T.name}</em><span>${fmt(n)}</span>`;
         b.setAttribute('aria-pressed', 'false');
         b.onclick = () => setThread(thread === T ? null : T); T.btn = b; threadBox.appendChild(b);
@@ -96,11 +95,14 @@
     const felt = songs.filter(s => s.feel), feltShare = felt.reduce((t, s) => t + s.n, 0) / songs.reduce((t, s) => t + s.n, 0);
     const defaultNote = () => 'Pick one to trace its pull across the galaxy.';
     threadBox.insertAdjacentHTML('beforeend', '<p class="note" id="threadNote"></p>');
+    // while a mood's lines are drawn, a way out sits at the top of the sky: this, Escape, or a tap on empty sky clears them
+    const unweb = document.createElement('button'); unweb.className = 'unweb'; unweb.onclick = () => setThread(null); document.body.appendChild(unweb);
     let thread = null, threadAt = 0;
     function setThread(T) {
         thread = T; threadAt = performance.now();
         threads.forEach(x => { x.btn.classList.toggle('on', x === T); x.btn.setAttribute('aria-pressed', String(x === T)); });
         $('#threadNote').textContent = T ? T.note : defaultNote();
+        unweb.innerHTML = T ? `<i style="background:rgb(${T.c})"></i>Showing every ${esc(T.key)} song<b>Clear the lines ✕</b>` : ''; unweb.classList.toggle('on', !!T);
         quiet();
     }
     function setColor(mode) {
@@ -136,8 +138,8 @@
     }
     // The camera orbits the point it looks at: yaw spins the disk, pitch tilts it toward me, and perspective
     // makes near stars bigger and far ones smaller. The cursor adds a little extra tilt.
-    const cam = { yaw: -0.35, pitch: 1.18, ty: 0, tp: 0 }, FOV = 3200;
-    let cY = 1, sY = 0, cP = 1, sP = 0;
+    const PITCH = 1.26, cam = { yaw: -0.35, pitch: PITCH, ty: 0, tp: 0 }, FOV = 3200;   // PITCH: the low, side-on angle the galaxy looks best from
+    let cY = 1, sY = 0, cP = 1, sP = 0, still = false;   // still: the visitor stopped the spin, so the sky holds where they left it
     let bangE = 1, bC = 1, bS = 0, outro = null;
     function project(x, y, z) {
         if (bangE < 1) { const nx = (x * bC - y * bS) * bangE, ny = (x * bS + y * bC) * bangE; x = nx; y = ny; z *= bangE; }
@@ -224,18 +226,9 @@
     // Earth at night: real continents (Natural Earth), the Texas border, and real cities at their real coordinates (lat, lon, size)
     const DALLAS = [32.78, -96.80], AUSTIN = [30.27, -97.74];
     let HOME = DALLAS, homeLabel = 'DALLAS';   // the globe turns so HOME faces the camera: Dallas in the opening, Austin at the end
-    const CITIES = [[32.78, -96.8, 6], [32.75, -97.33, 3.5], [29.76, -95.37, 6], [30.27, -97.74, 3], [29.42, -98.49, 3.5], [35.47, -97.52, 2], [36.15, -95.99, 1.5],
-        [32.5, -93.75, 1], [33.58, -101.85, 1], [31.76, -106.49, 1.5], [31.55, -97.15, 0.8], [33.21, -97.13, 0.8], [39.74, -104.99, 3], [39.1, -94.58, 2.5], [29.95, -90.07, 2],
-        [35.15, -90.05, 1.8], [34.75, -92.29, 1], [33.75, -84.39, 4.5], [41.88, -87.63, 7], [33.45, -112.07, 4.5], [25.69, -100.32, 4], [19.43, -99.13, 8], [20.67, -103.35, 3],
-        [34.05, -118.24, 9], [37.77, -122.42, 5], [47.61, -122.33, 3.5], [40.71, -74.0, 10], [42.36, -71.06, 4], [38.9, -77.04, 4.5], [25.76, -80.19, 4.5], [28.54, -81.38, 2.5],
-        [38.63, -90.2, 2.5], [44.98, -93.27, 3], [39.96, -82.99, 2], [42.33, -83.05, 3.5], [36.17, -115.14, 2.5], [40.76, -111.89, 2], [35.23, -80.84, 2.5], [36.16, -86.78, 2.5],
-        [43.65, -79.38, 5], [45.5, -73.57, 3.5], [49.28, -123.12, 2.5], [21.16, -86.85, 1], [23.13, -82.38, 2], [4.71, -74.07, 5], [-12.05, -77.04, 5], [-23.55, -46.63, 10],
-        [-22.91, -43.17, 6], [-34.6, -58.38, 7], [-33.45, -70.67, 4.5], [51.51, -0.13, 8], [48.86, 2.35, 7], [40.42, -3.7, 5], [52.52, 13.4, 4], [41.9, 12.5, 3.5], [55.76, 37.62, 7],
-        [30.04, 31.24, 7], [6.52, 3.38, 6], [-26.2, 28.05, 4], [25.2, 55.27, 3.5], [28.61, 77.21, 9], [19.08, 72.88, 9], [12.97, 77.59, 5], [22.57, 88.36, 6], [13.08, 80.27, 4],
-        [17.39, 78.49, 4], [23.81, 90.41, 7], [31.23, 121.47, 9], [39.9, 116.4, 8], [22.32, 114.17, 6], [35.68, 139.69, 10], [37.57, 126.98, 7], [1.35, 103.82, 4], [13.76, 100.5, 5],
-        [-6.2, 106.85, 7], [14.6, 120.98, 6], [-33.87, 151.21, 4], [-37.81, 144.96, 3.5], [41.01, 28.98, 7], [35.69, 51.39, 6], [24.86, 67.0, 7], [33.69, 73.05, 3], [31.55, 74.34, 5]];
-    const lights = [];
-    for (const [la, lo, w] of CITIES) for (let k = 0; k < 18 + w * 26; k++) { const sg = 0.07 * Math.sqrt(w); lights.push([la + gs() * sg, lo + gs() * sg * 1.2, R1() < 0.25 ? [255, 240, 215] : [255, 180, 100], 0.4 + R1() * 0.6]); }
+    // the places I've been, and only those: one white light each, where it really is
+    const PLACES = [['LUCKNOW', 26.85, 80.95], ['DELHI', 28.61, 77.21], ['NEW YORK', 40.71, -74.0], ['CHICAGO', 41.88, -87.63],
+        ['DALLAS', 32.78, -96.8], ['AUSTIN', 30.27, -97.74], ['MIAMI', 25.76, -80.19], ['ORLANDO', 28.54, -81.38]];
     const RAD = Math.PI / 180; let cLa = Math.cos(DALLAS[0] * RAD), sLa = Math.sin(DALLAS[0] * RAD);
     function setHome(h, label) { HOME = h; homeLabel = label; cLa = Math.cos(h[0] * RAD); sLa = Math.sin(h[0] * RAD); }
     const toRad = flat => { const a = new Float32Array(flat.length); for (let i = 0; i < flat.length; i += 2) { a[i] = flat[i + 1] * RAD; a[i + 1] = flat[i] * RAD; } return a; };   // [lon, lat] -> [lat, lon] radians
@@ -299,7 +292,7 @@
         }
 
         // one continuous pull-back from above Texas to the whole planet (R = Earth's radius on screen); the planet turns as we leave
-        const k = -3.2 + 5.4 * smooth(t / 4.6) + Math.max(0, t - 4.6) * 2.2, R = M * 0.26 * Math.exp(-k), fadeE = clamp((5.2 - t) / 0.8, 0, 1), spin = 1.1 * smooth((t - 1.4) / 3.6);
+        const k = -3.2 + 5.4 * smooth(t / 4.6) + Math.max(0, t - 4.6) * 2.2, R = M * 0.26 * Math.exp(-k), fadeE = clamp((5.2 - t) / 0.8, 0, 1), spin = -3.1 * smooth((t - 1.4) / 3.6);   // turns east as we leave: past New York, across the Atlantic, to Lucknow and Delhi
         const [dx, dy, dz] = onGlobe(HOME[0], HOME[1], spin), px = cx + dx * R, py = cy - dy * R;   // where home is right now
         if (R > 1.2 && fadeE > 0) {
             // atmosphere, ocean, continents, then night falling across the planet from the lower right
@@ -316,13 +309,15 @@
             // Texas, outlined, so the starting point is unmistakable
             if (texas && R > M * 0.6) { g.strokeStyle = `rgba(232,186,214,${0.85 * clamp((R / M - 0.6) / 1.2, 0, 1) * (1 - calm)})`; g.lineWidth = 1.4; if (ringPath(texas, cx, cy, R, spin, false)) { g.closePath(); g.stroke(); } }
             g.restore(); g.globalAlpha = 1; g.globalCompositeOperation = 'lighter';
-            // city lights
-            const ds = clamp(R * 0.0007, 0.6, 1.5), near = clamp((R / M - 0.8) / 1.5, 0, 1), glow = sprite([255, 214, 180]);   // up close, each town is a soft warm glow, not a block
-            for (const [la, lo, c, b] of lights) { const [x, y, z] = onGlobe(la, lo, spin); if (z <= 0.02) continue;
+            // the places I've been: a crisp white point with a soft halo, named once we're close enough to read
+            const ds = clamp(R * 0.004, 1.3, 3.2), glow = sprite([255, 240, 250]), named = clamp((R / M - 0.5) / 0.6, 0, 1) * fadeE * (1 - calm);
+            for (const [name, la, lo] of PLACES) { const [x, y, z] = onGlobe(la, lo, spin); if (z <= 0.02) continue;
                 const X = cx + x * R, Y = cy - y * R; if (X < -20 || Y < -20 || X > W + 20 || Y > H + 20) continue;
-                const a = b * fadeE * Math.min(1, z * 3) * (1 - calm);
-                if (near > 0) { g.globalAlpha = a * 0.1 * near; g.drawImage(glow, X - 6, Y - 6, 12, 12); g.globalAlpha = 1; }
-                g.fillStyle = `rgba(255,226,200,${a})`; g.fillRect(X - ds / 2, Y - ds / 2, ds, ds); }
+                const a = fadeE * Math.min(1, z * 3) * (1 - calm), h = ds * 7;
+                g.globalAlpha = a * 0.5; g.drawImage(glow, X - h, Y - h, h * 2, h * 2); g.globalAlpha = 1;
+                g.fillStyle = `rgba(255,255,255,${a})`; g.beginPath(); g.arc(X, Y, ds, 0, 7); g.fill();
+                if (named > 0 && name !== homeLabel) { g.globalCompositeOperation = 'source-over'; g.textAlign = 'left'; g.font = '10px "JetBrains Mono", monospace';
+                    g.fillStyle = `rgba(232,222,240,${0.7 * named * Math.min(1, z * 3)})`; g.fillText(name, X + ds + 5, Y + 3); g.globalCompositeOperation = 'lighter'; } }
             g.strokeStyle = `rgba(200,180,236,${0.4 * fadeE})`; g.lineWidth = Math.max(0.6, R * 0.01); g.beginPath(); g.arc(cx, cy, R, 3.4, 5.4); g.stroke();
             // labels while we're close enough to read them
             const la = clamp((R / M - 1.2) / 1.5, 0, 1) * fadeE * (1 - calm);
@@ -390,12 +385,14 @@
         frontier += (grown() - frontier) * 0.08;
         const ik = clamp((time - intro.start) / intro.ms, 0, 1), ie = 1 - (1 - ik) ** 3, sw = (1 - ie) * 2.6;
         bangE = 0.015 + 0.985 * ie; bC = Math.cos(sw); bS = Math.sin(sw);
-        if (ik < 1 && !intro.touched) { cam.pitch = 0.1 + 1.08 * ie;   /* settles at a low, side-on angle so the spiral and its arms read */ view.z = fitZ * (2.6 - 1.6 * ie); }
+        if (ik < 1 && !intro.touched) { cam.pitch = 0.1 + (PITCH - 0.1) * ie;   /* settles at a low, side-on angle so the spiral and its arms read */ view.z = fitZ * (2.6 - 1.6 * ie); }
         if (fly) { const k = Math.min(1, (time - fly.start) / fly.ms), e = k < .5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2, lz = Math.log(fly.from.z) + (Math.log(fly.to.z) - Math.log(fly.from.z)) * e;
             view.z = Math.exp(lz); view.x = fly.from.x + (fly.to.x - fly.from.x) * e; view.y = fly.from.y + (fly.to.y - fly.from.y) * e; if (k >= 1) fly = null; }
         // the galaxy turns slowly on its own while nobody is touching it
-        if (!drag && step < 0 && !selected && !focusArtist && time - touched > 1500) cam.yaw += dt * 0.00011;   // the galaxy orbits on its own (about one turn a minute) until you take the wheel
-        cam.ty += ((mouse.on ? (mouse.x / W - 0.5) * 0.22 : 0) - cam.ty) * 0.05; cam.tp += ((mouse.on ? (mouse.y / H - 0.5) * 0.14 : 0) - cam.tp) * 0.05;
+        if (!still && !drag && step < 0 && time - touched > 1500) cam.yaw += dt * 0.00011;   // the galaxy orbits on its own (about one turn a minute) until you take the wheel
+        if (!still && !drag && time - touched > 6000) cam.pitch += (PITCH - cam.pitch) * Math.min(1, dt * 0.0006);   // left alone, it settles back to its best angle
+        const lean = mouse.on && !still;   // stopped, the cursor doesn't tilt it either, so names stay put
+        cam.ty += ((lean ? (mouse.x / W - 0.5) * 0.22 : 0) - cam.ty) * 0.05; cam.tp += ((lean ? (mouse.y / H - 0.5) * 0.14 : 0) - cam.tp) * 0.05;
         const yaw = cam.yaw + cam.ty, pitch = clamp(cam.pitch + cam.tp, 0, 1.45);
         cY = Math.cos(yaw); sY = Math.sin(yaw); cP = Math.cos(pitch); sP = Math.sin(pitch);
 
@@ -476,7 +473,7 @@
 
         // a thread: its edges draw themselves in, then sparks travel along them
         if (thread) {
-            const shown = Math.floor(thread.edges.length * Math.min(1, (time - threadAt) / 1600)), [cr, cg2, cb] = thread.c, curvy = thread.key === 'together';
+            const shown = Math.floor(thread.edges.length * Math.min(1, (time - threadAt) / 1600)), [cr, cg2, cb] = thread.c, curvy = false;
             for (const [w, a] of [[3, 0.07], [0.8, 0.5]]) { g.lineWidth = w; g.strokeStyle = `rgba(${cr},${cg2},${cb},${a})`; g.beginPath();
                 for (let i = 0; i < shown; i++) { const [p, q] = thread.edges[i]; if (lit(p) && lit(q)) curve(p, q, curvy); } g.stroke(); }
             g.fillStyle = `rgba(${cr},${cg2},${cb},.9)`;
@@ -509,7 +506,7 @@
             const tw = (0.75 + 0.25 * Math.sin(time / 700 + s.tw)) * brightness(s) * Math.min(1, focus) * (1 + s.glow * 0.6) * depth * quietMood;
             const c = thread && dimOthers.has(s) ? thread.c : s.c;
             if (r > 1.6 || s.glow > 0.2) { g.globalAlpha = Math.min(1, (0.22 + 0.3 * s.glow) * tw); const R = r * 2.6 + s.glow * 10; g.drawImage(sprite(c), x - R, y - R, R * 2, R * 2); g.globalAlpha = 1; }
-            g.fillStyle = `rgba(${Math.min(255, c[0] + 50)},${Math.min(255, c[1] + 50)},${Math.min(255, c[2] + 50)},${Math.min(1, tw * 0.9)})`;
+            g.fillStyle = `rgba(${Math.min(255, c[0] + 18)},${Math.min(255, c[1] + 18)},${Math.min(255, c[2] + 18)},${Math.min(1, tw * 0.9)})`;   // only a touch lighter, so the color still reads
             g.beginPath(); g.arc(x, y, Math.max(0.5, r), 0, 7); g.fill();
         }
         for (let i = births.length - 1; i >= 0; i--) {
@@ -528,18 +525,38 @@
             g.fillStyle = `rgba(${p.c},${p.life * 0.8})`; g.beginPath(); g.arc(p.x, p.y, p.life * 2.2, 0, 7); g.fill(); }
         g.globalCompositeOperation = 'source-over';
 
-        // names and photos: my top constellations, whichever I'm near, and, once I zoom in, every constellation big enough on screen
+        // names and photos: my top constellations, whichever I'm near, and, once I zoom in, every constellation big enough on screen.
+        // The top ten are drawn big, with their rank, and the smaller names step aside rather than land on top of them.
         g.textAlign = 'center';
+        if (time - shieldAt > 250) { shieldAt = time; shields = panelRects(); }
         const named = new Set([...artists.slice(0, 14), nearArtist, focusArtist].filter(Boolean));
         for (const A of artists) { if (named.size >= 44) break; if (A.spread * view.z * A.f > 55 && A.sx > 0 && A.sy > 0 && A.sx < W && A.sy < H) named.add(A); }
-        for (const A of named) {
-            const litK = A.songs.filter(lit).length / A.songs.length, close = A === nearArtist || A === focusArtist; if (litK < 0.25 && !close) continue;
-            const a = clamp((ik - 0.6) / 0.4, 0, 1) * (close ? 0.95 : (0.3 + 0.5 * litK) * (dimOthers ? 0.4 : 1) * clamp(0.35 + 0.55 * A.f, 0.35, 1));
-            const top = A.sy - (A.spread * Math.max(0.35, cP) + 10) * view.z * A.f - 6, pr = close ? 20 : A.i === 0 ? 17 : 12;
-            const img = photoImg(A);
-            if (img) { g.save(); g.globalAlpha = a; g.beginPath(); g.arc(A.sx, top - pr - 18, pr, 0, 7); g.clip(); g.drawImage(img, A.sx - pr, top - pr * 2 - 18, pr * 2, pr * 2); g.restore();
-                g.strokeStyle = `rgba(243,236,244,${a * 0.6})`; g.lineWidth = 1; g.beginPath(); g.arc(A.sx, top - pr - 18, pr, 0, 7); g.stroke(); }
-            g.font = `${A.i === 0 ? 22 : close ? 17 : 14}px "Bodoni Moda", Georgia, serif`; g.fillStyle = `rgba(243,236,244,${a})`; g.fillText(A.name, A.sx, top);
+        const small = W < 760, isClose = A => A === nearArtist || A === focusArtist, tier = A => isClose(A) ? 0 : A.i < 10 ? 1 : 2;
+        const placed = [], boxes = [];
+        for (const A of [...named].sort((a, b) => tier(a) - tier(b) || a.i - b.i)) {
+            const litK = A.songs.filter(lit).length / A.songs.length, close = isClose(A), star = A.i < 10; if (litK < 0.25 && !close) continue;
+            const top = A.sy - (A.spread * Math.max(0.35, cP) + 10) * view.z * A.f - 6;
+            const pr = star ? (small ? 19 : A.i === 0 ? 32 : 27) : close ? 20 : 12, fs = star ? (small ? 17 : A.i === 0 ? 30 : 24) : close ? 17 : 14;
+            if (shields.some(r => A.sx > r.left - 80 && A.sx < r.right + 80 && top > r.top - pr * 2 - 24 && top < r.bottom + 20)) continue;   // never under a panel
+            g.font = `${fs}px "Bodoni Moda", Georgia, serif`; const hw = Math.max(g.measureText(A.name).width / 2, pr) + 6;
+            const box = [A.sx - hw, top - pr * 2 - 22, A.sx + hw, top + (close ? 20 : 8)];
+            if (tier(A) === 2 && boxes.some(b => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue;
+            boxes.push(box); placed.push([A, top, pr, fs, litK, close, star]);
+        }
+        nameHits = placed.map(([A], n) => [A, boxes[n]]);
+        for (let n = placed.length - 1; n >= 0; n--) {   // the most important last, so it sits on top
+            const [A, top, pr, fs, litK, close, star] = placed[n];
+            const a = clamp((ik - 0.6) / 0.4, 0, 1) * (close || star ? 0.95 * (dimOthers && !close ? 0.5 : 1) : (0.3 + 0.5 * litK) * (dimOthers ? 0.4 : 1) * clamp(0.35 + 0.55 * A.f, 0.35, 1));
+            const img = photoImg(A), py = top - pr - 18;
+            if (img) { g.save(); g.globalAlpha = a; g.beginPath(); g.arc(A.sx, py, pr, 0, 7); g.clip(); g.drawImage(img, A.sx - pr, py - pr, pr * 2, pr * 2); g.restore();
+                g.strokeStyle = star ? `rgba(232,186,214,${a * 0.9})` : `rgba(243,236,244,${a * 0.6})`; g.lineWidth = star ? 1.5 : 1; g.beginPath(); g.arc(A.sx, py, pr, 0, 7); g.stroke(); }
+            if (star) {   // the rank, on a small pink badge at the photo's shoulder
+                const bx = A.sx + pr * 0.74, by = py + pr * 0.74, br = small ? 8 : 10;
+                g.fillStyle = `rgba(232,186,214,${a})`; g.beginPath(); g.arc(bx, by, br, 0, 7); g.fill();
+                g.font = `600 ${small ? 9 : 11}px "JetBrains Mono", monospace`; g.fillStyle = `rgba(43,26,48,${a})`; g.textBaseline = 'middle'; g.fillText(A.i + 1, bx, by + 0.5); g.textBaseline = 'alphabetic';
+            }
+            g.font = `${fs}px "Bodoni Moda", Georgia, serif`; g.fillStyle = `rgba(243,236,244,${a})`;
+            if (star) { g.shadowColor = 'rgba(10,6,16,.85)'; g.shadowBlur = 10; } g.fillText(A.name, A.sx, top); g.shadowBlur = 0;
             if (close) { g.font = '10px "JetBrains Mono", monospace'; g.fillStyle = 'rgba(207,198,218,.75)'; g.fillText(`#${A.i + 1} · ${A.songs.length} SONGS · ${fmt(A.hours)} H`, A.sx, top + 16); }
         }
 
@@ -548,6 +565,18 @@
         $('#date').textContent = new Date(now).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
         frames++; if (time - fpsAt > 1000) { $('#fps').textContent = Math.round(frames * 1000 / (time - fpsAt)); frames = 0; fpsAt = time; }
         requestAnimationFrame(frame);
+    }
+    // the panels floating over the sky, so constellation names can step out from under them
+    let shields = [], shieldAt = 0, nameHits = [];   // nameHits: each drawn name and photo with its box on screen, so it can be clicked
+    const nameAt = (x, y) => (nameHits.find(([, b]) => x > b[0] && x < b[2] && y > b[1] && y < b[3]) || [])[0];
+    const SHIELDED = '.replaycap, .threads, .card, .guide, .tour, .album, .choose, .hero, .time, .toast, .endchoice, .ainfo, .nudge';
+    function panelRects() {
+        const out = [];
+        for (const el of document.querySelectorAll(SHIELDED)) {
+            const st = getComputedStyle(el); if (st.visibility === 'hidden' || st.display === 'none' || +st.opacity < 0.3) continue;
+            const r = el.getBoundingClientRect(); if (r.width && r.height && r.right > 0 && r.left < W) out.push(r);
+        }
+        return out;
     }
     // links are drawn as gentle arcs so long ones read as connections, not as part of a constellation
     function ctrl(p, q, curvy) { const mx = (p.sx + q.sx) / 2, my = (p.sy + q.sy) / 2; if (!curvy) return [mx, my]; return [mx - (q.sy - p.sy) * 0.18, my + (q.sx - p.sx) * 0.18]; }
@@ -661,7 +690,7 @@
     function finishReplay() { clearInterval(tipTimer); if (score) { stopScore(false); scoreFinale(); } cancelAnimationFrame(bang); bang = null; replaying = false; setNow(t1); document.body.classList.add('choosing');
         setTimeout(() => { if (step < 0 && document.body.classList.contains('replay')) choose.classList.add('on'); }, 900); }
     function bigBang(ms) { if (sfx.on && sfx.ctx) boom(); endTour(); closeCard(); fly = null; frontier = 0;
-        cam.yaw = -0.35; view.x = 0; view.y = W < 760 ? 30 - 70 / fitZ : 30; view.z = fitZ; intro.start = performance.now(); intro.touched = false;
+        cam.yaw = -0.35; cam.pitch = PITCH; view.x = 0; view.y = W < 760 ? 30 - 70 / fitZ : 30; view.z = fitZ; intro.start = performance.now(); intro.touched = false;
         replay(ms); }
     $('#chooseSlow').onclick = () => bigBang(SLOW_MS);
     $('#replaySlow').onclick = () => bigBang(SLOW_MS);
@@ -681,7 +710,7 @@
         { t: 'Constellations are artists', p: () => `The lines join one artist's songs. The most massive is ${topA().name}: ${fmt(topA().listens)} listens, right at the core because she came first.`, go: () => openArtist(topA()) },
         { t: 'Observe any star', p: () => `Click a star for its whole life cycle: first light, peak brightness, biggest day, skip rate, and the songs in its orbit. This one is my most played, ${topA() === topS().A ? '' : 'by ' + topS().A.name + ', '}${fmt(topS().n)} times.`, go: () => openSong(topS()), at: '#card' },
         { t: 'Change the spectrum', p: () => 'Switch from the era a star formed to how it feels: pink love, burgundy heartbreak, sour lilac bittersweet, deep purple dark.', go: () => { closeCard(); setColor('mood'); }, at: '#threads' },
-        { t: 'Map the gravity', p: () => 'Light up every pair of songs that pull each other along, back-to-back, or every song of one mood, and watch them cross the sky.', go: () => setThread(threads[0]), at: '#threads' },
+        { t: 'Map the gravity', p: () => 'Light up every song of one mood, love, heartbreak, bittersweet, and watch it cross the sky.', go: () => setThread(threads[0]), at: '#threads' },
         { t: 'Rewind the cosmos', p: () => 'Drag the timeline to any month and the galaxy rewinds to exactly the stars that had formed by then. The bars are the signal: plays per month.', go: () => { setThread(null); setColor('year'); }, at: '.time' },
         { t: 'Point the telescope', p: () => 'Press / and type an artist or a song; the camera flies there. The galaxy is yours now.', go: () => {}, at: '.search' },
     ];
@@ -692,15 +721,20 @@
         if (g.at) $(g.at).classList.add('guided');
         guideEl.innerHTML = `<div class="label">Explore the sky · ${i + 1} of ${GUIDE.length}</div><h3>${g.t}</h3><p>${g.p()}</p>
             <div class="gnav"><div class="gdots">${GUIDE.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</div>
-            ${i ? '<button class="gback">Back</button>' : '<button class="gback">Skip</button>'}<button class="pill solid gnext">${i === GUIDE.length - 1 ? 'Done' : 'Next →'}</button></div>`;
+            ${i < GUIDE.length - 1 ? '<button class="gback gskip">Skip</button>' : ''}${i ? '<button class="gback gprev">Back</button>' : ''}<button class="pill solid gnext">${i === GUIDE.length - 1 ? 'Done' : 'Next →'}</button></div>`;
         guideEl.classList.add('on'); document.body.classList.add('guiding');
         guideEl.querySelector('.gnext').onclick = () => guide(i + 1);
-        guideEl.querySelector('.gback').onclick = () => i ? guide(i - 1) : endGuide();
+        const skip = guideEl.querySelector('.gskip'), prev = guideEl.querySelector('.gprev');
+        if (skip) skip.onclick = endGuide; if (prev) prev.onclick = () => guide(i - 1);
     }
     function endGuide() { if (guideAt < 0) return; guideAt = -1; guideEl.classList.remove('on'); document.body.classList.remove('guiding'); document.querySelectorAll('.guided').forEach(x => x.classList.remove('guided')); setThread(null); setColor('year'); }
     // the replay is the big bang again: whatever the tour or a card was looking at, the camera pulls back to the
     // whole sky, the disk collapses to a point and the galaxy grows out from its first star
     $('#bang').onclick = () => bigBang();
+    // stop the spin, so the names hold still long enough to find who's where; press again and it turns on its own again
+    const stillBtn = $('#still'), STILL_OFF = '<path d="M5 3.5v9M11 3.5v9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>', STILL_ON = '<path d="M5 3v10l8.5-5z" fill="currentColor"/>';
+    stillBtn.onclick = () => { still = !still; stillBtn.setAttribute('aria-pressed', still); stillBtn.classList.toggle('on', still);
+        stillBtn.querySelector('svg').innerHTML = still ? STILL_ON : STILL_OFF; stillBtn.querySelector('span').textContent = still ? 'Let it spin' : 'Stop spinning'; };
 
     // ---------- hover, cards, search ----------
     const tip = $('#tip'), audio = $('#audio'), card = $('#card');
@@ -768,24 +802,41 @@
         card.classList.add('on'); card.scrollTop = 0; quiet();
         if (listen) play(s); else syncPlay();
     }
+    const bios = new Map(), MUSICIAN = /sing|music|band|rapper|composer|\bdj\b|group|duo|producer|songwriter|record|perform|actor|actress/i;
+    function bio(A) {
+        if (!bios.has(A.i)) bios.set(A.i, (async () => {
+            for (const t of [A.name, `${A.name} (singer)`, `${A.name} (musician)`, `${A.name} (band)`, `${A.name} (rapper)`, `${A.name} (composer)`]) {
+                try { const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(t.replace(/ /g, '_'))}`); if (!r.ok) continue;
+                    const d = await r.json(); if (d.type !== 'standard' || !MUSICIAN.test(`${d.description || ''} ${(d.extract || '').slice(0, 240)}`)) continue;
+                    const sent = (d.extract || '').match(/[^.!?]+(?:[.!?]+["')\]]*|$)(?:\s+|$)/g) || [];
+                    return { description: d.description ? d.description[0].toUpperCase() + d.description.slice(1) : '', short: sent.slice(0, 2).join('').trim(), url: d.content_urls && d.content_urls.desktop.page };
+                } catch { /* offline or blocked: the profile just goes without */ } }
+            return null; })());
+        return bios.get(A.i);
+    }
     function openArtist(A, { push } = {}) {
         const backBtn = enter({ A }, push); pair = null;
         focusArtist = A; selected = null; if (now < day(A.first)) setNow(day(A.first));
         flyToArtist(A);
-        const top = [...A.songs].slice(0, 5), span = Math.round((day(A.last) - day(A.first)) / DAY);
+        const top = A.songs.slice(0, 8), span = Math.round((day(A.last) - day(A.first)) / DAY);
         card.innerHTML = `${backBtn}<button class="x" aria-label="Close">×</button>
-            <div class="head"><img class="round" alt="" src="${blank}"><div><div class="label">Constellation · #${A.i + 1} of ${fmt(artists.length)}</div><h2>${esc(A.name)}</h2></div></div>
+            <div class="head"><img class="round" alt="" src="${blank}"><div><div class="label">Constellation · #${A.i + 1} of ${fmt(artists.length)}</div><h2>${esc(A.name)}</h2><div class="bdesc"></div></div></div>
+            <div class="bio" hidden><p></p><a target="_blank" rel="noopener">More on Wikipedia ↗</a></div>
+            <div class="tops"><div class="label">What I play most by them</div>${top.map((s, k) => `<button data-i="${s.i}"><span class="n">${k + 1}</span><img alt="" src="${blank}"><span class="t"><b>${esc(s.title)}</b><i style="--w:${Math.max(4, Math.round(100 * s.n / top[0].n))}%"></i></span><small>${fmt(s.n)} plays</small></button>`).join('')}</div>
             <div class="facts">
                 <div>Listens<b>${fmt(A.listens)}</b></div><div>Hours<b>${fmt(A.hours)}</b></div>
                 <div>Stars<b>${A.songs.length} song${A.songs.length > 1 ? 's' : ''}</b></div><div>In my orbit<b>${(span / 365).toFixed(1)} years</b></div>
                 <div>Entered my galaxy<b>${longDate(day(A.first))}</b></div><div>Last seen<b>${longDate(day(A.last))}</b></div>
                 <div>Peak brightness<b>${monthName(A.peak_month)}</b></div><div>Strongest pull<b>${fmt(A.peak_week_listens)} listens in a week</b></div>
                 ${D.months.some(m => m.owner === A.i) ? `<div class="wide">Months they owned<b>${D.months.filter(m => m.owner === A.i).length} of ${D.months.length}</b></div>` : ''}
-            </div>
-            <div class="mates"><div class="label">Brightest stars</div>${top.map(s => `<button data-i="${s.i}"><b>${esc(s.title)}</b><small>${fmt(s.n)}</small></button>`).join('')}</div>`;
+            </div>`;
         photo(A).then(u => { if (focusArtist === A) card.querySelector('.head img').src = u || blank; });
+        bio(A).then(d => { if (focusArtist !== A || !d) return; const box = card.querySelector('.bio');
+            card.querySelector('.bdesc').textContent = d.description || ''; box.querySelector('p').textContent = d.short;
+            box.querySelector('a').href = d.url; box.hidden = false; });
         wire();
-        card.querySelectorAll('.mates button').forEach(b => b.onclick = () => openSong(songs[+b.dataset.i]));
+        card.querySelectorAll('.tops button').forEach(b => { const s = songs[+b.dataset.i]; b.onclick = () => openSong(s);
+            cover(s).then(u => { if (u && b.isConnected) b.querySelector('img').src = u; }); });
         card.classList.add('on'); card.scrollTop = 0; quiet();
     }
     // what two songs have in common, from the data: artist, mood, when I found them, when they peaked, when I play them,
@@ -796,37 +847,34 @@
         if (!prev.has(b)) return null;
         const path = []; for (let s = b; s; s = prev.get(s)) path.unshift(s); return path;
     }
-    function shared(a, b) {
-        const out = [], [x, y] = a.born <= b.born ? [a, b] : [b, a], months = (p, q) => Math.round(Math.abs(day(q) - day(p)) / (30.4 * DAY));
-        const link = a.links.find(m => m.s === b);
-        if (link) out.push(['Played together', `I've played them back-to-back ${link.c} times.`]);
-        if (a.A === b.A) out.push(['Same artist', `Both are ${a.A.name}, from a constellation of ${a.A.songs.length} songs.`]);
-        if (a.feel && a.feel === b.feel) out.push(['Same feeling', `Both feel ${a.feel}${a.mood && b.mood ? ', and I tagged both myself' : ', partly inferred from what I play them with'}.`]);
-        else if (a.feel && b.feel) out.push(['Different feelings', `${a.title} feels ${a.feel}, ${b.title} feels ${b.feel}.`]);
-        if (a.first.slice(0, 7) === b.first.slice(0, 7)) out.push(['Found together', `I found both in ${monthName(a.first.slice(0, 7))}${a.first === b.first ? ', on the very same day' : ''}.`]);
-        else { const n = months(x.first, y.first); out.push(['Found apart', `I found ${y.title} ${n <= 1 ? 'a month' : n + ' months'} after ${x.title}.`]); }
-        if (a.peak === b.peak) out.push(['Same peak', `Both peaked in ${monthName(a.peak)}.`]);
-        else if (months(a.peak + '-15', b.peak + '-15') <= 2) out.push(['Peaked close', `They peaked within ${months(a.peak + '-15', b.peak + '-15')} month${months(a.peak + '-15', b.peak + '-15') > 1 ? 's' : ''} of each other.`]);
-        const dh = Math.min(Math.abs(a.hour - b.hour), 24 - Math.abs(a.hour - b.hour));
-        if (dh <= 1) out.push(['Same hour', `I usually play both around ${hourName(a.hour)}.`]);
-        if (t1 - a.gone < 45 * DAY && t1 - b.gone < 45 * DAY) out.push(['Still in rotation', 'I still play both.']);
-        if (a.skip < 0.35 && b.skip < 0.35) out.push(['Never skipped', 'I almost never skip either one.']);
-        if (a.skip > 0.7 && b.skip > 0.7) out.push(['Often skipped', 'I skip both most of the time, and keep coming back anyway.']);
-        return out;
+    // the same eight connection points for every pair, each one either made or not, with the evidence
+    function connections(a, b, path) {
+        const months = (p, q) => Math.round(Math.abs(day(q) - day(p)) / (30.4 * DAY)), link = a.links.find(m => m.s === b);
+        const dh = Math.min(Math.abs(a.hour - b.hour), 24 - Math.abs(a.hour - b.hour)), dp = months(a.peak + '-15', b.peak + '-15'), df = months(a.first, b.first);
+        const live = s => t1 - s.gone < 45 * DAY, pct = s => Math.round(s.skip * 100) + '%';
+        return [
+            ['Played back-to-back', !!link, link ? `${link.c} time${link.c > 1 ? 's' : ''}, one right after the other` : path ? `never directly; ${path.length - 2} song${path.length > 3 ? 's' : ''} in between` : 'never, not even through other songs'],
+            ['Same artist', a.A === b.A, a.A === b.A ? `both ${a.A.name}` : `${a.A.name} and ${b.A.name}`],
+            ['Same feeling', !!a.feel && a.feel === b.feel, a.feel && b.feel ? (a.feel === b.feel ? `both ${a.feel}` : `${a.feel} and ${b.feel}`) : 'one of them has no mood yet'],
+            ['Found together', df <= 1, df ? `${monthName(a.first.slice(0, 7))} and ${monthName(b.first.slice(0, 7))}` : a.first === b.first ? 'on the very same day' : `both in ${monthName(a.first.slice(0, 7))}`],
+            ['Peaked together', dp <= 2, a.peak === b.peak ? `both in ${monthName(a.peak)}` : `${monthName(a.peak)} and ${monthName(b.peak)}`],
+            ['Same time of day', dh <= 1, dh ? `around ${hourName(a.hour)} and ${hourName(b.hour)}` : `both around ${hourName(a.hour)}`],
+            ['Same skip habit', Math.abs(a.skip - b.skip) <= 0.15, `skipped ${pct(a)} and ${pct(b)} of the time`],
+            ['Both still playing', live(a) && live(b), live(a) && live(b) ? 'both in the last 45 days' : live(a) || live(b) ? `only ${(live(a) ? a : b).title} still is` : 'neither one lately'],
+        ];
     }
     function openPair(a, b, { push } = {}) {
         const backBtn = enter({ pair: [a, b] }, push);
         selected = null; focusArtist = null; if (now < Math.max(a.born, b.born)) setNow(Math.max(a.born, b.born));
         const path = chain(a, b); pair = { a, b, path };
         flyTo((a.x + b.x) / 2, (a.y + b.y) / 2, clamp(Math.min(W, H) * 0.42 / (Math.hypot(a.x - b.x, a.y - b.y) + 120), minZ(), 4));
-        const facts = shared(a, b), row = (k, f) => `<div>${k}<b>${f(a)}</b><b>${f(b)}</b></div>`;
+        const points = connections(a, b, path), made = points.filter(p => p[1]).length;
         card.innerHTML = `${backBtn}<button class="x" aria-label="Close">×</button>
-            <div class="label">Two stars</div>
             <div class="pairhead"><button data-i="${a.i}"><img alt="" src="${blank}"><b>${esc(a.title)}</b><small>${esc(a.A.name)}</small></button><span>⟷</span><button data-i="${b.i}"><img alt="" src="${blank}"><b>${esc(b.title)}</b><small>${esc(b.A.name)}</small></button></div>
-            <div class="shared"><div class="label">What they share</div>${facts.length ? facts.map(([k, t]) => `<p><em>${k}</em>${esc(t)}</p>`).join('') : '<p>Honestly, not much: they live in different corners of my galaxy.</p>'}</div>
-            <div class="shared"><div class="label">How my listening connects them</div>${path ? (path.length === 2 ? '<p>Directly: one plays right after the other.</p>'
-                : `<p>${path.length - 1} steps through songs I play back-to-back:</p><div class="path">${path.map(s => `<button data-i="${s.i}">${esc(s.title)}</button>`).join('<i>→</i>')}</div>`) : '<p>No chain of back-to-back plays reaches from one to the other.</p>'}</div>
-            <div class="vs label">Side by side</div><div class="vsgrid">${row('Listens', s => fmt(s.n))}${row('First light', s => longDate(s.born))}${row('Peak brightness', s => monthName(s.peak))}${row('Usually around', s => hourName(s.hour))}${row('Skipped', s => Math.round(s.skip * 100) + '%')}</div>`;
+            <p class="pverdict">Connected on <b>${made} of ${points.length}</b> points.</p>
+            <ol class="points">${points.map(([k, on, t]) => `<li class="${on ? 'on' : ''}"><i aria-hidden="true"></i><div><em>${k}<span class="sr">: ${on ? 'yes' : 'no'}</span></em>${esc(t)}</div></li>`).join('')}</ol>
+            ${path && path.length > 2 ? `<div class="shared"><div class="label">The chain between them</div><div class="path">${path.map(s => `<button data-i="${s.i}">${esc(s.title)}</button>`).join('<i>→</i>')}</div></div>` : ''}
+            <div class="vsgrid"><div>Listens<b>${fmt(a.n)}</b><b>${fmt(b.n)}</b></div></div>`;
         card.querySelectorAll('.pairhead button').forEach((el, k) => { const s = k ? b : a; cover(s).then(u => { el.querySelector('img').src = u; }); });
         card.querySelectorAll('.pairhead button, .path button').forEach(el => el.onclick = () => openSong(songs[+el.dataset.i]));
         wire(); card.classList.add('on'); card.scrollTop = 0; quiet();
@@ -877,8 +925,9 @@
         if (e.pointerType !== 'mouse') return;
         mouse.x = e.clientX; mouse.y = e.clientY; mouse.on = true;
         hover = drag && drag.moved > 5 ? null : pick(e.clientX, e.clientY);
-        nearArtist = hover ? hover.A : nearestArtist(e.clientX, e.clientY);
-        cv.classList.toggle('on-star', !!hover); showTip(hover, e.clientX, e.clientY);
+        const overName = !hover && !drag && nameAt(e.clientX, e.clientY);
+        nearArtist = hover ? hover.A : overName || nearestArtist(e.clientX, e.clientY);
+        cv.classList.toggle('on-star', !!(hover || overName)); showTip(hover, e.clientX, e.clientY);
         const c = hover ? hover.c : [232, 186, 214];
         for (let k = 0; k < 2; k++) trail.push({ x: e.clientX, y: e.clientY, vx: (Math.random() - .5) * .6, vy: (Math.random() - .5) * .6 + .15, life: 0.6 + Math.random() * 0.4, c });
         if (trail.length > 160) trail.splice(0, trail.length - 160);
@@ -888,9 +937,10 @@
         const wasTap = drag && drag.moved <= 5 && pts.size === 1;
         pts.delete(e.pointerId); if (pts.size < 2) pinch = null;
         if (wasTap) {
-            const s = pick(e.clientX, e.clientY);
-            if (s) { if (albumOwnsAudio()) openSong(s, { fly: false }); else { pauseOrEnd(); openSong(s, { fly: false, listen: true }); } }   // mid-album, a star opens its card but doesn't play
-            else { ripples.push({ x: e.clientX, y: e.clientY, t: performance.now() }); if (card.classList.contains('on')) closeCard(); }
+            const s = pick(e.clientX, e.clientY), named = nameAt(e.clientX, e.clientY);
+            if (named) openArtist(named);   // a click on a name or photo opens that artist's profile
+            else if (s) { if (albumOwnsAudio()) openSong(s, { fly: false }); else { pauseOrEnd(); openSong(s, { fly: false, listen: true }); } }   // mid-album, a star opens its card but doesn't play
+            else { ripples.push({ x: e.clientX, y: e.clientY, t: performance.now() }); if (card.classList.contains('on')) closeCard(); else if (thread && guideAt < 0) setThread(null); }
         }
         if (!pts.size) { drag = null; cv.classList.remove('drag'); }
     };
@@ -934,7 +984,8 @@
     // a track title always gets exactly one line: if it's too wide, the type steps down until it fits
     function fitTitle() { const el = $('#tourTitle'); el.style.fontSize = ''; let px = parseFloat(getComputedStyle(el).fontSize);
         while (el.scrollWidth > el.clientWidth + 1 && px > 18) { px -= 1; el.style.fontSize = px + 'px'; } }
-    function startTour(i = 0) { hideInfo();
+    function startTour(i = 0, sure = false) { hideInfo();
+        const home = !!TOUR[i].outro && (sure || (step === i && !!outro));   // the last track only leaves the galaxy when you ask to go home; otherwise it plays right here
         const startingFresh = step < 0; album.classList.add('started');
         openAlbum();
         leaveReplay();
@@ -946,7 +997,7 @@
         $('#tourText').textContent = c.text; $('#tourVerdict').textContent = c.verdict || '';
         // the closing song: a YouTube embed (YouTube licenses what it hosts), shown small in the card and started by the tour's own click
         const tv = $('#tourVideo');
-        if (c.outro && window.ENDING_YOUTUBE) { tv.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(window.ENDING_YOUTUBE)}?autoplay=1&playsinline=1&rel=0" title="May the Music Never End, Greg Gilpin" allow="autoplay; encrypted-media" allowfullscreen></iframe><span>May the Music Never End · Greg Gilpin</span>`; tv.hidden = false; }
+        if (home && window.ENDING_YOUTUBE) { tv.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(window.ENDING_YOUTUBE)}?autoplay=1&playsinline=1&rel=0" title="May the Music Never End, Greg Gilpin" allow="autoplay; encrypted-media" allowfullscreen></iframe><span>May the Music Never End · Greg Gilpin</span>`; tv.hidden = false; }
         else { tv.innerHTML = ''; tv.hidden = true; } $('#tourStep').textContent = `${i + 1} / ${TOUR.length}`; $('#pTitle').textContent = c.name;
         $('#tourNext').setAttribute('aria-label', i === TOUR.length - 1 ? 'End of album' : 'Next track');
         // the evidence: light only the stars this chapter is about, and fly to them
@@ -977,11 +1028,12 @@
         const bare = t => t.toLowerCase().replace(/ [(\[-].*$/, '').trim();
         const namesake = songs.filter(x => !x.A.desi && bare(x.title) === bare(c.name)).sort((a, b) => b.n - a.n)[0];
         const pinned = fits(c.play != null ? songs[c.play] : null), sound = c.keep ? pinned || namesake : namesake || pinned;   // a pinned cover changes only the picture
-        if (sound && !c.spree && !c.swings && !c.seq && !(c.outro && window.ENDING_YOUTUBE)) play(sound, true); else audio.pause();
+        if (sound && !c.spree && !c.swings && !c.seq && !(home && window.ENDING_YOUTUBE)) play(sound, true); else audio.pause();
         // the last track flies the viewer home: out of the galaxy and down to Austin
         // and once it lands on Austin, the last word is a question
         clearTimeout(endingTimer); hush();
-        if (c.outro) { setHome(AUSTIN, 'AUSTIN'); outro = { start: performance.now() }; document.body.classList.add('outro');
+        $('#tourHome').hidden = !c.outro || home;
+        if (home) { setHome(AUSTIN, 'AUSTIN'); outro = { start: performance.now() }; document.body.classList.add('outro');
             endingTimer = setTimeout(() => { if (step === i) { say('Where will she go next?', 'Austin, Texas'); showEnd(); } }, 6000); }
         else if (outro) { outro = null; setHome(DALLAS, 'DALLAS'); document.body.classList.remove('outro'); }
         // now playing: the song's cover, and the songs behind this finding, each one a click away
@@ -1050,15 +1102,16 @@
     // the ends of the journey are choices, never automatic: after Austin, the deluxe (until it's been played) or stay;
     // after the deluxe, back to Austin or keep exploring the galaxy
     const endChoice = $('#endChoice'), vaultAt = TOUR.findIndex(t => !t.side), homeAt = TOUR.findIndex(t => t.outro);
+    $('#toEarth').onclick = $('#tourHome').onclick = () => { if (!(step === homeAt && outro)) startTour(homeAt, true); };   // from anywhere in the galaxy, fly home to Austin
     let vaultPlayed = false, crossTimer = null;
     function showEnd(crossroads = false) {
         // three places the journey asks instead of deciding: the end of Side B (home, the deluxe, or the galaxy),
         // Austin (the deluxe or stay), and the end of the deluxe (home or the galaxy)
         const inAustin = !crossroads && TOUR[step] && TOUR[step].outro, opts = crossroads
-            ? [['Play the vault →', true, () => startTour(vaultAt)], ['Take me back to Earth', false, () => startTour(homeAt)]]
+            ? [['Play the vault →', true, () => startTour(vaultAt)], ['Take me back to Earth', false, () => startTour(homeAt, true)]]
             : inAustin
             ? [vaultPlayed ? ['Keep exploring the galaxy', true, () => { hush(); endTour(); }] : ['Play the deluxe: From the Vault →', true, () => { hush(); startTour(vaultAt); }], ['Stay in Austin', false, () => {}]]
-            : [['Yes, show me around →', true, () => { endTour(); guide(0); }], ['I\'ll explore on my own', false, () => endTour()], ['Back to Austin', false, () => startTour(homeAt)]];
+            : [['Yes, show me around →', true, () => { endTour(); guide(0); }], ['I\'ll explore on my own', false, () => endTour()], ['Back to Austin', false, () => startTour(homeAt, true)]];
         const afterVault = !crossroads && !inAustin;   // the end of the deluxe asks in the right panel too: the galaxy is theirs now
         // the end of Side B asks in the right panel, where the record flipped: you stay in the galaxy, and the
         // vault plays on its own unless you ask to go home; only then does the camera leave for Earth
@@ -1067,7 +1120,7 @@
         endChoice.innerHTML = (crossroads ? `<div class="label">End of Side B</div><h3>Where to next?</h3><p>The deluxe is waiting: five songs from the vault. Or the record can carry you home, back to Earth.</p>`
             : afterVault ? `<div class="label">That's the whole album</div><h3>Now the galaxy is yours.</h3><p>All ${fmt(songs.length)} songs are out there. Spin the sky, open any star, color it by feeling, or search for a song you love. Want a quick tour first?</p>` : '') + opts.map(([t, main], k) => `<button class="pill${main ? ' solid' : ''}" data-k="${k}">${esc(t)}</button>`).join('')
             + (crossroads ? '<div class="crossbar"><i></i></div><small class="crossnote">The vault plays in <b>12</b>s</small>' : '');
-        const pick = k => { clearInterval(crossTimer); endChoice.classList.remove('on', 'cross'); opts[k][2](); };
+        const pick = k => { clearInterval(crossTimer); endChoice.classList.remove('on'); setTimeout(() => endChoice.classList.contains('on') || endChoice.classList.remove('cross'), 1300); opts[k][2](); };   // fade out where it stands, then drop the panel layout
         endChoice.querySelectorAll('button').forEach(b => b.onclick = () => pick(+b.dataset.k));
         if (crossroads) { let left = 12; const n = endChoice.querySelector('.crossnote b');
             crossTimer = setInterval(() => { left--; if (n) n.textContent = left; if (left <= 0) pick(0); }, 1000); }
@@ -1243,7 +1296,7 @@
     const flip = $('#flip'), arm = $('#flipArm'), disc = $('#flipDisc'), tt = $('#tt'), flipSay = $('#flipSay');
     const ON = 0, OFF = -30;   // the arm's angle on the record, and lifted clear of it
     let flipTo = null, armAt = ON, flipped = false, sideB = false, armDrag = null;
-    function nextTrack(i) { if (TOUR[i - 1] && TOUR[i - 1].outro) return showEnd();   // after Austin, the listener chooses: the deluxe, or stay
+    function nextTrack(i) { if (TOUR[i - 1] && TOUR[i - 1].outro) return outro ? showEnd() : startTour(i);   // after Austin, the listener chooses: the deluxe, or stay
          if (TOUR[i] && TOUR[i].outro) return showEnd(true);   // before Earth, too: home, the deluxe, or keep exploring
          if (TOUR[i - 1] && TOUR[i - 1].side === 'Side A' && TOUR[i].side === 'Side B') openFlip(i); else startTour(i); }
     function setArm(a, ease) { armAt = clamp(a, OFF - 6, ON); arm.style.transition = ease ? 'transform .6s cubic-bezier(.3,.7,.2,1)' : 'none'; arm.style.transform = `rotate(${armAt}deg)`; }
@@ -1411,6 +1464,34 @@
     ['play', 'pause', 'ended'].forEach(e => audio.addEventListener(e, syncNav)); syncNav();
     audio.addEventListener('ended', () => { playing = null; syncPlay(); });
 
+    // the now-playing bar: while a song plays outside the album, it takes the month's place at the bottom.
+    // Next plays the song I most often play right after this one; back goes to the one before.
+    const NB_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15L19.5 12z" fill="currentColor"/></svg>', NB_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.5h4v15H6zM14 4.5h4v15h-4z" fill="currentColor"/></svg>';
+    const nbHeard = [];
+    let nbSong = null;
+    function syncBar() {
+        const on = !!playing && !audio.ended; document.body.classList.toggle('nowplaying', on);
+        if (!on) return;
+        if (nbSong !== playing) { if (nbSong && nbHeard[nbHeard.length - 1] !== nbSong) nbHeard.push(nbSong); nbSong = playing;
+            $('#nbTitle').textContent = playing.title; $('#nbArtist').textContent = playing.A.name; const im = $('#nbArt'); im.src = blank; cover(playing).then(u => { if (nbSong === playing) im.src = u; }); }
+        $('#nbPlay').innerHTML = audio.paused ? NB_PLAY : NB_PAUSE; $('#nbPlay').setAttribute('aria-label', audio.paused ? 'Play' : 'Pause');
+        $('#nbPrev').disabled = !nbHeard.length;
+    }
+    function tickBar() { const d = audio.duration || 30, t = audio.currentTime || 0;
+        $('#nbBar').style.width = (100 * t / d).toFixed(2) + '%'; $('#nbAt').textContent = mmss(t * 1000); $('#nbLeft').textContent = '-' + mmss((d - t) * 1000); }
+    ['play', 'pause', 'ended', 'loadedmetadata'].forEach(e => audio.addEventListener(e, () => { syncBar(); tickBar(); }));
+    audio.addEventListener('timeupdate', tickBar);
+    $('#nbPlay').onclick = () => { if (audio.paused) audio.play().catch(() => {}); else audio.pause(); };
+    $('#nbNext').onclick = () => { if (!nbSong) return; const n = (nbSong.links.find(m => !nbHeard.includes(m.s)) || nbSong.links[0] || {}).s || songs[Math.floor(Math.random() * 50)]; openSong(n, { listen: true }); };
+    $('#nbPrev').onclick = () => { const p = nbHeard.pop(); if (!p) return; nbSong = p; openSong(p, { listen: true }); };
+
+    // fold either side panel away, to just explore the sky; the choice is remembered
+    function fold(side, on) { document.body.classList.toggle('fold-' + side, on); const b = $('#fold' + side.toUpperCase());
+        b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', `${on ? 'Show' : 'Hide'} the ${side === 'l' ? 'left' : 'right'} panel`);
+        try { localStorage.setItem('hr-fold-' + side, on ? '1' : ''); } catch (e) {} }
+    for (const side of ['l', 'r']) { let on = false; try { on = localStorage.getItem('hr-fold-' + side) === '1'; } catch (e) {}
+        fold(side, on); $('#fold' + side.toUpperCase()).onclick = () => fold(side, !document.body.classList.contains('fold-' + side)); }
+
     // ---------- sound: the opening's effects, synthesized in the browser (no audio files) ----------
     const sfx = { ctx: null, master: null, on: false, done: new Set() };
     function sfxInit() { try { sfx.ctx = new (window.AudioContext || window.webkitAudioContext)(); sfx.master = sfx.ctx.createGain(); sfx.master.gain.value = 0.75; sfx.master.connect(sfx.ctx.destination); sfx.ctx.resume(); } catch (e) { sfx.ctx = null; } }
@@ -1482,7 +1563,15 @@
         document.body.classList.add('intro');
         if (freeze != null) { const l = lines.find(([a, b]) => freeze * 1000 >= a && freeze * 1000 < b); if (l) say(l[2], l[3]); }
         else if (!gated) startWords();
-        skipBtn.onclick = () => { if (!pre.done) skipIntro(); else if (replaying) finishReplay(); };
+        skipBtn.onclick = skipAll;
+    }
+    // one button, on screen from the first typed line to the end of the formation: it skips all of it and lands in the finished sky
+    let skippedAll = false;
+    function skipAll(e) {
+        if (e) e.stopPropagation(); skippedAll = true;
+        if (gated && !pre.begun) begin(false);
+        if (!pre.done) { skipIntro(); pre.timers.forEach(clearTimeout); hush(); return; }   // the frame loop then begins the galaxy, already grown
+        leaveReplay(); setNow(t1); document.body.classList.remove('intro');
     }
     function skipIntro() {
         if (!pre.begun && gated) return;
@@ -1493,11 +1582,15 @@
     }
     function beginGalaxy(time) {
         pre.done = true; intro.start = time;
-        document.body.classList.add('replay'); document.body.classList.remove('intro');
+        document.body.classList.remove('intro');
+        if (skippedAll) { setNow(t1); return; }
+        document.body.classList.add('replay');
         setTimeout(() => { if (!bang && step < 0 && !album.classList.contains('on')) replay(); }, reduced ? 0 : 500);
     }
     addEventListener('keydown', e => { if (gated && !pre.begun && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); checked ? (sfx.ctx || sfxInit(), brief(true)) : soundcheck(); return; }
-        if (!pre.done && (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); skipIntro(); } });
+        if (!pre.done && (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); skipIntro(); }
+        else if (e.key === 'Escape' && replaying && !skippedAll) skipAll();
+        else if (e.key === 'Escape' && thread && guideAt < 0 && !card.classList.contains('on')) setThread(null); });
     // the begin screen: one click starts the opening, with sound or without
     function begin(withSound) {
         if (pre.begun) return; pre.begun = true;
@@ -1533,22 +1626,29 @@
         if (briefed) return; briefed = true; const gate = $('#gate'); gate.classList.add('briefing');
         const go = () => { if (pre.begun) return; gate.removeEventListener('click', go); begin(withSound); };
         // the same three-line screenplay format as the opening: where we cut to, what it is, what to expect
-        const parts = [[$('#b1'), 'CUT TO: T = 0 · THE SUHANI MUSICVERSE', 22], [$('#b2'), `${fmt(D.totals.hours)} hours. ${fmt(Math.round((t1 - t0) / DAY) + 1)} days. ${fmt(songs.length)} songs.`, 34], [$('#b3'), 'Strap in. Her universe is about to begin.', 22]];
-        let p = 0, n = 0; const tick = () => { if (pre.begun) return; const [el, t, ms] = parts[p]; el.classList.add('caret'); n++; el.textContent = t.slice(0, n);
-            if (n < t.length) return setTimeout(tick, ms); el.classList.remove('caret'); p++; n = 0; if (p < parts.length) setTimeout(tick, 220); else setTimeout(go, 1100); };
-        setTimeout(tick, 150); gate.addEventListener('click', go);
+        // the heading and the cue fade in; the numbers spin like a counter and lock in one digit at a time, left to right
+        const b1 = $('#b1'), b2 = $('#b2'), b3 = $('#b3'), final = `${fmt(D.totals.hours)} hours. ${fmt(Math.round((t1 - t0) / DAY) + 1)} days. ${fmt(songs.length)} songs.`;
+        const digits = [...final].map((ch, i) => /\d/.test(ch) ? i : -1).filter(i => i >= 0), LOCK = 1300, START = 250;
+        [b1, b2, b3].forEach(el => el.classList.add('reveal')); b1.textContent = 'CUT TO: T = 0 · THE SUHANI MUSICVERSE'; b3.textContent = 'Strap in. Her universe is about to begin.';
+        requestAnimationFrame(() => b1.classList.add('in'));
+        const t0r = performance.now(); b2.classList.add('in');
+        const spin = now => { if (pre.begun) return; const k = (now - t0r - START) / LOCK, locked = Math.floor(clamp(k, 0, 1) * digits.length);
+            const chars = [...final]; digits.forEach((i, j) => { if (j >= locked) chars[i] = String(Math.floor(Math.random() * 10)); }); b2.textContent = chars.join('');
+            if (k < 1) requestAnimationFrame(spin); else { b2.textContent = final; b2.classList.add('locked'); b3.classList.add('in'); setTimeout(go, 1500); } };
+        requestAnimationFrame(spin); gate.addEventListener('click', go);
     }
     // first, how it all started, typed out live like the first page of a screenplay: the scene heading, the moment, then the cue.
     // The soundcheck rises in under it; a click skips the typing.
     if (gated) { const fp = D.facts.first_play, d0 = new Date(fp.at.replace(' ', 'T')), h = d0.getHours(), m = d0.getMinutes();
         const slug = `EXT. DALLAS, TEXAS — ${d0.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).replace(/,(?= \w+ \d)/, ',').toUpperCase()} — ${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
-        const parts = [[$('#t1'), slug, 18], [$('#t2'), 'A 16-year-old asks her dad for Spotify Premium. He says yes.', 30], [$('#t3'), 'Sound on, headphones on: her Spotify journey starts now.', 19]];   // all three lines in about 5.5 seconds
+        const parts = [[$('#t1'), slug, 10], [$('#t2'), 'A 16-year-old asks her dad for Spotify Premium. He says yes.', 22], [$('#t3'), 'Sound on, headphones on: her Spotify journey starts now.', 12]];   // all three lines in about 3.5 seconds
+        let seen = false; try { seen = localStorage.getItem('hr-seen') === '1'; localStorage.setItem('hr-seen', '1'); } catch (e) {}
         const gate = $('#gate'); gate.classList.add('opening-on', 'typing'); let p = 0, n = 0, typer = null;
         const done = () => { clearTimeout(typer); parts.forEach(([el, t]) => { el.textContent = t; el.classList.remove('caret'); }); gate.classList.remove('typing'); setTimeout(() => gate.classList.remove('opening-on'), 300); };
         const tick = () => { const [el, t, ms] = parts[p]; el.classList.add('caret'); n++; el.textContent = t.slice(0, n);
             if (n < t.length) { typer = setTimeout(tick, ms); return; }
             el.classList.remove('caret'); p++; n = 0; if (p < parts.length) typer = setTimeout(tick, 260); else done(); };
-        typer = setTimeout(tick, 200);
+        if (seen) done(); else typer = setTimeout(tick, 200);   // a returning visitor gets the whole page at once
         gate.addEventListener('click', () => { if (gate.classList.contains('typing')) done(); }); }
     if (gated) { document.body.classList.add('gated'); $('#gateGo').onclick = e => { e.stopPropagation(); checked ? (sfx.ctx || sfxInit(), brief(true)) : soundcheck(); }; $('#gateQuiet').onclick = e => { e.stopPropagation(); brief(false); }; }
     cv.addEventListener('click', () => { if (!pre.done) skipIntro(); });
